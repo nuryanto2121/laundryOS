@@ -1,0 +1,28 @@
+modules:
+  customer:
+    owns:
+      - customers
+    apis:
+      - /customers
+    events:
+      - customer.created
+      - customer.updated
+
+  order:
+    owns:
+      - orders
+      - order_items
+      - order_status_histories
+    apis:
+      - /orders
+    events:
+      - order.created
+      - order.status.changed
+
+  payment:
+    owns:
+      - payments
+    apis:
+      - /payments
+    events:
+      - payment.completed

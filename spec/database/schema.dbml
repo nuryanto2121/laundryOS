@@ -1,0 +1,73 @@
+Project LaundryOS {
+  database_type: "PostgreSQL"
+}
+
+Table customers {
+  id uuid [pk]
+
+  customer_code varchar [unique]
+
+  full_name varchar
+
+  phone varchar [unique]
+
+  email varchar
+
+  address text
+
+  latitude decimal
+
+  longitude decimal
+
+  created_at timestamp
+
+  updated_at timestamp
+
+  deleted_at timestamp
+}
+
+Table services {
+
+  id uuid [pk]
+
+  service_code varchar [unique]
+
+  service_name varchar
+
+  duration_day int
+
+  price_per_kg decimal
+
+  active boolean
+
+}
+
+Table orders {
+
+  id uuid [pk]
+
+  order_number varchar [unique]
+
+  customer_id uuid
+
+  service_id uuid
+
+  status varchar
+
+  total_weight decimal
+
+  total_price decimal
+
+  pickup_required boolean
+
+  notes text
+
+  created_at timestamp
+
+  updated_at timestamp
+
+}
+
+Ref: orders.customer_id > customers.id
+
+Ref: orders.service_id > services.id

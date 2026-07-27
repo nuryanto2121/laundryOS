@@ -1,0 +1,65 @@
+openapi: 3.1.0
+
+info:
+
+  title: LaundryOS API
+
+  version: 1.0
+
+servers:
+
+  - url: http://localhost:8080
+
+paths:
+
+  /customers:
+
+    get:
+
+      summary: List Customers
+
+      tags:
+
+        - Customer
+
+    post:
+
+      summary: Create Customer
+
+      tags:
+
+        - Customer
+
+  /orders:
+
+    get:
+
+      summary: List Orders
+
+    post:
+
+      summary: Create Order
+
+components:
+
+  schemas:
+
+    Customer:
+
+      type: object
+
+      properties:
+
+        id:
+
+          type: string
+
+          format: uuid
+
+        full_name:
+
+          type: string
+
+        phone:
+
+          type: string

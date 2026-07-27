@@ -1,0 +1,36 @@
+{
+    "events": [
+        {
+            "name": "customer.created",
+            "publisher": "api",
+            "subscriber": [
+                "notification"
+            ]
+        },
+        {
+            "name": "order.created",
+            "publisher": "order",
+            "subscriber": [
+                "notification",
+                "dashboard",
+                "analytics"
+            ]
+        },
+        {
+            "name": "order.status.changed",
+            "publisher": "workflow",
+            "subscriber": [
+                "notification",
+                "analytics"
+            ]
+        },
+        {
+            "name": "payment.completed",
+            "publisher": "payment",
+            "subscriber": [
+                "dashboard",
+                "analytics"
+            ]
+        }
+    ]
+}

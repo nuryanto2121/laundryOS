@@ -1,0 +1,37 @@
+sequenceDiagram
+
+Customer
+
+->> Gateway:
+
+Pickup Request
+
+Gateway
+
+->> API:
+
+POST /orders
+
+API
+
+->> Database:
+
+Insert Order
+
+API
+
+->> Gateway:
+
+Success
+
+Gateway
+
+->> Laundry Group:
+
+New Pickup
+
+Gateway
+
+->> Customer:
+
+Order Created
