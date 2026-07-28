@@ -34,6 +34,30 @@ Status: **Completed**
 
 ### Completed
 
-- Repository created
-- AI Documentation created
-- Project Structure created
+- Monorepo
+- Docker Compose
+- Go API
+- Node Gateway
+- Vue Dashboard
+- Development Tooling
+
+
+## Sprint 01
+
+### Milestone 2 — Session Persistence
+
+Date:
+2026-07-28
+
+Completed:
+- Persist WhatsApp session using useMultiFileAuthState
+- Session path configurable via SESSION_PATH
+- Session reused after restart
+- QR displayed only for first login
+- Startup logging improved
+- Removed legacy session_temp references
+
+Verification:
+- Restart without QR ✔
+- Existing session reused ✔
+- Lint passed ✔
