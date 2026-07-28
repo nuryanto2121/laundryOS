@@ -2,22 +2,28 @@
  * WhatsApp Client
  *
  * Initializes the Baileys socket and manages the connection lifecycle.
- * This module is the primary responsibility of the Gateway.
+ * Session management is delegated to session.js.
  *
- * Milestone 1 scope:
- * - Connect to WhatsApp
- * - Display QR code in terminal
- * - Log connection state transitions
+ * Milestone 2 scope:
+ * - Persist session using useMultiFileAuthState via session.load()
+ * - Reuse existing session on startup (no QR if session is valid)
+ * - Show QR Code only when no valid session exists
+ * - Reconnect automatically on restartRequired
+ * - Stop gracefully on loggedOut (no auto-delete, no restart)
  *
- * Out of scope (future milestones):
- * - Session persistence
- * - Message handling
- * - Go Backend integration
+ * Out of scope:
+ * - Message handling (Milestone 3)
+ * - Go Backend integration (Milestone 5)
  */
 
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import fs from 'node:fs';
+import path from 'node:path';
+import makeWASocket, { DisconnectReason } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import logger from '../logger/index.js';
+import * as session from './session.js';
+
+const SESSION_PATH = process.env.SESSION_PATH || session.DEFAULT_SESSION_PATH;
 
 /**
  * WhatsApp connection state.
@@ -39,7 +45,6 @@ let currentState = WAState.DISCONNECTED;
 
 /**
  * Returns the current WhatsApp connection state.
- * Used by the health endpoint to expose state externally.
  * @returns {string}
  */
 export function getState() {
@@ -49,15 +54,22 @@ export function getState() {
 /**
  * Starts the WhatsApp client.
  *
- * NOTE: Auth state is in-memory for Milestone 1.
- * Session persistence will be added in Milestone 2.
+ * Loads auth state from disk via session.load().
+ * If no session exists, Baileys will emit a QR code.
+ * If a valid session exists, Baileys will connect silently.
  */
 export async function startWhatsApp() {
   logger.info('Starting WhatsApp client...');
+  logger.info(`Session path resolved to: ${SESSION_PATH}`);
 
-  // In-memory auth state — session is lost on restart (Milestone 1 only).
-  // Milestone 2 will replace this with useMultiFileAuthState persisted to disk.
-  const { state, saveCreds } = await useMultiFileAuthState('session_temp');
+  const credsExist = fs.existsSync(path.join(SESSION_PATH, 'creds.json'));
+  if (credsExist) {
+    logger.info('Existing session detected. Resuming connection...');
+  } else {
+    logger.info('No existing session detected. A new QR code will be generated.');
+  }
+
+  const { state, saveCreds } = await session.load(SESSION_PATH);
 
   const socket = makeWASocket({
     auth: state,
@@ -104,6 +116,11 @@ export async function startWhatsApp() {
     if (connection === 'open') {
       currentState = WAState.CONNECTED;
       logger.info('WhatsApp connected.');
+
+      const id = socket.user?.id || 'Unknown';
+      const name = socket.user?.name || socket.user?.verifiedName || 'Unknown';
+
+      logger.info(`Connected\n\nID      : ${id}\nName    : ${name}\nPlatform: WhatsApp`);
     }
 
     if (connection === 'close') {
@@ -114,13 +131,20 @@ export async function startWhatsApp() {
 
       logger.warn(`WhatsApp disconnected. Reason: ${reason}`);
 
-      // Reconnect automatically unless logged out
-      if (statusCode !== DisconnectReason.loggedOut) {
-        logger.info('Reconnecting in 2 seconds...');
-        setTimeout(startWhatsApp, 2000);
-      } else {
-        logger.error('WhatsApp logged out. Please remove session_temp folder and restart to scan new QR.');
+      if (statusCode === DisconnectReason.loggedOut) {
+        // Session is no longer valid. Stop the WhatsApp lifecycle gracefully.
+        // The process remains running so health checks continue to respond.
+        // To re-login: delete the session directory and restart the gateway.
+        logger.error(
+          `WhatsApp logged out. Gateway is stopped. ` +
+            `Delete ${SESSION_PATH} and restart to scan a new QR.`
+        );
+        return;
       }
+
+      // For all other disconnect reasons (including restartRequired), reconnect.
+      logger.info('Reconnecting in 2 seconds...');
+      setTimeout(startWhatsApp, 2000);
     }
   });
 

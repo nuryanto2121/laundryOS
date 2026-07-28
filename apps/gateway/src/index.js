@@ -3,12 +3,12 @@
  *
  * Startup order:
  * 1. Start WhatsApp client (primary responsibility)
- * 2. Start HTTP server (secondary — health endpoint only for Milestone 1)
+ * 2. Start HTTP server (secondary — liveness health endpoint)
  */
 
 import express from 'express';
 import logger from './logger/index.js';
-import { startWhatsApp, getState } from './whatsapp/client.js';
+import { startWhatsApp } from './whatsapp/client.js';
 
 const PORT = process.env.PORT || 3000;
 const APP_VERSION = process.env.APP_VERSION || '0.1.0';
@@ -19,7 +19,6 @@ const APP_VERSION = process.env.APP_VERSION || '0.1.0';
 
 startWhatsApp().catch((err) => {
   logger.error('WhatsApp client failed to start.', { error: err.message });
-  process.exit(1);
 });
 
 // ---------------------------------------------------------------------------
@@ -32,7 +31,8 @@ app.use(express.json());
 
 /**
  * GET /health
- * Standard health check. Includes current WhatsApp connection state.
+ * Liveness probe. Responds 200 while the process is running.
+ * WhatsApp connectivity is an application-level concern, not a liveness indicator.
  */
 app.get('/health', (_req, res) => {
   res.status(200).json({
@@ -40,7 +40,6 @@ app.get('/health', (_req, res) => {
     service: 'laundryos-gateway',
     version: APP_VERSION,
     timestamp: new Date().toISOString(),
-    whatsapp: getState(),
   });
 });
 
