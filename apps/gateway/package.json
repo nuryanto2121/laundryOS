@@ -1,7 +1,8 @@
 {
   "name": "laundryos-gateway",
   "version": "0.1.0",
-  "description": "LaundryOS WhatsApp Gateway — Sprint 00 scaffold",
+  "description": "LaundryOS WhatsApp Gateway",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -15,12 +16,15 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "@whiskeysockets/baileys": "7.0.0-rc13",
+    "express": "^4.19.2",
+    "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.0.0",
     "prettier": "^3.3.3"
   }
 }
