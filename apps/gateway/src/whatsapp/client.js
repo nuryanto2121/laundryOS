@@ -92,20 +92,20 @@ export async function startWhatsApp() {
     // Suppress Baileys' internal logger output to keep terminal readable.
     logger: {
       level: 'silent',
-      log: () => { },
-      info: () => { },
-      warn: () => { },
-      error: () => { },
-      debug: () => { },
-      trace: () => { },
+      log: () => {},
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      debug: () => {},
+      trace: () => {},
       child: () => ({
         level: 'silent',
-        log: () => { },
-        info: () => { },
-        warn: () => { },
-        error: () => { },
-        debug: () => { },
-        trace: () => { },
+        log: () => {},
+        info: () => {},
+        warn: () => {},
+        error: () => {},
+        debug: () => {},
+        trace: () => {},
         child: () => ({}),
       }),
     },
@@ -156,7 +156,7 @@ export async function startWhatsApp() {
         // To re-login: delete the session directory and restart the gateway.
         logger.error(
           `WhatsApp logged out. Gateway is stopped. ` +
-          `Delete ${SESSION_PATH} and restart to scan a new QR.`
+            `Delete ${SESSION_PATH} and restart to scan a new QR.`
         );
         return;
       }
