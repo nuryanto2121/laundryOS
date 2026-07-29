@@ -18,7 +18,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import makeWASocket, {
+  DisconnectReason,
+  fetchLatestBaileysVersion,
+  jidEncode,
+  jidNormalizedUser,
+} from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import logger from '../logger/index.js';
 import * as session from './session.js';
@@ -43,6 +48,7 @@ export const WAState = {
  * @type {string}
  */
 let currentState = WAState.DISCONNECTED;
+let activeSocket = null;
 
 /**
  * Returns the current WhatsApp connection state.
@@ -111,6 +117,8 @@ export async function startWhatsApp() {
     },
   });
 
+  activeSocket = socket;
+
   socket.ev.on('creds.update', saveCreds);
 
   socket.ev.on('messages.upsert', (upsert) => {
@@ -168,4 +176,34 @@ export async function startWhatsApp() {
   });
 
   return socket;
+}
+
+/**
+ * Sends a text message through the active WhatsApp connection.
+ * @param {string} phone The destination phone number.
+ * @param {string} message The text message to send.
+ * @returns {Promise<boolean>} True if sent successfully.
+ */
+export async function sendMessage(phone, message) {
+  if (currentState !== WAState.CONNECTED || !activeSocket) {
+    throw new Error('WhatsApp is not connected');
+  }
+
+  const jid = jidNormalizedUser(jidEncode(phone, 's.whatsapp.net'));
+
+  try {
+    await activeSocket.sendMessage(jid, { text: message });
+    logger.info(
+      `\nOutgoing Message\n\n` +
+        `To        : ${phone}\n` +
+        `Type      : text\n` +
+        `Text      : ${message}\n` +
+        `Status    : Sent\n` +
+        `────────────────────────────`
+    );
+    return true;
+  } catch (error) {
+    logger.error(`Failed to send message. ${error.message || error}`);
+    throw error;
+  }
 }
