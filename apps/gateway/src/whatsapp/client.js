@@ -18,10 +18,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import makeWASocket, { DisconnectReason } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import logger from '../logger/index.js';
 import * as session from './session.js';
+import { handleMessagesUpsert } from './handler.js';
 
 const SESSION_PATH = process.env.SESSION_PATH || session.DEFAULT_SESSION_PATH;
 
@@ -71,34 +72,50 @@ export async function startWhatsApp() {
 
   const { state, saveCreds } = await session.load(SESSION_PATH);
 
+  let version = [2, 3000, 1015901307];
+  try {
+    const fetched = await fetchLatestBaileysVersion();
+    version = fetched.version;
+  } catch {
+    logger.warn(`Failed to fetch WA version (network error). Using fallback v${version.join('.')}`);
+  }
+
+  logger.info(`Using WA v${version.join('.')}`);
+
   const socket = makeWASocket({
     auth: state,
+    version,
+    browser: ['LaundryOS Gateway', 'Chrome', '1.0.0'],
     // Disable Baileys' built-in QR printing; we handle it manually below
     // for clean, explicit terminal output.
     printQRInTerminal: false,
     // Suppress Baileys' internal logger output to keep terminal readable.
     logger: {
       level: 'silent',
-      log: () => {},
-      info: () => {},
-      warn: () => {},
-      error: () => {},
-      debug: () => {},
-      trace: () => {},
+      log: () => { },
+      info: () => { },
+      warn: () => { },
+      error: () => { },
+      debug: () => { },
+      trace: () => { },
       child: () => ({
         level: 'silent',
-        log: () => {},
-        info: () => {},
-        warn: () => {},
-        error: () => {},
-        debug: () => {},
-        trace: () => {},
+        log: () => { },
+        info: () => { },
+        warn: () => { },
+        error: () => { },
+        debug: () => { },
+        trace: () => { },
         child: () => ({}),
       }),
     },
   });
 
   socket.ev.on('creds.update', saveCreds);
+
+  socket.ev.on('messages.upsert', (upsert) => {
+    handleMessagesUpsert(upsert);
+  });
 
   socket.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -125,6 +142,8 @@ export async function startWhatsApp() {
 
     if (connection === 'close') {
       currentState = WAState.DISCONNECTED;
+      logger.info(JSON.stringify(lastDisconnect, null, 2));
+      // console.dir(lastDisconnect, { depth: null });
 
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       const reason = DisconnectReason[statusCode] ?? `code ${statusCode}`;
@@ -137,7 +156,7 @@ export async function startWhatsApp() {
         // To re-login: delete the session directory and restart the gateway.
         logger.error(
           `WhatsApp logged out. Gateway is stopped. ` +
-            `Delete ${SESSION_PATH} and restart to scan a new QR.`
+          `Delete ${SESSION_PATH} and restart to scan a new QR.`
         );
         return;
       }
