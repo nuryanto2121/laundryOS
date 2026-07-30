@@ -2,19 +2,19 @@
 
 ## Current Version
 
-v0.1.0-m4
+v0.2.0-m1
 
 ---
 
 ## Current Sprint
 
-Sprint 01 - WhatsApp Gateway Foundation
+Sprint 02 - Backend Foundation
 
 ---
 
 ## Current Milestone
 
-Milestone 5 - Gateway Integration
+Milestone 2 - Database Migration
 
 ---
 
@@ -32,42 +32,46 @@ Completed
 - ✅ Sprint 01 / Milestone 3 - Message Receiver
 - ✅ Sprint 01 / Milestone 4 - Send Message
 - ✅ Sprint 01 / Milestone 5 - Gateway Integration
+- ✅ Sprint 02 / Milestone 1 - Backend Initialization
 
 ---
 
 ## Current Goal
 
-Prepare the Gateway HTTP API for integration with external services.
+Prepare the database schema for the Go Backend.
 
 ---
 
 ## Acceptance Criteria
 
-- Stable HTTP API
-- Standardized JSON responses
-- Improved `/health` endpoint
-- Request validation
-- Request logging
-- API documentation
-- Lint passes
-- Docker build passes
+- Migration tool configured.
+- Migration up works.
+- Migration down works.
+- Customers table created.
+- Orders table created.
+- Lint passes.
+- Docker build passes.
 
 ---
 
 ## Out of Scope
 
-- Go Backend
+- Customer module
+- Order module
+- Swagger
 - Authentication
-- Authorization
-- Retry mechanism
-- Queue
-- Redis
-- PostgreSQL
-- Media messages
-- Message delivery status
+- Database migration
+
+---
+
+## References
+
+- architecture.md
+- schema.dbml
+- sprint-02.md
 
 ---
 
 ## Next Milestone
 
-Sprint 02 - Go Backend Integration
+Milestone 2 - Database Migration

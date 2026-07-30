@@ -4,6 +4,12 @@ This document defines the engineering principles that the AI must follow when co
 
 These principles apply to every sprint and milestone unless explicitly overridden by the developer.
 
+When proposing or implementing technologies, AI must follow Architecture.md.
+
+AI must not introduce technologies outside Architecture.md.
+
+If a required technology is not defined in Architecture.md, AI must ask for approval before introducing it.
+
 ---
 
 # 1. Stay Within the Current Milestone

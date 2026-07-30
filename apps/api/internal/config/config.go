@@ -1,43 +1,43 @@
 package config
 
 import (
+	"log"
 	"os"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
-	Port       string
-	DBHost     string
-	DBPort     string
-	DBName     string
-	DBUser     string
-	DBPassword string
-	RedisHost  string
-	RedisPort  string
-	AppVersion string
+	Port       string `env:"PORT"         env-default:"8080"`
+	DBHost     string `env:"DB_HOST"      env-default:"localhost"`
+	DBPort     string `env:"DB_PORT"      env-default:"5432"`
+	DBName     string `env:"DB_NAME"      env-default:"laundryos"`
+	DBUser     string `env:"DB_USER"      env-default:"postgres"`
+	DBPassword string `env:"DB_PASSWORD"  env-default:""`
+	RedisHost  string `env:"REDIS_HOST"   env-default:"localhost"`
+	RedisPort  string `env:"REDIS_PORT"   env-default:"6379"`
+	AppVersion string `env:"APP_VERSION"  env-default:"0.1.0"`
 }
 
-// Load reads configuration from environment variables.
-// Each variable falls back to a safe default if not set.
+// Load reads configuration from a .env file (if present in the current directory)
+// and from environment variables. Environment variables always take precedence.
 func Load() *Config {
-	return &Config{
-		Port:       getEnv("PORT", "8080"),
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBName:     getEnv("DB_NAME", "laundryos"),
-		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		RedisHost:  getEnv("REDIS_HOST", "localhost"),
-		RedisPort:  getEnv("REDIS_PORT", "6379"),
-		AppVersion: getEnv("APP_VERSION", "0.1.0"),
-	}
-}
+	var cfg Config
 
-// getEnv returns the value of the environment variable named by key,
-// or fallback if the variable is not set or is empty.
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	const envFile = ".env"
+
+	if _, err := os.Stat(envFile); err == nil {
+		// .env file found — read file first, then override with real env vars
+		if err := cleanenv.ReadConfig(envFile, &cfg); err != nil {
+			log.Fatalf("Config error: %s", err)
+		}
+	} else {
+		// No .env file — read from environment variables only (production / Docker)
+		if err := cleanenv.ReadEnv(&cfg); err != nil {
+			log.Fatalf("Config error: %s", err)
+		}
 	}
-	return fallback
+
+	return &cfg
 }

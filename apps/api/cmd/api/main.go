@@ -1,23 +1,70 @@
 package main
 
 import (
-	"log"
+	"context"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/config"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/db"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/handler"
 )
 
 func main() {
+	// Initialize slog
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	cfg := config.Load()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", handler.NewHealthHandler(cfg.AppVersion))
+	ctx := context.Background()
+
+	// Initialize Database
+	dbPool, err := db.New(ctx, cfg)
+	if err != nil {
+		slog.Error("database initialization failed", "error", err)
+		os.Exit(1)
+	}
+	defer dbPool.Close()
+
+	// Initialize HTTP Router
+	router := chi.NewRouter()
+
+	router.Get("/health", handler.NewHealthHandler(cfg.AppVersion))
 
 	addr := ":" + cfg.Port
-	log.Printf("laundryos-api v%s starting on %s", cfg.AppVersion, addr)
-
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("server error: %v", err)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: router,
 	}
+
+	// Start server asynchronously
+	go func() {
+		slog.Info("laundryos-api starting", "version", cfg.AppVersion, "addr", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("listen error", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Graceful Shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	slog.Info("shutting down server...")
+
+	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("server forced to shutdown", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("server exiting")
 }
