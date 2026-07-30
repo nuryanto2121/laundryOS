@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.0-m1
+v0.2.0-m2
 
 ---
 
@@ -14,13 +14,13 @@ Sprint 02 - Backend Foundation
 
 ## Current Milestone
 
-Milestone 2 - Database Migration
+Milestone 3 - Customer Module
 
 ---
 
 ## Status
 
-Completed
+Planned
 
 ---
 
@@ -33,22 +33,24 @@ Completed
 - ✅ Sprint 01 / Milestone 4 - Send Message
 - ✅ Sprint 01 / Milestone 5 - Gateway Integration
 - ✅ Sprint 02 / Milestone 1 - Backend Initialization
+- ✅ Sprint 02 / Milestone 2 - Database Migration
 
 ---
 
 ## Current Goal
 
-Prepare the database schema for the Go Backend.
+Implement Customer CRUD API.
 
 ---
 
 ## Acceptance Criteria
 
-- Migration tool configured.
-- Migration up works.
-- Migration down works.
-- Customers table created.
-- Orders table created.
+- Create Customer.
+- Update Customer.
+- Delete Customer.
+- Get Customer Detail.
+- List Customers.
+- CRUD tested manually.
 - Lint passes.
 - Docker build passes.
 
@@ -74,4 +76,4 @@ Prepare the database schema for the Go Backend.
 
 ## Next Milestone
 
-Milestone 2 - Database Migration
+Milestone 3 - Customer Module

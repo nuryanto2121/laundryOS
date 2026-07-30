@@ -1,5 +1,31 @@
 # Release Notes
 
+## v0.2.0 — Sprint 02 / Milestone 2: Database Migration
+
+Status: **Completed**
+
+Date:
+2026-07-30
+
+### Completed
+
+#### Milestone 2 — Database Migration
+- Configured database schema migration using `golang-migrate`
+- Created the initial migration version `000001_init_schema`
+- Ensured migration tables align with the single source of truth (`spec/database/schema.dbml`)
+- Created the `customers` table with soft delete support
+- Created the `services` table for laundry services catalogue
+- Created the `orders` table with foreign keys referencing customers and services
+- Updated `Makefile` with `migrate-up` and `migrate-down` targets for local development convenience
+
+### Verification
+
+- Migration `up` creates `customers`, `services`, and `orders` successfully ✔
+- Migration `down` cleanly drops all tables in reverse dependency order ✔
+- Migration tables strictly reflect column precisions from the spec ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 1: Backend Initialization
 
 Status: **Completed**

@@ -129,6 +129,7 @@ The Backend requires a versioned database schema to support future business modu
 #### [NEW] Schema
 
 - Create customers table.
+- CRreate Service table
 - Create orders table.
 
 ## Risks
@@ -151,6 +152,7 @@ The Backend requires a versioned database schema to support future business modu
 - Migration up works.
 - Migration down works.
 - Customers table created.
+- Services table created.
 - Orders table created.
 - Lint passes.
 - Docker build passes.

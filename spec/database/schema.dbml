@@ -3,6 +3,7 @@ Project LaundryOS {
 }
 
 Table customers {
+
   id uuid [pk]
 
   customer_code varchar [unique]
@@ -15,15 +16,16 @@ Table customers {
 
   address text
 
-  latitude decimal
+  latitude decimal(10,7)
 
-  longitude decimal
+  longitude decimal(10,7)
 
   created_at timestamp
 
   updated_at timestamp
 
   deleted_at timestamp
+
 }
 
 Table services {
@@ -34,9 +36,9 @@ Table services {
 
   service_name varchar
 
-  duration_day int
+  duration_day integer
 
-  price_per_kg decimal
+  price_per_kg decimal(12,2)
 
   active boolean
 
@@ -54,9 +56,9 @@ Table orders {
 
   status varchar
 
-  total_weight decimal
+  total_weight decimal(10,2)
 
-  total_price decimal
+  total_price decimal(12,2)
 
   pickup_required boolean
 

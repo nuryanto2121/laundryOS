@@ -5,7 +5,8 @@
 .PHONY: up down restart logs ps build test clean \
         lint lint-api lint-gateway lint-dashboard \
         fmt fmt-api fmt-gateway fmt-dashboard \
-        api gateway dashboard
+        api gateway dashboard \
+        migrate-up migrate-down
 
 # -----------------------------------------------------------------------------
 # Docker Compose
@@ -62,6 +63,17 @@ test: test-api
 ## Run Go API tests
 test-api:
 	cd apps/api && go test ./...
+
+# DB_URL constructed from apps/api/.env variables for local migration runs.
+DB_URL ?= postgres://postgres:secret@localhost:5432/laundryos?sslmode=disable
+
+## Run database migrations (up)
+migrate-up:
+	migrate -path apps/api/migrations -database "$(DB_URL)" up
+
+## Roll back database migrations (down)
+migrate-down:
+	migrate -path apps/api/migrations -database "$(DB_URL)" down
 
 # Node 22 LTS path (keg-only on macOS — takes priority over system node)
 NODE22_BIN := /usr/local/opt/node@22/bin
