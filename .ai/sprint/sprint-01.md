@@ -246,44 +246,326 @@ Planned
 
 ## Goal
 
-Send WhatsApp message programmatically.
+Expose a minimal HTTP endpoint that sends a WhatsApp text message through the existing Baileys connection.
 
-## Tasks
+The Gateway acts only as a transport layer and contains no business logic.
 
-Create internal endpoint.
+---
 
-POST
+## Scope
 
-/send-message
+### In Scope
 
-Request
+- Create HTTP endpoint:
+  ```
+  POST /send-message
+  ```
 
+- Accept JSON request:
+  ```json
+  {
+    "phone": "6281234567890",
+    "message": "Hello"
+  }
+  ```
+
+- Validate required fields:
+  - `phone`
+  - `message`
+
+- Convert phone number to WhatsApp JID:
+  ```
+  6281234567890
+      ↓
+  6281234567890@s.whatsapp.net
+  ```
+
+- Send message using the active Baileys socket.
+
+- Return appropriate HTTP response.
+
+- Log outgoing messages.
+
+---
+
+### Out of Scope
+
+- Go Backend integration
+- Authentication / Authorization
+- Rate limiting
+- Retry mechanism
+- Scheduled messages
+- Media messages
+- Broadcast messages
+- Database
+- Delivery status tracking
+- Queue / Worker
+
+---
+
+## Proposed Changes
+
+### MODIFY
+
+#### `apps/gateway/src/index.js`
+
+- Register:
+  ```
+  POST /send-message
+  ```
+- Delegate request handling to a dedicated HTTP handler.
+
+---
+
+#### `apps/gateway/src/whatsapp/client.js`
+
+Expose a function:
+
+```js
+sendMessage(phone, message)
+```
+
+Responsibilities:
+
+- Verify WhatsApp connection is active.
+- Convert phone number into WhatsApp JID.
+- Send text message via Baileys.
+- Return send result.
+- No HTTP-specific logic.
+
+---
+
+### NEW
+
+#### `apps/gateway/src/http/sendMessage.js`
+
+Responsibilities:
+
+- Parse HTTP request.
+- Validate request body.
+- Invoke `client.sendMessage()`.
+- Return HTTP response.
+- No WhatsApp-specific implementation.
+
+---
+
+## API Contract
+
+### Request
+
+**POST** `/send-message`
+
+```json
 {
-    "phone":"628xxxxxxxxxx",
-    "message":"Hello"
+  "phone": "6281234567890",
+  "message": "Hello"
 }
+```
 
-Gateway sends message through Baileys.
+---
+
+### Success Response
+
+HTTP 200
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### Validation Error
+
+HTTP 400
+
+```json
+{
+  "success": false,
+  "message": "phone is required"
+}
+```
+
+or
+
+```json
+{
+  "success": false,
+  "message": "message is required"
+}
+```
+
+---
+
+### WhatsApp Not Connected
+
+HTTP 503
+
+```json
+{
+  "success": false,
+  "message": "WhatsApp is not connected"
+}
+```
+
+---
+
+### Internal Error
+
+HTTP 500
+
+```json
+{
+  "success": false,
+  "message": "Failed to send message"
+}
+```
+
+---
+
+## Logging
+
+### Success
+
+```
+Outgoing Message
+
+To        : 6281234567890
+Type      : text
+Text      : Hello
+Status    : Sent
+────────────────────────────
+```
+
+### Failure
+
+```
+Failed Sending Message
+
+To        : 6281234567890
+Reason    : <error>
+────────────────────────────
+```
+
+---
 
 ## Deliverables
 
-Message successfully delivered.
+- HTTP endpoint implemented.
+- WhatsApp text message successfully sent.
+- Outgoing message logged.
+- Request validation implemented.
 
-## Out of Scope
-
-Go Backend.
+---
 
 ## Acceptance Criteria
 
-POST endpoint.
+- POST `/send-message` endpoint exists.
+- Accepts JSON request body.
+- Validates required fields.
+- Converts phone number to WhatsApp JID.
+- Uses the existing Baileys connection.
+- Customer receives the message.
+- Returns HTTP 200 on success.
+- Returns HTTP 400 for invalid requests.
+- Returns HTTP 503 when WhatsApp is disconnected.
+- Returns HTTP 500 for unexpected errors.
+- Gateway remains running after sending messages.
+- Lint passes.
+- Docker build passes.
 
-Customer receives message.
+---
 
-Definition of Done
+## Definition of Done
 
-HTTP returns success.
+- HTTP endpoint implemented.
+- Message successfully delivered.
+- Proper HTTP response returned.
+- Manual verification completed.
+- Code reviewed.
+- Lint passes.
+- Docker build passes.
 
-Message delivered.
+---
+
+## Verification Plan
+
+### Positive Test
+
+Request:
+
+```json
+{
+  "phone": "6281234567890",
+  "message": "Hello"
+}
+```
+
+Expected:
+
+- HTTP 200
+- Customer receives the message
+- Gateway logs the outgoing message
+
+---
+
+### Validation Test
+
+Missing `phone`:
+
+```json
+{
+  "message": "Hello"
+}
+```
+
+Expected:
+
+- HTTP 400
+
+---
+
+Missing `message`:
+
+```json
+{
+  "phone": "6281234567890"
+}
+```
+
+Expected:
+
+- HTTP 400
+
+---
+
+### Connection Test
+
+Disconnect WhatsApp.
+
+Call:
+
+```
+POST /send-message
+```
+
+Expected:
+
+- HTTP 503
+- No crash
+
+---
+
+### Error Handling Test
+
+Force `sock.sendMessage()` to throw an exception.
+
+Expected:
+
+- HTTP 500
+- Error logged
+- Gateway remains running
 
 ---
 
@@ -295,75 +577,201 @@ Planned
 
 ## Goal
 
-Forward incoming WhatsApp messages to Go Backend.
+Prepare the WhatsApp Gateway to be consumed by external services.
 
-Gateway becomes a dumb transport layer.
+This milestone focuses on stabilizing the Gateway API, improving API responses, and exposing a minimal interface that can later be called by the Go Backend.
 
-## Flow
+No Go Backend implementation is included in this milestone.
 
-Customer
-
-↓
-
-Gateway
-
-↓
-
-Go Backend
-
-↓
-
-Gateway
-
-↓
-
-Customer
+---
 
 ## Tasks
 
-Forward incoming message.
+### HTTP API
 
-POST
+Review and finalize the Gateway HTTP interface.
 
-/api/v1/messages
+Endpoints:
 
-Receive backend response.
+GET /health
 
-Reply to customer.
+POST /send-message
 
-Backend response is temporary static text.
+Standardize HTTP responses.
+
+Example success:
+
+```json
+{
+  "success": true
+}
+```
+
+Example validation error:
+
+```json
+{
+  "success": false,
+  "error": "phone is required"
+}
+```
+
+Example gateway unavailable:
+
+```json
+{
+  "success": false,
+  "error": "WhatsApp is not connected"
+}
+```
+
+---
+
+### Health Endpoint
+
+Enhance the existing `/health` endpoint.
+
+Return:
+
+```json
+{
+  "status": "UP",
+  "whatsapp": "CONNECTED"
+}
+```
+
+or
+
+```json
+{
+  "status": "UP",
+  "whatsapp": "DISCONNECTED"
+}
+```
+
+The WhatsApp status must come from `client.getState()`.
+
+---
+
+### API Validation
+
+Validate:
+
+- Content-Type
+- phone
+- message
+
+Return proper HTTP status codes.
+
+400
+
+Invalid request.
+
+503
+
+Gateway not connected.
+
+500
+
+Unexpected internal error.
+
+---
+
+### Logging
+
+Log every API request.
+
+Example:
+
+```
+POST /send-message
+```
+
+Log response status.
+
+Example:
+
+```
+POST /send-message -> 200
+```
+
+No request body should be logged.
+
+---
+
+### Documentation
+
+Document:
+
+- endpoint
+- request
+- response
+- status code
+
+inside the project README.
+
+---
 
 ## Deliverables
 
-Successful round trip.
+Stable Gateway HTTP API.
+
+Consistent response structure.
+
+Improved health endpoint.
+
+Documented API.
+
+---
 
 ## Out of Scope
 
-Database.
+Go Backend.
 
-Customer Management.
+Authentication.
 
-Laundry Orders.
+Authorization.
 
-AI.
+Webhook.
+
+Retry mechanism.
+
+Rate limiting.
+
+Queue.
+
+Redis.
+
+PostgreSQL.
+
+Media messages.
+
+Message delivery status.
+
+---
 
 ## Acceptance Criteria
 
-Customer sends:
+- GET /health returns Gateway status and WhatsApp status.
+- POST /send-message keeps working.
+- HTTP responses are standardized.
+- Validation errors return HTTP 400.
+- Disconnected Gateway returns HTTP 503.
+- Unexpected errors return HTTP 500.
+- Every request is logged.
+- API is documented.
+- Lint passes.
+- Docker build passes.
 
-Hello
+---
 
-Backend responds:
+## Definition of Done
 
-Welcome to FAN Laundry.
+Gateway exposes a stable HTTP API that is ready to be consumed by external services.
 
-Customer receives reply.
+No business logic exists inside the Gateway.
 
-Definition of Done
-
-Round trip completed.
-
-No business logic exists inside Gateway.
+The Gateway remains responsible only for transporting WhatsApp messages.
 
 ---
 

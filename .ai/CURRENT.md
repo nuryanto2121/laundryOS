@@ -1,16 +1,28 @@
 # Current Project State
 
 ## Current Version
-v0.1.0-m3
+
+v0.1.0-m4
+
+---
 
 ## Current Sprint
+
 Sprint 01 - WhatsApp Gateway Foundation
 
+---
+
 ## Current Milestone
-Milestone 4 - Send Message
+
+Milestone 5 - Gateway Integration
+
+---
 
 ## Status
-Planning
+
+Completed
+
+---
 
 ## Completed
 
@@ -18,30 +30,44 @@ Planning
 - ✅ Sprint 01 / Milestone 1 - Baileys Initialization
 - ✅ Sprint 01 / Milestone 2 - Session Persistence
 - ✅ Sprint 01 / Milestone 3 - Message Receiver
+- ✅ Sprint 01 / Milestone 4 - Send Message
+- ✅ Sprint 01 / Milestone 5 - Gateway Integration
+
+---
 
 ## Current Goal
 
-Send WhatsApp message programmatically.
+Prepare the Gateway HTTP API for integration with external services.
+
+---
 
 ## Acceptance Criteria
 
-- POST endpoint /send-message
-- Request accepts phone and message
-- Gateway sends message through Baileys
-- Customer receives message
-- HTTP returns success
-- Message delivered
+- Stable HTTP API
+- Standardized JSON responses
+- Improved `/health` endpoint
+- Request validation
+- Request logging
+- API documentation
+- Lint passes
+- Docker build passes
+
+---
 
 ## Out of Scope
 
 - Go Backend
+- Authentication
+- Authorization
+- Retry mechanism
+- Queue
+- Redis
+- PostgreSQL
+- Media messages
+- Message delivery status
 
-## References
-
-- architecture.md
-- schema.dbml
-- events.json
+---
 
 ## Next Milestone
 
-Milestone 5 - Gateway Integration
+Sprint 02 - Go Backend Integration

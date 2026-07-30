@@ -8,7 +8,7 @@
 
 import express from 'express';
 import logger from './logger/index.js';
-import { startWhatsApp, sendMessage } from './whatsapp/client.js';
+import { startWhatsApp, sendMessage, getState } from './whatsapp/client.js';
 
 const PORT = process.env.PORT || 3000;
 const APP_VERSION = process.env.APP_VERSION || '0.1.0';
@@ -34,13 +34,13 @@ app.use(express.json());
  * Liveness probe. Responds 200 while the process is running.
  * WhatsApp connectivity is an application-level concern, not a liveness indicator.
  */
-app.get('/health', (_req, res) => {
+app.get('/health', (req, res) => {
+  logger.info(`GET /health`);
   res.status(200).json({
-    status: 'ok',
-    service: 'laundryos-gateway',
-    version: APP_VERSION,
-    timestamp: new Date().toISOString(),
+    status: 'UP',
+    whatsapp: getState(),
   });
+  logger.info(`GET /health -> 200`);
 });
 
 /**
@@ -48,24 +48,30 @@ app.get('/health', (_req, res) => {
  * Sends a WhatsApp text message to the specified phone number.
  */
 app.post('/send-message', async (req, res) => {
+  logger.info(`POST /send-message`);
   try {
     const { phone, message } = req.body;
 
     if (typeof phone !== 'string' || !phone.trim()) {
-      return res.status(400).json({ success: false, message: 'phone is required' });
+      logger.info(`POST /send-message -> 400`);
+      return res.status(400).json({ success: false, error: 'phone is required' });
     }
     if (typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ success: false, message: 'message is required' });
+      logger.info(`POST /send-message -> 400`);
+      return res.status(400).json({ success: false, error: 'message is required' });
     }
 
     await sendMessage(phone.trim(), message.trim());
 
+    logger.info(`POST /send-message -> 200`);
     return res.status(200).json({ success: true });
   } catch (error) {
     if (error.message === 'WhatsApp is not connected') {
-      return res.status(503).json({ success: false, message: error.message });
+      logger.info(`POST /send-message -> 503`);
+      return res.status(503).json({ success: false, error: error.message });
     }
-    return res.status(500).json({ success: false, message: 'failed to send message' });
+    logger.info(`POST /send-message -> 500`);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
