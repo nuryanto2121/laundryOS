@@ -13,6 +13,8 @@ import (
 	"github.com/nuryanto2121/laundryos/apps/api/internal/config"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/db"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/handler"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/repository"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
 )
 
 func main() {
@@ -32,10 +34,22 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	// Initialize Customer module
+	customerRepo := repository.NewCustomerRepository(dbPool)
+	customerSvc := service.NewCustomerService(customerRepo)
+	customerHandler := handler.NewCustomerHandler(customerSvc)
+
 	// Initialize HTTP Router
 	router := chi.NewRouter()
 
 	router.Get("/health", handler.NewHealthHandler(cfg.AppVersion))
+
+	// Customer routes
+	router.Post("/customers", customerHandler.Create)
+	router.Get("/customers", customerHandler.List)
+	router.Get("/customers/{id}", customerHandler.Get)
+	router.Put("/customers/{id}", customerHandler.Update)
+	router.Delete("/customers/{id}", customerHandler.Delete)
 
 	addr := ":" + cfg.Port
 	srv := &http.Server{
