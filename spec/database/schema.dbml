@@ -20,6 +20,8 @@ Table customers {
 
   longitude decimal(10,7)
 
+  status varchar [default: 'ACTIVE']
+
   created_at timestamp
 
   updated_at timestamp
