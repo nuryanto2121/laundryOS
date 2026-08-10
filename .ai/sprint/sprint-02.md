@@ -182,7 +182,7 @@ Planned
 
 ## Goal
 
-Implement Customer CRUD API.
+Implement Customer CRUD API using the project architecture.
 
 ## Business Problem
 
@@ -191,10 +191,10 @@ Customer information must be centralized so every business process references th
 ## Scope
 
 - Customer model
-- Repository
-- Service
-- HTTP handler
-- REST API
+- Customer repository
+- Customer service
+- Customer HTTP handler
+- Customer REST API
 
 ## Proposed Changes
 
@@ -224,6 +224,7 @@ Customer information must be centralized so every business process references th
 
 - Customer validation rules may evolve in future milestones.
 - Keep business logic inside the service layer only.
+- Keep repository responsible only for data persistence.
 
 ## Deliverables
 
@@ -232,17 +233,18 @@ Customer information must be centralized so every business process references th
 ## Out of Scope
 
 - Order module
+- Service module
 - Authentication
 - AI
 - Dashboard
 
 ## Acceptance Criteria
 
-- Create Customer.
-- Update Customer.
-- Delete Customer.
-- Get Customer Detail.
-- List Customers.
+- Create Customer API.
+- Update Customer API.
+- Delete Customer API.
+- Get Customer Detail API.
+- List Customers API.
 - CRUD tested manually.
 - Lint passes.
 - Docker build passes.
@@ -252,6 +254,7 @@ Customer information must be centralized so every business process references th
 ### Automated Tests
 
 - Run lint.
+- Build Docker image.
 
 ### Manual Verification
 
@@ -260,6 +263,14 @@ Customer information must be centralized so every business process references th
 3. Delete Customer.
 4. Get Customer Detail.
 5. List Customers.
+
+## Architecture Constraints
+
+- Follow Architecture.md.
+- Business logic belongs in the Service layer.
+- Repository is responsible only for persistence.
+- Handler is responsible only for HTTP.
+- Do not introduce additional architectural layers.
 
 ---
 

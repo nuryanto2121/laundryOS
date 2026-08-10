@@ -14,11 +14,11 @@ import (
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers (
     id, customer_code, full_name, phone, email, address,
-    latitude, longitude, created_at, updated_at
+    latitude, longitude, status, created_at, updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
 )
-RETURNING id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at
+RETURNING id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status
 `
 
 type CreateCustomerParams struct {
@@ -30,6 +30,7 @@ type CreateCustomerParams struct {
 	Address      pgtype.Text    `json:"address"`
 	Latitude     pgtype.Numeric `json:"latitude"`
 	Longitude    pgtype.Numeric `json:"longitude"`
+	Status       string         `json:"status"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
@@ -42,6 +43,7 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		arg.Address,
 		arg.Latitude,
 		arg.Longitude,
+		arg.Status,
 	)
 	var i Customer
 	err := row.Scan(
@@ -56,13 +58,17 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
 const deleteCustomer = `-- name: DeleteCustomer :exec
 UPDATE customers
-SET deleted_at = NOW()
+SET
+    status     = 'INACTIVE',
+    deleted_at = NOW(),
+    updated_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL
 `
 
@@ -72,7 +78,7 @@ func (q *Queries) DeleteCustomer(ctx context.Context, id pgtype.UUID) error {
 }
 
 const getCustomer = `-- name: GetCustomer :one
-SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at FROM customers
+SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status FROM customers
 WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -92,12 +98,53 @@ func (q *Queries) GetCustomer(ctx context.Context, id pgtype.UUID) (Customer, er
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
+const getCustomerByPhone = `-- name: GetCustomerByPhone :one
+SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status FROM customers
+WHERE phone = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCustomerByPhone(ctx context.Context, phone string) (Customer, error) {
+	row := q.db.QueryRow(ctx, getCustomerByPhone, phone)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerCode,
+		&i.FullName,
+		&i.Phone,
+		&i.Email,
+		&i.Address,
+		&i.Latitude,
+		&i.Longitude,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const getLatestCustomerCodeToday = `-- name: GetLatestCustomerCodeToday :one
+SELECT customer_code FROM customers
+WHERE created_at >= CURRENT_DATE
+ORDER BY customer_code DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestCustomerCodeToday(ctx context.Context) (string, error) {
+	row := q.db.QueryRow(ctx, getLatestCustomerCodeToday)
+	var customer_code string
+	err := row.Scan(&customer_code)
+	return customer_code, err
+}
+
 const listCustomers = `-- name: ListCustomers :many
-SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at FROM customers
+SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status FROM customers
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
@@ -123,6 +170,7 @@ func (q *Queries) ListCustomers(ctx context.Context) ([]Customer, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -143,19 +191,23 @@ SET
     address     = $5,
     latitude    = $6,
     longitude   = $7,
+    status      = $8,
+    deleted_at  = $9,
     updated_at  = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at
+WHERE id = $1
+RETURNING id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status
 `
 
 type UpdateCustomerParams struct {
-	ID        pgtype.UUID    `json:"id"`
-	FullName  string         `json:"full_name"`
-	Phone     string         `json:"phone"`
-	Email     pgtype.Text    `json:"email"`
-	Address   pgtype.Text    `json:"address"`
-	Latitude  pgtype.Numeric `json:"latitude"`
-	Longitude pgtype.Numeric `json:"longitude"`
+	ID        pgtype.UUID      `json:"id"`
+	FullName  string           `json:"full_name"`
+	Phone     string           `json:"phone"`
+	Email     pgtype.Text      `json:"email"`
+	Address   pgtype.Text      `json:"address"`
+	Latitude  pgtype.Numeric   `json:"latitude"`
+	Longitude pgtype.Numeric   `json:"longitude"`
+	Status    string           `json:"status"`
+	DeletedAt pgtype.Timestamp `json:"deleted_at"`
 }
 
 func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error) {
@@ -167,6 +219,8 @@ func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) 
 		arg.Address,
 		arg.Latitude,
 		arg.Longitude,
+		arg.Status,
+		arg.DeletedAt,
 	)
 	var i Customer
 	err := row.Scan(
@@ -181,6 +235,41 @@ func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const updateCustomerStatus = `-- name: UpdateCustomerStatus :one
+UPDATE customers
+SET
+    status     = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status
+`
+
+type UpdateCustomerStatusParams struct {
+	ID     pgtype.UUID `json:"id"`
+	Status string      `json:"status"`
+}
+
+func (q *Queries) UpdateCustomerStatus(ctx context.Context, arg UpdateCustomerStatusParams) (Customer, error) {
+	row := q.db.QueryRow(ctx, updateCustomerStatus, arg.ID, arg.Status)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerCode,
+		&i.FullName,
+		&i.Phone,
+		&i.Email,
+		&i.Address,
+		&i.Latitude,
+		&i.Longitude,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.Status,
 	)
 	return i, err
 }

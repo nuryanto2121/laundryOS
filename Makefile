@@ -6,7 +6,8 @@
         lint lint-api lint-gateway lint-dashboard \
         fmt fmt-api fmt-gateway fmt-dashboard \
         api gateway dashboard \
-        migrate-up migrate-down
+        migrate-up migrate-down \
+        sqlc
 
 # -----------------------------------------------------------------------------
 # Docker Compose
@@ -74,6 +75,10 @@ migrate-up:
 ## Roll back database migrations (down)
 migrate-down:
 	migrate -path apps/api/migrations -database "$(DB_URL)" down
+
+## Generate type-safe database access code
+sqlc:
+	cd apps/api && sqlc generate
 
 # Node 22 LTS path (keg-only on macOS — takes priority over system node)
 NODE22_BIN := /usr/local/opt/node@22/bin

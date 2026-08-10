@@ -1,5 +1,40 @@
 # Release Notes
 
+## v0.2.0 — Sprint 02 / Milestone 3: Customer Module
+
+Status: **Completed**
+
+Date:
+2026-07-31
+
+### Completed
+
+#### Milestone 3 — Customer Module
+- Implemented Customer CRUD REST API: Create, Get, List, Update, Delete
+- Configured `sqlc` with `sqlc.yaml` and generated type-safe database access code
+- Customer SQL queries: `CreateCustomer`, `GetCustomer`, `ListCustomers`, `UpdateCustomer`, `DeleteCustomer` (soft delete)
+- Customer Model separated into `customer_request.go` and `customer_response.go`
+- Repository layer owns all `pgtype` / `sqlc` mapping — no database types leak to Service or Handler
+- Service layer operates entirely on domain models (pure Go types)
+- Handler layer: HTTP-only — decode, call service, encode
+- Fixed `pgtype.Numeric` conversion (`Scan` requires string, not float64)
+- UUID formatted using `github.com/google/uuid` library
+- Timestamps formatted using `time.RFC3339` stdlib constant
+- Added `make sqlc` target to Makefile
+- `golangci-lint` passes with 0 issues
+
+### Verification
+
+- Create Customer ✔
+- Get Customer Detail ✔
+- List Customers ✔
+- Update Customer ✔
+- Delete Customer (soft delete — excluded from List and Get) ✔
+- Latitude / Longitude persisted correctly ✔
+- `golangci-lint run` — 0 issues ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 2: Database Migration
 
 Status: **Completed**

@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.0-m2
+v0.2.0-m3
 
 ---
 
@@ -14,7 +14,7 @@ Sprint 02 - Backend Foundation
 
 ## Current Milestone
 
-Milestone 3 - Customer Module
+Milestone 4 - Order Module
 
 ---
 
@@ -34,22 +34,23 @@ Planned
 - ✅ Sprint 01 / Milestone 5 - Gateway Integration
 - ✅ Sprint 02 / Milestone 1 - Backend Initialization
 - ✅ Sprint 02 / Milestone 2 - Database Migration
+- ✅ Sprint 02 / Milestone 3 - Customer Module
 
 ---
 
 ## Current Goal
 
-Implement Customer CRUD API.
+Implement Order CRUD API.
 
 ---
 
 ## Acceptance Criteria
 
-- Create Customer.
-- Update Customer.
-- Delete Customer.
-- Get Customer Detail.
-- List Customers.
+- Create Order.
+- Update Order.
+- Delete Order.
+- Get Order Detail.
+- List Orders.
 - CRUD tested manually.
 - Lint passes.
 - Docker build passes.
@@ -58,11 +59,10 @@ Implement Customer CRUD API.
 
 ## Out of Scope
 
-- Customer module
-- Order module
-- Swagger
+- Service module
 - Authentication
-- Database migration
+- Payment
+- Dashboard
 
 ---
 
@@ -76,4 +76,4 @@ Implement Customer CRUD API.
 
 ## Next Milestone
 
-Milestone 3 - Customer Module
+Milestone 4 - Order Module

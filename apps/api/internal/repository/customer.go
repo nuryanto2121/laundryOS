@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/nuryanto2121/laundryos/apps/api/internal/db/generated"
@@ -25,18 +27,19 @@ func NewCustomerRepository(pool *pgxpool.Pool) *CustomerRepository {
 }
 
 // Create inserts a new customer and returns the created record.
-func (r *CustomerRepository) Create(ctx context.Context, req model.CreateCustomerRequest) (model.Customer, error) {
+func (r *CustomerRepository) Create(ctx context.Context, req model.CreateCustomerRequest, customerCode string, status model.CustomerStatus) (model.Customer, error) {
 	id := uuid.New()
 
 	arg := db.CreateCustomerParams{
 		ID:           pgtype.UUID{Bytes: id, Valid: true},
-		CustomerCode: req.CustomerCode,
+		CustomerCode: customerCode,
 		FullName:     req.FullName,
 		Phone:        req.Phone,
 		Email:        pgtype.Text{String: req.Email, Valid: req.Email != ""},
 		Address:      pgtype.Text{String: req.Address, Valid: req.Address != ""},
 		Latitude:     toNumeric(req.Latitude),
 		Longitude:    toNumeric(req.Longitude),
+		Status:       string(status),
 	}
 
 	c, err := r.queries.CreateCustomer(ctx, arg)
@@ -59,6 +62,31 @@ func (r *CustomerRepository) Get(ctx context.Context, id string) (model.Customer
 	return toModel(c), nil
 }
 
+// GetByPhone retrieves a customer by phone number across all lifecycle states (including deleted/inactive).
+func (r *CustomerRepository) GetByPhone(ctx context.Context, phone string) (model.Customer, error) {
+	c, err := r.queries.GetCustomerByPhone(ctx, phone)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Customer{}, nil
+		}
+		return model.Customer{}, fmt.Errorf("repository: get customer by phone: %w", err)
+	}
+	return toModel(c), nil
+}
+
+// GetLatestCustomerCodeToday retrieves today's latest customer code based on created_at.
+// Note: encountering pgx.ErrNoRows is a normal operational condition indicating the first customer registration of the day, not an error.
+func (r *CustomerRepository) GetLatestCustomerCodeToday(ctx context.Context) (string, error) {
+	code, err := r.queries.GetLatestCustomerCodeToday(ctx)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", fmt.Errorf("repository: get latest customer code today: %w", err)
+	}
+	return code, nil
+}
+
 // List returns all non-deleted customers.
 func (r *CustomerRepository) List(ctx context.Context) ([]model.Customer, error) {
 	rows, err := r.queries.ListCustomers(ctx)
@@ -72,8 +100,8 @@ func (r *CustomerRepository) List(ctx context.Context) ([]model.Customer, error)
 	return result, nil
 }
 
-// Update updates mutable customer fields and returns the updated record.
-func (r *CustomerRepository) Update(ctx context.Context, id string, req model.UpdateCustomerRequest) (model.Customer, error) {
+// Update updates customer fields and returns the updated record.
+func (r *CustomerRepository) Update(ctx context.Context, id string, req model.UpdateCustomerRequest, status model.CustomerStatus, deletedAt *string) (model.Customer, error) {
 	pgID, err := parseUUID(id)
 	if err != nil {
 		return model.Customer{}, err
@@ -87,11 +115,32 @@ func (r *CustomerRepository) Update(ctx context.Context, id string, req model.Up
 		Address:   pgtype.Text{String: req.Address, Valid: req.Address != ""},
 		Latitude:  toNumeric(req.Latitude),
 		Longitude: toNumeric(req.Longitude),
+		Status:    string(status),
+		DeletedAt: parseTimestamp(deletedAt),
 	}
 
 	c, err := r.queries.UpdateCustomer(ctx, arg)
 	if err != nil {
 		return model.Customer{}, fmt.Errorf("repository: update customer: %w", err)
+	}
+	return toModel(c), nil
+}
+
+// UpdateStatus persists a status change for an existing customer.
+func (r *CustomerRepository) UpdateStatus(ctx context.Context, id string, status model.CustomerStatus) (model.Customer, error) {
+	pgID, err := parseUUID(id)
+	if err != nil {
+		return model.Customer{}, err
+	}
+
+	arg := db.UpdateCustomerStatusParams{
+		ID:     pgID,
+		Status: string(status),
+	}
+
+	c, err := r.queries.UpdateCustomerStatus(ctx, arg)
+	if err != nil {
+		return model.Customer{}, fmt.Errorf("repository: update customer status: %w", err)
 	}
 	return toModel(c), nil
 }
@@ -145,6 +194,18 @@ func numericToFloat64(n pgtype.Numeric) *float64 {
 	return &v
 }
 
+// parseTimestamp converts a formatted string pointer to pgtype.Timestamp.
+func parseTimestamp(s *string) pgtype.Timestamp {
+	if s == nil || *s == "" {
+		return pgtype.Timestamp{}
+	}
+	t, err := time.Parse(time.RFC3339, *s)
+	if err != nil {
+		return pgtype.Timestamp{}
+	}
+	return pgtype.Timestamp{Time: t.UTC(), Valid: true}
+}
+
 // toModel converts a sqlc-generated db.Customer to model.Customer.
 func toModel(c db.Customer) model.Customer {
 	m := model.Customer{
@@ -153,6 +214,7 @@ func toModel(c db.Customer) model.Customer {
 		Phone:        c.Phone,
 		Latitude:     numericToFloat64(c.Latitude),
 		Longitude:    numericToFloat64(c.Longitude),
+		Status:       model.CustomerStatus(c.Status),
 	}
 	if c.ID.Valid {
 		m.ID = uuid.UUID(c.ID.Bytes).String()
@@ -168,6 +230,10 @@ func toModel(c db.Customer) model.Customer {
 	}
 	if c.UpdatedAt.Valid {
 		m.UpdatedAt = c.UpdatedAt.Time.UTC().Format(time.RFC3339)
+	}
+	if c.DeletedAt.Valid {
+		s := c.DeletedAt.Time.UTC().Format(time.RFC3339)
+		m.DeletedAt = &s
 	}
 	return m
 }

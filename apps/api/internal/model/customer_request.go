@@ -2,13 +2,12 @@ package model
 
 // CreateCustomerRequest holds the input fields for creating a customer.
 type CreateCustomerRequest struct {
-	CustomerCode string   `json:"customer_code"`
-	FullName     string   `json:"full_name"`
-	Phone        string   `json:"phone"`
-	Email        string   `json:"email"`
-	Address      string   `json:"address"`
-	Latitude     *float64 `json:"latitude"`
-	Longitude    *float64 `json:"longitude"`
+	FullName  string   `json:"full_name"`
+	Phone     string   `json:"phone"`
+	Email     string   `json:"email"`
+	Address   string   `json:"address"`
+	Latitude  *float64 `json:"latitude"`
+	Longitude *float64 `json:"longitude"`
 }
 
 // UpdateCustomerRequest holds the input fields for updating a customer.
@@ -19,4 +18,9 @@ type UpdateCustomerRequest struct {
 	Address   string   `json:"address"`
 	Latitude  *float64 `json:"latitude"`
 	Longitude *float64 `json:"longitude"`
+}
+
+// UpdateCustomerStatusRequest holds the input field for changing customer status.
+type UpdateCustomerStatusRequest struct {
+	Status CustomerStatus `json:"status"`
 }

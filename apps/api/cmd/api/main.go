@@ -49,6 +49,7 @@ func main() {
 	router.Get("/customers", customerHandler.List)
 	router.Get("/customers/{id}", customerHandler.Get)
 	router.Put("/customers/{id}", customerHandler.Update)
+	router.Patch("/customers/{id}/status", customerHandler.UpdateStatus)
 	router.Delete("/customers/{id}", customerHandler.Delete)
 
 	addr := ":" + cfg.Port

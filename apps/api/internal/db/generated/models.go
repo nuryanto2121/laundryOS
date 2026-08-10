@@ -20,6 +20,7 @@ type Customer struct {
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
 	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 	DeletedAt    pgtype.Timestamp `json:"deleted_at"`
+	Status       string           `json:"status"`
 }
 
 type Order struct {

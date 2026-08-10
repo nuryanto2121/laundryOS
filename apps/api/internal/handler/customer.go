@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
@@ -31,6 +32,10 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	customer, err := h.svc.Create(r.Context(), req)
 	if err != nil {
 		slog.Error("create customer failed", "error", err)
+		if err.Error() == "customer already registered" || err.Error() == "customer is blocked" {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "failed to create customer")
 		return
 	}
@@ -78,6 +83,30 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("update customer failed", "id", id, "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to update customer")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, customer)
+}
+
+// UpdateStatus handles PATCH /customers/{id}/status
+func (h *CustomerHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req model.UpdateCustomerStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	customer, err := h.svc.UpdateStatus(r.Context(), id, req.Status)
+	if err != nil {
+		slog.Error("update customer status failed", "id", id, "error", err)
+		if err.Error() == "invalid target status" || strings.HasPrefix(err.Error(), "customer already") {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to update customer status")
 		return
 	}
 
