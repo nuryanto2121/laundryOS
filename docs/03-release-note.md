@@ -1,5 +1,37 @@
 # Release Notes
 
+## v0.2.0 — Sprint 02 / Milestone 4: Order Module
+
+Status: **Completed**
+
+Date:
+2026-11-18
+
+### Completed
+
+#### Milestone 4 — Order Module
+- Implemented Order CRUD REST API: Create, Get, List, Update, Delete
+- Configured sqlc queries for order persistence (`CreateOrder`, `GetOrder`, `ListOrders`, `UpdateOrder`, `DeleteOrder`, `GetLatestOrderNumberToday`)
+- Order domain model with deterministic order numbering (`ORD` + `YYMMDD` + 6-digit daily sequence)
+- Order status state enum (`NEW`)
+- Soft/hard deletion aligned with database schema
+- Repository layer maps all pgx/pgtype database types safely
+- Unit tests for Order service with mock repository (`service_test.TestOrderService_*`)
+- `golangci-lint` passes with 0 issues
+- Docker build and container verification passes
+
+### Verification
+
+- POST /orders creates order with deterministic sequence `ORD261118000001` ✔
+- GET /orders lists active orders ✔
+- GET /orders/{id} retrieves order detail ✔
+- PUT /orders/{id} updates mutable order properties while preserving status and order number ✔
+- DELETE /orders/{id} removes order record (returns HTTP 204, subsequent GET returns HTTP 404) ✔
+- Unit test suite passes (39/39 tests) ✔
+- golangci-lint run — 0 issues ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 3: Customer Module
 
 Status: **Completed**

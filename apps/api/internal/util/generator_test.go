@@ -13,11 +13,11 @@ func TestGenerateCode(t *testing.T) {
 	dateStr := time.Now().Format("060102")
 
 	tests := []struct {
-		name         string
-		prefix       string
-		sequence     int64
-		expected     string
-		expectedLen  int
+		name        string
+		prefix      string
+		sequence    int64
+		expected    string
+		expectedLen int
 	}{
 		{
 			name:        "sequence 1 with custom prefix",

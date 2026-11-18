@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.0-m3
+v0.2.0-m4
 
 ---
 
@@ -14,7 +14,7 @@ Sprint 02 - Backend Foundation
 
 ## Current Milestone
 
-Milestone 4 - Order Module
+Milestone 5 - Swagger Documentation
 
 ---
 
@@ -35,23 +35,22 @@ Planned
 - ✅ Sprint 02 / Milestone 1 - Backend Initialization
 - ✅ Sprint 02 / Milestone 2 - Database Migration
 - ✅ Sprint 02 / Milestone 3 - Customer Module
+- ✅ Sprint 02 / Milestone 4 - Order Module
 
 ---
 
 ## Current Goal
 
-Implement Order CRUD API.
+Generate Swagger documentation for Backend APIs.
 
 ---
 
 ## Acceptance Criteria
 
-- Create Order.
-- Update Order.
-- Delete Order.
-- Get Order Detail.
-- List Orders.
-- CRUD tested manually.
+- Swagger generated.
+- Customer endpoints documented.
+- Order endpoints documented.
+- Swagger accessible.
 - Lint passes.
 - Docker build passes.
 
@@ -59,21 +58,20 @@ Implement Order CRUD API.
 
 ## Out of Scope
 
-- Service module
-- Authentication
-- Payment
+- SDK generation
+- API versioning
 - Dashboard
+- Payment
 
 ---
 
 ## References
 
 - architecture.md
-- schema.dbml
 - sprint-02.md
 
 ---
 
 ## Next Milestone
 
-Milestone 4 - Order Module
+Milestone 5 - Swagger Documentation

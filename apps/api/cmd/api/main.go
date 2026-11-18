@@ -39,6 +39,11 @@ func main() {
 	customerSvc := service.NewCustomerService(customerRepo)
 	customerHandler := handler.NewCustomerHandler(customerSvc)
 
+	// Initialize Order module
+	orderRepo := repository.NewOrderRepository(dbPool)
+	orderSvc := service.NewOrderService(orderRepo)
+	orderHandler := handler.NewOrderHandler(orderSvc)
+
 	// Initialize HTTP Router
 	router := chi.NewRouter()
 
@@ -51,6 +56,13 @@ func main() {
 	router.Put("/customers/{id}", customerHandler.Update)
 	router.Patch("/customers/{id}/status", customerHandler.UpdateStatus)
 	router.Delete("/customers/{id}", customerHandler.Delete)
+
+	// Order routes
+	router.Post("/orders", orderHandler.Create)
+	router.Get("/orders", orderHandler.List)
+	router.Get("/orders/{id}", orderHandler.Get)
+	router.Put("/orders/{id}", orderHandler.Update)
+	router.Delete("/orders/{id}", orderHandler.Delete)
 
 	addr := ":" + cfg.Port
 	srv := &http.Server{

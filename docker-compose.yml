@@ -6,6 +6,8 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    profiles:
+      - infra-container
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -29,6 +31,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    profiles:
+      - infra-container
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -50,6 +54,8 @@ services:
       context: apps/api
       dockerfile: Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
@@ -66,11 +72,6 @@ services:
       - "${API_PORT:-8080}:8080"
     networks:
       - laundryos_network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 15s
@@ -86,6 +87,8 @@ services:
       context: apps/gateway
       dockerfile: Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
@@ -114,6 +117,8 @@ services:
       context: apps/dashboard
       dockerfile: Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:

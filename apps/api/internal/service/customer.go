@@ -40,14 +40,7 @@ func (s *CustomerService) Create(ctx context.Context, req model.CreateCustomerRe
 			return model.Customer{}, errors.New("customer is blocked")
 		case model.CustomerStatusInactive:
 			// Case C: Customer Exists and is INACTIVE (Reactivation Flow)
-			updateReq := model.UpdateCustomerRequest{
-				FullName:  req.FullName,
-				Phone:     req.Phone,
-				Email:     req.Email,
-				Address:   req.Address,
-				Latitude:  req.Latitude,
-				Longitude: req.Longitude,
-			}
+			updateReq := model.UpdateCustomerRequest(req)
 			return s.repo.Update(ctx, existing.ID, updateReq, model.CustomerStatusActive, nil)
 		}
 	}
