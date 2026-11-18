@@ -15,6 +15,13 @@ definitions:
         example: 0.1.0
         type: string
     type: object
+  model.BotResponse:
+    properties:
+      category:
+        type: string
+      reply:
+        type: string
+    type: object
   model.CreateCustomerRequest:
     properties:
       address:
@@ -96,6 +103,20 @@ definitions:
       error:
         example: error message
         type: string
+    type: object
+  model.IncomingMessageRequest:
+    properties:
+      from:
+        type: string
+      push_name:
+        type: string
+      text:
+        type: string
+      timestamp:
+        type: integer
+    required:
+    - from
+    - text
     type: object
   model.Order:
     properties:
@@ -194,6 +215,37 @@ info:
   title: LaundryOS API
   version: 0.1.0
 paths:
+  /bot/messages:
+    post:
+      consumes:
+      - application/json
+      description: Matches incoming message text with FAQ knowledge base and responds
+        with formatted text
+      parameters:
+      - description: Incoming WhatsApp message payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.IncomingMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.BotResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Process Incoming WhatsApp Message
+      tags:
+      - Bot
   /customers:
     get:
       description: Retrieve a list of active customers

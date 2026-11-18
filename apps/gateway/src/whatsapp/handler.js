@@ -1,6 +1,8 @@
 import logger from '../logger/index.js';
 import { normalizeMessage } from './mapper.js';
 
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8080';
+
 export function handleMessagesUpsert(upsert) {
   if (upsert.type !== 'notify') {
     return;
@@ -45,5 +47,47 @@ export function handleMessagesUpsert(upsert) {
         `Time      : ${displayTime}\n` +
         `────────────────────────────`
     );
+
+    // Forward text messages to the backend bot endpoint (transport only)
+    if (normalized.text && normalized.from) {
+      forwardToBackend(normalized);
+    }
+  }
+}
+
+async function forwardToBackend(normalized) {
+  const url = `${API_BASE_URL}/bot/messages`;
+  try {
+    let ts = normalized.timestamp;
+    if (typeof ts === 'object' && ts !== null && ts.low !== undefined) {
+      ts = ts.low;
+    }
+    ts = Number(ts);
+    if (isNaN(ts) || ts <= 0) {
+      ts = Math.floor(Date.now() / 1000);
+    }
+
+    const payload = {
+      from: normalized.from,
+      text: normalized.text,
+      push_name: normalized.pushName || '',
+      timestamp: ts,
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      logger.warn(`Failed forwarding message to backend: ${res.status} ${res.statusText}`);
+    } else {
+      logger.info(`Message forwarded to backend successfully: ${normalized.from}`);
+    }
+  } catch (err) {
+    logger.error('Error forwarding message to backend:', { error: err.message });
   }
 }

@@ -17,6 +17,7 @@ type Config struct {
 	DBPassword string `env:"DB_PASSWORD"  env-default:""`
 	RedisHost  string `env:"REDIS_HOST"   env-default:"localhost"`
 	RedisPort  string `env:"REDIS_PORT"   env-default:"6379"`
+	GatewayURL string `env:"GATEWAY_URL"  env-default:"http://localhost:3000"`
 	AppVersion string `env:"APP_VERSION"  env-default:"0.1.0"`
 }
 

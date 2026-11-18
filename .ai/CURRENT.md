@@ -2,25 +2,25 @@
 
 ## Current Version
 
-v0.2.0
+v0.3.0
 
 ---
 
 ## Current Sprint
 
-Sprint 03 - FAQ Bot
+Sprint 04 - Pickup Management
 
 ---
 
 ## Current Milestone
 
-Sprint 02 Completed / Planning Sprint 03
+Sprint 03 Completed / Planning Sprint 04
 
 ---
 
 ## Status
 
-Ready for Sprint 03
+Ready for Sprint 04
 
 ---
 
@@ -40,39 +40,44 @@ Ready for Sprint 03
   - ✅ Milestone 4 - Order Module
   - ✅ Milestone 5 - Swagger Documentation
   - ✅ Milestone 6 - API Standardization & Integration Tests
+- ✅ Sprint 03 - FAQ Bot
+  - ✅ Milestone 1 - Knowledge Base & Keyword Matcher
+  - ✅ Milestone 2 - Dynamic DB Knowledge Provider, Webhook & Audit Logging
+  - ✅ Milestone 3 - Gateway Transport Forwarding
+  - ✅ Milestone 4 - Integration & Benchmark Verification
 
 ---
 
 ## Current Goal
 
-Sprint 02 completed. Begin Sprint 03: FAQ Bot.
+Sprint 03 completed. Begin Sprint 04: Pickup Management.
 
 ---
 
 ## Acceptance Criteria
 
-- Sprint 02 Definition of Done satisfied.
-- Integration & regression test suite passing 100%.
-- Ready for WhatsApp FAQ Bot integration.
+- Sprint 03 Definition of Done satisfied (All FAQs respond accurately, latency < 2s).
+- Integration test suite passing 20/20 test cases.
+- Ready for Sprint 04 Pickup Management.
 
 ---
 
 ## Out of Scope
 
-- Payment
-- Analytics
-- POS
+- AI / LLM
+- Orders workflow state machine
+- Dashboard
 
 ---
 
 ## References
 
 - architecture.md
-- sprint-02.md
 - sprint-03.md
+- sprint-04.md
 
 ---
 
 ## Next Milestone
 
-Sprint 03 / Milestone 1 - FAQ Bot Initialization
+Sprint 04 / Milestone 1 - Pickup Flow & Conversation State

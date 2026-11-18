@@ -14,6 +14,7 @@ type RouterParams struct {
 	AppVersion      string
 	CustomerHandler *CustomerHandler
 	OrderHandler    *OrderHandler
+	BotHandler      *BotHandler
 }
 
 // NewRouter constructs and configures the Chi HTTP router with middlewares and route mappings.
@@ -24,6 +25,11 @@ func NewRouter(p RouterParams) http.Handler {
 	// System routes
 	r.Get("/health", NewHealthHandler(p.AppVersion))
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
+
+	// Bot routes
+	if p.BotHandler != nil {
+		r.Post("/bot/messages", p.BotHandler.HandleMessage)
+	}
 
 	// Customer routes
 	r.Post("/customers", p.CustomerHandler.Create)

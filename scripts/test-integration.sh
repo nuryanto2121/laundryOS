@@ -238,7 +238,45 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Results Summary
+# 6. Bot FAQ Endpoint
+# -----------------------------------------------------------------------------
+echo ""
+echo "[6/6] Testing Bot FAQ Endpoint..."
+
+# Price query
+BOT_PRICE_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from": "628123456789", "text": "Berapa biaya cuci kiloan?", "push_name": "TestUser"}')
+BOT_PRICE_CAT=$(echo "$BOT_PRICE_RESP" | jq -r '.category // empty')
+if [ "$BOT_PRICE_CAT" == "PRICE" ]; then
+  pass "POST /bot/messages matches PRICE category"
+else
+  fail "POST /bot/messages PRICE query returned category: $BOT_PRICE_CAT"
+fi
+
+# Unknown query
+BOT_UNKNOWN_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from": "628123456789", "text": "Apakah jual pulsa kuota?", "push_name": "TestUser"}')
+BOT_UNKNOWN_CAT=$(echo "$BOT_UNKNOWN_RESP" | jq -r '.category // empty')
+if [ "$BOT_UNKNOWN_CAT" == "UNKNOWN" ]; then
+  pass "POST /bot/messages unrecognized query returns UNKNOWN with fallback menu"
+else
+  fail "POST /bot/messages UNKNOWN query returned category: $BOT_UNKNOWN_CAT"
+fi
+
+# Validation rejection
+BOT_EMPTY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+if [ "$BOT_EMPTY_STATUS" -eq 400 ]; then
+  pass "POST /bot/messages with empty body rejected (HTTP 400)"
+else
+  fail "POST /bot/messages empty body returned HTTP $BOT_EMPTY_STATUS"
+fi
+
+# -----------------------------------------------------------------------------
+# Results Summary
 # -----------------------------------------------------------------------------
 echo ""
 echo "=========================================================="

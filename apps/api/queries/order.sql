@@ -8,25 +8,13 @@ INSERT INTO orders (
 RETURNING *;
 
 -- name: GetOrder :one
-SELECT 
-    o.*,
-    c.full_name AS customer_name,
-    s.service_name AS service_name
-FROM orders o
-JOIN customers c ON o.customer_id = c.id
-JOIN services s ON o.service_id = s.id
-WHERE o.id = $1
+SELECT * FROM orders
+WHERE id = $1
 LIMIT 1;
 
 -- name: ListOrders :many
-SELECT 
-    o.*,
-    c.full_name AS customer_name,
-    s.service_name AS service_name
-FROM orders o
-JOIN customers c ON o.customer_id = c.id
-JOIN services s ON o.service_id = s.id
-ORDER BY o.created_at DESC;
+SELECT * FROM orders
+ORDER BY created_at DESC;
 
 -- name: UpdateOrder :one
 UPDATE orders

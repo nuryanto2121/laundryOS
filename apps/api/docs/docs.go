@@ -15,6 +15,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/bot/messages": {
+            "post": {
+                "description": "Matches incoming message text with FAQ knowledge base and responds with formatted text",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Bot"
+                ],
+                "summary": "Process Incoming WhatsApp Message",
+                "parameters": [
+                    {
+                        "description": "Incoming WhatsApp message payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.IncomingMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.BotResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/customers": {
             "get": {
                 "description": "Retrieve a list of active customers",
@@ -483,6 +529,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.BotResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "reply": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CreateCustomerRequest": {
             "type": "object",
             "required": [
@@ -600,6 +657,27 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "error message"
+                }
+            }
+        },
+        "model.IncomingMessageRequest": {
+            "type": "object",
+            "required": [
+                "from",
+                "text"
+            ],
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "push_name": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
                 }
             }
         },

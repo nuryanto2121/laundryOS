@@ -1,5 +1,36 @@
 # Release Notes
 
+## v0.3.0 — Sprint 03: WhatsApp FAQ Bot
+
+Status: **Completed** (Sprint 03 Finished)
+
+Date:
+2026-11-18
+
+### Completed
+
+- Implemented rule-based FAQ knowledge base supporting all 6 business scopes (Price, Service, Operating Hours, Address & Maps, Delivery Coverage, and Pickup Procedures).
+- Built token-based weighted keyword matcher with text normalization (punctuation stripping, case folding, exact and phrase weighting).
+- Implemented Dynamic Knowledge Base Provider querying live active laundry services from PostgreSQL `services` table, with seamless in-memory fallback.
+- Added structured audit logging for unrecognized customer queries (`slog.Warn`) to support business intelligence and bot training.
+- Created HTTP Bot Webhook endpoint `POST /bot/messages` with request validation and asynchronous WhatsApp Gateway dispatcher.
+- Updated WhatsApp Gateway (`apps/gateway/src/whatsapp/handler.js`) to automatically forward non-group incoming text messages to the backend bot endpoint.
+- Updated Swagger and OpenAPI specifications (`spec/api/openapi.yaml`).
+- Expanded automated integration test suite (`scripts/test-integration.sh`) to 20 test cases, achieving 100% pass rate.
+- Benchmark: Response time is ~50ms (well within the < 2s SLA requirement).
+- Sprint 03 is officially concluded.
+
+### Verification
+
+- Live price query returned dynamic PostgreSQL active services list with IDR formatting ✔
+- Live hours, address, pickup, and coverage queries matched categories accurately ✔
+- Unrecognized query logged structured audit payload and returned friendly fallback menu ✔
+- Empty body properly rejected with HTTP 400 validation error ✔
+- Integration test suite: 20 passed, 0 failed ✔
+- Unit test suite: 84 passed, 0 failed ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 6: API Standardization & Test Suite
 
 Status: **Completed** (Sprint 02 Finished)

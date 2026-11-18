@@ -43,11 +43,17 @@ func Run() error {
 	orderSvc := service.NewOrderService(orderRepo)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 
+	// Initialize Bot module
+	serviceRepo := repository.NewServiceRepository(dbPool)
+	botSvc := service.NewBotService(serviceRepo, cfg.GatewayURL)
+	botHandler := handler.NewBotHandler(botSvc)
+
 	// Initialize HTTP Router
 	router := handler.NewRouter(handler.RouterParams{
 		AppVersion:      cfg.AppVersion,
 		CustomerHandler: customerHandler,
 		OrderHandler:    orderHandler,
+		BotHandler:      botHandler,
 	})
 
 	addr := ":" + cfg.Port
