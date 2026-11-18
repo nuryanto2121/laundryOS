@@ -2,25 +2,25 @@
 
 ## Current Version
 
-v0.3.0
+v0.4.0
 
 ---
 
 ## Current Sprint
 
-Sprint 04 - Pickup Management
+Sprint 05 - Dashboard
 
 ---
 
 ## Current Milestone
 
-Sprint 03 Completed / Planning Sprint 04
+Sprint 04 Completed / Planning Sprint 05
 
 ---
 
 ## Status
 
-Ready for Sprint 04
+Ready for Sprint 05
 
 ---
 
@@ -45,39 +45,45 @@ Ready for Sprint 04
   - ✅ Milestone 2 - Dynamic DB Knowledge Provider, Webhook & Audit Logging
   - ✅ Milestone 3 - Gateway Transport Forwarding
   - ✅ Milestone 4 - Integration & Benchmark Verification
+- ✅ Sprint 04 - Pickup Management
+  - ✅ Milestone 1 - Multi-Turn Conversation State & Session Store
+  - ✅ Milestone 2 - Pickup Flow State Machine & Auto-Registration
+  - ✅ Milestone 3 - Courier / Staff WhatsApp Alert Service
+  - ✅ Milestone 4 - End-to-End Integration & Regression Test Suite
 
 ---
 
 ## Current Goal
 
-Sprint 03 completed. Begin Sprint 04: Pickup Management.
+Sprint 04 completed. Begin Sprint 05: Dashboard.
 
 ---
 
 ## Acceptance Criteria
 
-- Sprint 03 Definition of Done satisfied (All FAQs respond accurately, latency < 2s).
-- Integration test suite passing 20/20 test cases.
-- Ready for Sprint 04 Pickup Management.
+- Sprint 04 Definition of Done satisfied (Pickup completed end-to-end via WhatsApp).
+- Order creation status WAITING_PICKUP verified in database.
+- Integration test suite passing 26/26 test cases.
+- Ready for Sprint 05 Dashboard.
 
 ---
 
 ## Out of Scope
 
-- AI / LLM
-- Orders workflow state machine
-- Dashboard
+- Payment
+- Analytics
+- POS
 
 ---
 
 ## References
 
 - architecture.md
-- sprint-03.md
 - sprint-04.md
+- sprint-05.md
 
 ---
 
 ## Next Milestone
 
-Sprint 04 / Milestone 1 - Pickup Flow & Conversation State
+Sprint 05 / Milestone 1 - Web Dashboard Foundation

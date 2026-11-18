@@ -1,6 +1,6 @@
 package bot
 
-// FAQ Categories supported in Sprint 03
+// FAQ Categories supported in Sprint 03 & Sprint 04
 const (
 	CategoryPrice    = "PRICE"
 	CategoryService  = "SERVICE"
@@ -8,6 +8,7 @@ const (
 	CategoryAddress  = "ADDRESS"
 	CategoryCoverage = "COVERAGE"
 	CategoryPickup   = "PICKUP"
+	CategoryStatus   = "STATUS"
 	CategoryHelp     = "HELP"
 	CategoryUnknown  = "UNKNOWN"
 )
@@ -76,6 +77,16 @@ func GetKnowledgeBase() []FAQItem {
 				"ambil cucian", "cara jemput", "mau dijemput", "jemput pakaian",
 			},
 			Description: "Tata cara meminta penjemputan cucian langsung ke rumah/kos.",
+		},
+		{
+			Category: CategoryStatus,
+			Title:    "Cek Status Cucian & Jadwal Selesai",
+			Keywords: []string{
+				"status", "cek status", "cek cucian", "status cucian", "selesai",
+				"kapan selesai", "sudah selesai", "selesai belum", "progres", "lacak",
+				"tracking", "nota", "order", "jadwal selesai",
+			},
+			Description: "Informasi status pengerjaan cucian dan estimasi waktu selesai.",
 		},
 		{
 			Category: CategoryHelp,

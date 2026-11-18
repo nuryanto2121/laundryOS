@@ -276,6 +276,97 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 7. Interactive Multi-Turn Pickup Flow
+# -----------------------------------------------------------------------------
+echo ""
+echo "[7/7] Testing Multi-Turn Interactive Pickup Flow..."
+
+PICKUP_PHONE="6281777$(date +%s | tail -c 6)"
+
+# Turn 1: Initiate pickup
+TURN1_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"Kak mau pickup cucian dong","push_name":"TesterPickup"}')
+if echo "$TURN1_RESP" | grep -q "REQUEST PENJEMPUTAN"; then
+  pass "Turn 1: Bot initiates pickup session and prompts for address"
+else
+  fail "Turn 1: Failed initiating pickup session: $TURN1_RESP"
+fi
+
+# Turn 2: Provide Address
+TURN2_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"Jl. Kemang Raya No. 15, Apartemen Kemang Tower B No 301"}')
+if echo "$TURN2_RESP" | grep -q "pilih paket layanan"; then
+  pass "Turn 2: Address recorded and active services menu presented"
+else
+  fail "Turn 2: Failed processing address: $TURN2_RESP"
+fi
+
+# Turn 3: Select Service Option 1
+TURN3_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"1"}')
+if echo "$TURN3_RESP" | grep -q "Kapan kurir kami bisa menjemput"; then
+  pass "Turn 3: Service selected and schedule prompt displayed"
+else
+  fail "Turn 3: Failed selecting service: $TURN3_RESP"
+fi
+
+# Turn 4: Provide Pickup Schedule
+TURN4_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"Besok siang jam 13:00 WIB"}')
+if echo "$TURN4_RESP" | grep -q "RINGKASAN REQUEST PENJEMPUTAN"; then
+  pass "Turn 4: Schedule recorded and confirmation summary displayed"
+else
+  fail "Turn 4: Failed processing schedule: $TURN4_RESP"
+fi
+
+# Turn 5: Confirm with OK
+TURN5_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"OK"}')
+if echo "$TURN5_RESP" | grep -q "WAITING_PICKUP"; then
+  pass "Turn 5: Order created with WAITING_PICKUP status and success dispatched"
+else
+  fail "Turn 5: Failed confirming pickup order: $TURN5_RESP"
+fi
+
+# Turn 6: Test Pickup Cancellation
+CANCEL_PHONE="6281888$(date +%s | tail -c 6)"
+curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$CANCEL_PHONE"'","text":"pickup","push_name":"CancelUser"}' > /dev/null
+
+CANCEL_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$CANCEL_PHONE"'","text":"BATAL"}')
+if echo "$CANCEL_RESP" | grep -q "dibatalkan"; then
+  pass "Pickup session cancellation verified"
+else
+  fail "Pickup cancellation failed: $CANCEL_RESP"
+fi
+
+# Turn 7: Test Check Order Status by Phone
+STATUS_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"Cek status cucian saya dong","push_name":"TesterPickup"}')
+if echo "$STATUS_RESP" | grep -q "MENUNGGU PENJEMPUTAN"; then
+  pass "Turn 7: Check status by phone accurately tracks order"
+else
+  fail "Turn 7: Check status failed: $STATUS_RESP"
+fi
+
+# Gateway /groups endpoint test
+GATEWAY_GROUPS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/groups")
+if [ "$GATEWAY_GROUPS_STATUS" -eq 200 ]; then
+  pass "Gateway GET /groups returns HTTP 200"
+else
+  fail "Gateway GET /groups returned HTTP $GATEWAY_GROUPS_STATUS"
+fi
+
+# -----------------------------------------------------------------------------
 # Results Summary
 # -----------------------------------------------------------------------------
 echo ""

@@ -8,7 +8,7 @@
 
 import express from 'express';
 import logger from './logger/index.js';
-import { startWhatsApp, sendMessage, getState } from './whatsapp/client.js';
+import { startWhatsApp, sendMessage, getState, getParticipatingGroups } from './whatsapp/client.js';
 
 const PORT = process.env.PORT || 3000;
 const APP_VERSION = process.env.APP_VERSION || '0.1.0';
@@ -41,6 +41,27 @@ app.get('/health', (req, res) => {
     whatsapp: getState(),
   });
   logger.info(`GET /health -> 200`);
+});
+
+/**
+ * GET /groups
+ * Lists all WhatsApp groups the connected account is a member of.
+ * Used by admin to easily find and copy the staff group JID.
+ */
+app.get('/groups', async (req, res) => {
+  logger.info(`GET /groups`);
+  try {
+    const groups = await getParticipatingGroups();
+    return res.status(200).json({
+      success: true,
+      whatsapp_status: getState(),
+      total: groups.length,
+      data: groups,
+    });
+  } catch (error) {
+    logger.error('GET /groups failed', { error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 /**

@@ -72,6 +72,60 @@ func (q *Queries) DeleteOrder(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getLatestOrderByCustomerPhone = `-- name: GetLatestOrderByCustomerPhone :one
+SELECT 
+    o.id, o.order_number, o.customer_id, o.service_id, o.status,
+    o.total_weight, o.total_price, o.pickup_required, o.notes,
+    o.created_at, o.updated_at,
+    s.service_name, s.duration_day,
+    c.full_name AS customer_name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN services s ON o.service_id = s.id
+WHERE c.phone = $1
+ORDER BY o.created_at DESC
+LIMIT 1
+`
+
+type GetLatestOrderByCustomerPhoneRow struct {
+	ID             pgtype.UUID      `json:"id"`
+	OrderNumber    string           `json:"order_number"`
+	CustomerID     pgtype.UUID      `json:"customer_id"`
+	ServiceID      pgtype.UUID      `json:"service_id"`
+	Status         pgtype.Text      `json:"status"`
+	TotalWeight    pgtype.Numeric   `json:"total_weight"`
+	TotalPrice     pgtype.Numeric   `json:"total_price"`
+	PickupRequired pgtype.Bool      `json:"pickup_required"`
+	Notes          pgtype.Text      `json:"notes"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+	ServiceName    string           `json:"service_name"`
+	DurationDay    pgtype.Int4      `json:"duration_day"`
+	CustomerName   string           `json:"customer_name"`
+}
+
+func (q *Queries) GetLatestOrderByCustomerPhone(ctx context.Context, phone string) (GetLatestOrderByCustomerPhoneRow, error) {
+	row := q.db.QueryRow(ctx, getLatestOrderByCustomerPhone, phone)
+	var i GetLatestOrderByCustomerPhoneRow
+	err := row.Scan(
+		&i.ID,
+		&i.OrderNumber,
+		&i.CustomerID,
+		&i.ServiceID,
+		&i.Status,
+		&i.TotalWeight,
+		&i.TotalPrice,
+		&i.PickupRequired,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ServiceName,
+		&i.DurationDay,
+		&i.CustomerName,
+	)
+	return i, err
+}
+
 const getLatestOrderNumberToday = `-- name: GetLatestOrderNumberToday :one
 SELECT order_number FROM orders
 WHERE created_at >= CURRENT_DATE
@@ -107,6 +161,59 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getOrderByOrderNumber = `-- name: GetOrderByOrderNumber :one
+SELECT 
+    o.id, o.order_number, o.customer_id, o.service_id, o.status,
+    o.total_weight, o.total_price, o.pickup_required, o.notes,
+    o.created_at, o.updated_at,
+    s.service_name, s.duration_day,
+    c.full_name AS customer_name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+JOIN services s ON o.service_id = s.id
+WHERE o.order_number = $1
+LIMIT 1
+`
+
+type GetOrderByOrderNumberRow struct {
+	ID             pgtype.UUID      `json:"id"`
+	OrderNumber    string           `json:"order_number"`
+	CustomerID     pgtype.UUID      `json:"customer_id"`
+	ServiceID      pgtype.UUID      `json:"service_id"`
+	Status         pgtype.Text      `json:"status"`
+	TotalWeight    pgtype.Numeric   `json:"total_weight"`
+	TotalPrice     pgtype.Numeric   `json:"total_price"`
+	PickupRequired pgtype.Bool      `json:"pickup_required"`
+	Notes          pgtype.Text      `json:"notes"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+	ServiceName    string           `json:"service_name"`
+	DurationDay    pgtype.Int4      `json:"duration_day"`
+	CustomerName   string           `json:"customer_name"`
+}
+
+func (q *Queries) GetOrderByOrderNumber(ctx context.Context, orderNumber string) (GetOrderByOrderNumberRow, error) {
+	row := q.db.QueryRow(ctx, getOrderByOrderNumber, orderNumber)
+	var i GetOrderByOrderNumberRow
+	err := row.Scan(
+		&i.ID,
+		&i.OrderNumber,
+		&i.CustomerID,
+		&i.ServiceID,
+		&i.Status,
+		&i.TotalWeight,
+		&i.TotalPrice,
+		&i.PickupRequired,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ServiceName,
+		&i.DurationDay,
+		&i.CustomerName,
 	)
 	return i, err
 }

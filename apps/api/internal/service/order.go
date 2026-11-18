@@ -24,6 +24,15 @@ func NewOrderService(repo OrderRepository) *OrderService {
 
 // Create creates a new order with a deterministic order number and NEW status.
 func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest) (model.Order, error) {
+	return s.createWithStatus(ctx, req, model.OrderStatusNew)
+}
+
+// CreatePickupOrder creates a new order with WAITING_PICKUP status.
+func (s *OrderService) CreatePickupOrder(ctx context.Context, req model.CreateOrderRequest) (model.Order, error) {
+	return s.createWithStatus(ctx, req, model.OrderStatusWaitingPickup)
+}
+
+func (s *OrderService) createWithStatus(ctx context.Context, req model.CreateOrderRequest, status model.OrderStatus) (model.Order, error) {
 	latestNumber, err := s.repo.GetLatestOrderNumberToday(ctx)
 	if err != nil {
 		return model.Order{}, fmt.Errorf("service: get latest order number: %w", err)
@@ -34,12 +43,22 @@ func (s *OrderService) Create(ctx context.Context, req model.CreateOrderRequest)
 		return model.Order{}, err
 	}
 
-	return s.repo.Create(ctx, req, util.GenerateOrderNumber(sequence), model.OrderStatusNew)
+	return s.repo.Create(ctx, req, util.GenerateOrderNumber(sequence), status)
 }
 
 // Get retrieves an order by ID.
 func (s *OrderService) Get(ctx context.Context, id string) (model.Order, error) {
 	return s.repo.Get(ctx, id)
+}
+
+// GetLatestByCustomerPhone retrieves the latest order for a customer by their phone number.
+func (s *OrderService) GetLatestByCustomerPhone(ctx context.Context, phone string) (model.OrderTrackingDetail, error) {
+	return s.repo.GetLatestByCustomerPhone(ctx, phone)
+}
+
+// GetByOrderNumber retrieves tracking details for an order by its unique order number.
+func (s *OrderService) GetByOrderNumber(ctx context.Context, orderNumber string) (model.OrderTrackingDetail, error) {
+	return s.repo.GetByOrderNumber(ctx, orderNumber)
 }
 
 // List returns all orders.

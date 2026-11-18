@@ -45,7 +45,14 @@ func Run() error {
 
 	// Initialize Bot module
 	serviceRepo := repository.NewServiceRepository(dbPool)
-	botSvc := service.NewBotService(serviceRepo, cfg.GatewayURL)
+	notifSvc := service.NewNotificationService(cfg.GatewayURL, cfg.StaffPhone)
+	botSvc := service.NewBotService(service.BotServiceConfig{
+		CustomerService: customerSvc,
+		OrderService:    orderSvc,
+		ServiceRepo:     serviceRepo,
+		NotificationSvc: notifSvc,
+		GatewayURL:      cfg.GatewayURL,
+	})
 	botHandler := handler.NewBotHandler(botSvc)
 
 	// Initialize HTTP Router

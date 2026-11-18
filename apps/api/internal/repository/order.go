@@ -79,6 +79,42 @@ func (r *OrderRepository) GetLatestOrderNumberToday(ctx context.Context) (string
 	return orderNumber, nil
 }
 
+// GetLatestByCustomerPhone retrieves the latest order for a customer by phone number.
+func (r *OrderRepository) GetLatestByCustomerPhone(ctx context.Context, phone string) (model.OrderTrackingDetail, error) {
+	row, err := r.queries.GetLatestOrderByCustomerPhone(ctx, phone)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.OrderTrackingDetail{}, nil
+		}
+		return model.OrderTrackingDetail{}, fmt.Errorf("repository: get latest order by phone: %w", err)
+	}
+
+	return trackingRowToModel(
+		row.ID, row.OrderNumber, row.CustomerID, row.CustomerName,
+		row.ServiceID, row.ServiceName, int(row.DurationDay.Int32),
+		row.Status, row.TotalWeight, row.TotalPrice, row.PickupRequired,
+		row.Notes, row.CreatedAt, row.UpdatedAt,
+	), nil
+}
+
+// GetByOrderNumber retrieves an order by its unique order number.
+func (r *OrderRepository) GetByOrderNumber(ctx context.Context, orderNumber string) (model.OrderTrackingDetail, error) {
+	row, err := r.queries.GetOrderByOrderNumber(ctx, orderNumber)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.OrderTrackingDetail{}, nil
+		}
+		return model.OrderTrackingDetail{}, fmt.Errorf("repository: get order by order number: %w", err)
+	}
+
+	return trackingRowToModel(
+		row.ID, row.OrderNumber, row.CustomerID, row.CustomerName,
+		row.ServiceID, row.ServiceName, int(row.DurationDay.Int32),
+		row.Status, row.TotalWeight, row.TotalPrice, row.PickupRequired,
+		row.Notes, row.CreatedAt, row.UpdatedAt,
+	), nil
+}
+
 // List returns all orders ordered by creation time.
 func (r *OrderRepository) List(ctx context.Context) ([]model.Order, error) {
 	orders, err := r.queries.ListOrders(ctx)
@@ -182,6 +218,51 @@ func orderToModel(order db.Order) model.Order {
 	}
 	if order.UpdatedAt.Valid {
 		result.UpdatedAt = order.UpdatedAt.Time.UTC().Format(time.RFC3339)
+	}
+	return result
+}
+
+func trackingRowToModel(
+	id pgtype.UUID,
+	orderNumber string,
+	customerID pgtype.UUID,
+	customerName string,
+	serviceID pgtype.UUID,
+	serviceName string,
+	durationDay int,
+	status pgtype.Text,
+	totalWeight pgtype.Numeric,
+	totalPrice pgtype.Numeric,
+	pickupRequired pgtype.Bool,
+	notes pgtype.Text,
+	createdAt pgtype.Timestamp,
+	updatedAt pgtype.Timestamp,
+) model.OrderTrackingDetail {
+	result := model.OrderTrackingDetail{
+		OrderNumber:    orderNumber,
+		CustomerName:   customerName,
+		ServiceName:    serviceName,
+		DurationDay:    durationDay,
+		Status:         model.OrderStatus(status.String),
+		TotalWeight:    orderNumericToFloat64(totalWeight),
+		TotalPrice:     orderNumericToFloat64(totalPrice),
+		PickupRequired: pickupRequired.Bool,
+		Notes:          notes.String,
+	}
+	if id.Valid {
+		result.ID = uuid.UUID(id.Bytes).String()
+	}
+	if customerID.Valid {
+		result.CustomerID = uuid.UUID(customerID.Bytes).String()
+	}
+	if serviceID.Valid {
+		result.ServiceID = uuid.UUID(serviceID.Bytes).String()
+	}
+	if createdAt.Valid {
+		result.CreatedAt = createdAt.Time.UTC().Format(time.RFC3339)
+	}
+	if updatedAt.Valid {
+		result.UpdatedAt = updatedAt.Time.UTC().Format(time.RFC3339)
 	}
 	return result
 }

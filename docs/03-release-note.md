@@ -1,5 +1,41 @@
 # Release Notes
 
+## v0.4.0 — Sprint 04: Pickup Management
+
+Status: **Completed** (Sprint 04 Finished)
+
+Date:
+2026-11-18
+
+### Completed
+
+- Implemented interactive multi-turn conversation state machine (`IDLE`, `AWAITING_ADDRESS`, `AWAITING_SERVICE`, `AWAITING_SCHEDULE`, `AWAITING_CONFIRMATION`).
+- Built thread-safe session store (`MemorySessionStore`) with 15-minute TTL expiration and background cleaner loop.
+- Added returning customer memory: auto-retrieves stored address and offers instant confirmation.
+- Implemented customer auto-registration and address updates on confirmed pickup requests.
+- Integrated order creation with status `WAITING_PICKUP` and deterministic sequence numbering.
+- Implemented `NotificationService` broadcasting structured pickup ticket alerts to the Courier/Staff group.
+- Added graceful cancellation flow (`BATAL` / `CANCEL`) that immediately clears active session states.
+- Implemented Order Tracking & Completion Schedule feature (`STATUS` / `CEK STATUS` / explicit `ORD...` lookup) with humanized status progression and duration estimation.
+- Added Gateway `GET /groups` endpoint to retrieve all participating WhatsApp groups and their JIDs for easy configuration.
+- Expanded integration test suite (`scripts/test-integration.sh`) to 28 test cases with a 100% pass rate.
+- Sprint 04 is officially concluded.
+
+### Verification
+
+- Multi-turn Turn 1 to Turn 5 verified live against Docker container ✔
+- Customer `Bayu` automatically registered in `customers` table with `CST` code ✔
+- Order created in PostgreSQL `orders` table with status `WAITING_PICKUP` and `pickup_required: true` ✔
+- Returning customer query recognized saved address instantly ✔
+- Check status query by customer phone returned active order status and estimation ✔
+- Check status query by explicit order number (`ORD261118000001`) verified ✔
+- Gateway `GET /groups` returned HTTP 200 ✔
+- Sesi cancellation confirmed to clear memory store cleanly ✔
+- Unit test suite: 88 passed in 13 packages ✔
+- Integration test suite: 28 passed, 0 failed ✔
+
+---
+
 ## v0.3.0 — Sprint 03: WhatsApp FAQ Bot
 
 Status: **Completed** (Sprint 03 Finished)

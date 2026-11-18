@@ -35,6 +35,8 @@ func FormatResponseWithServices(category string, pushName string, services []mod
 		return formatCoverageResponse()
 	case CategoryPickup:
 		return formatPickupResponse()
+	case CategoryStatus:
+		return formatHelpResponse(nameGreeting)
 	case CategoryHelp:
 		return formatHelpResponse(nameGreeting)
 	default:
@@ -222,4 +224,78 @@ Maaf, kami belum memahami pertanyaan Anda. Untuk respon otomatis yang cepat, sil
 • *PICKUP* ➔ Cara request jemput cucian
 
 Staff kami juga akan meninjau pesan Anda secepatnya jika membutuhkan bantuan khusus. Terima kasih! 🙏`, nameGreeting)
+}
+
+// FormatOrderStatusResponse formats the tracking message for a customer's laundry order.
+func FormatOrderStatusResponse(order *model.OrderTrackingDetail, pushName string) string {
+	name := strings.TrimSpace(pushName)
+	if name == "" && order != nil && order.CustomerName != "" {
+		name = order.CustomerName
+	}
+	greeting := ""
+	if name != "" {
+		greeting = fmt.Sprintf(" Kak *%s*", name)
+	}
+
+	if order == nil || order.OrderNumber == "" {
+		return fmt.Sprintf(`🧺 *CEK STATUS CUCIAN LAUNDRYOS* 🧺
+
+Halo%s! Saat ini tidak ditemukan transaksi cucian aktif atas nomor WhatsApp Anda.
+
+• Jika baru saja menitipkan pakaian, staf kami sedang memproses penimbangan & antrean.
+• Anda juga dapat mengecek dengan mengetik nomor nota secara manual (contoh: *STATUS ORD261118000001*).
+• Ketik *PICKUP* jika ingin meminta penjemputan pakaian kotor. 🙏`, greeting)
+	}
+
+	statusDesc := humanizeStatus(order.Status)
+
+	weightStr := "-"
+	if order.TotalWeight > 0 {
+		weightStr = fmt.Sprintf("%.2f Kg", order.TotalWeight)
+	}
+
+	priceStr := "-"
+	if order.TotalPrice > 0 {
+		priceStr = fmt.Sprintf("Rp %s", formatIDR(order.TotalPrice))
+	}
+
+	duration := order.DurationDay
+	if duration <= 0 {
+		duration = 2
+	}
+
+	return fmt.Sprintf(`🧺 *STATUS CUCIAN ANDA (LaundryOS)* 🧺
+
+Halo%s! Berikut adalah rincian terkini pengerjaan cucian Anda:
+
+• *No. Order:* %s
+• *Paket Layanan:* %s
+• *Berat Cucian:* %s
+• *Total Biaya:* %s
+• *Status Terkini:* %s
+
+_Estimasi pengerjaan: %d hari kerja._
+
+Ketik *MENU* untuk pilihan info lainnya. Terima kasih! ✨`,
+		greeting, order.OrderNumber, order.ServiceName, weightStr, priceStr, statusDesc, duration,
+	)
+}
+
+func humanizeStatus(status model.OrderStatus) string {
+	switch status {
+	case model.OrderStatusWaitingPickup:
+		return "🛵 *MENUNGGU PENJEMPUTAN*\n  _(Kurir segera menuju lokasi Anda)_"
+	case model.OrderStatusNew:
+		return "📋 *PESANAN DITERIMA*\n  _(Masuk antrean penimbangan & sortir)_"
+	case model.OrderStatusConfirmed:
+		return "✅ *DIKONFIRMASI / DALAM ANTREAN CUCI*"
+	case model.OrderStatusInProgress:
+		return "🧼 *SEDANG PROSES PENGERJAAN*\n  _(Cuci / Kering / Setrika Uap Rapi)_"
+	case model.OrderStatusCompleted:
+		return "✨ *SELESAI & WANGI RAPI*\n  _(Siap diambil di outlet atau menunggu pengantaran)_"
+	case model.OrderStatusCancelled:
+		return "❌ *DIBATALKAN*"
+	default:
+		return fmt.Sprintf("*%s*", string(status))
+	}
 }

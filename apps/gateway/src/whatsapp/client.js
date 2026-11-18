@@ -180,22 +180,28 @@ export async function startWhatsApp() {
 
 /**
  * Sends a text message through the active WhatsApp connection.
- * @param {string} phone The destination phone number.
+ * Supports both standard phone numbers and group JIDs (e.g. 120363xxx@g.us).
+ * @param {string} destination The destination phone number or group JID.
  * @param {string} message The text message to send.
  * @returns {Promise<boolean>} True if sent successfully.
  */
-export async function sendMessage(phone, message) {
+export async function sendMessage(destination, message) {
   if (currentState !== WAState.CONNECTED || !activeSocket) {
     throw new Error('WhatsApp is not connected');
   }
 
-  const jid = jidNormalizedUser(jidEncode(phone, 's.whatsapp.net'));
+  let jid;
+  if (destination.endsWith('@g.us') || destination.endsWith('@s.whatsapp.net')) {
+    jid = destination;
+  } else {
+    jid = jidNormalizedUser(jidEncode(destination, 's.whatsapp.net'));
+  }
 
   try {
     await activeSocket.sendMessage(jid, { text: message });
     logger.info(
       `\nOutgoing Message\n\n` +
-        `To        : ${phone}\n` +
+        `To        : ${destination}\n` +
         `Type      : text\n` +
         `Text      : ${message}\n` +
         `Status    : Sent\n` +
@@ -205,5 +211,26 @@ export async function sendMessage(phone, message) {
   } catch (error) {
     logger.error(`Failed to send message. ${error.message || error}`);
     throw error;
+  }
+}
+
+/**
+ * Retrieves all WhatsApp groups the connected account is currently participating in.
+ * @returns {Promise<Array<{id: string, name: string, participants_count: number}>>}
+ */
+export async function getParticipatingGroups() {
+  if (currentState !== WAState.CONNECTED || !activeSocket) {
+    return [];
+  }
+  try {
+    const groups = await activeSocket.groupFetchAllParticipating();
+    return Object.values(groups).map((g) => ({
+      id: g.id,
+      name: g.subject,
+      participants_count: g.participants ? g.participants.length : 0,
+    }));
+  } catch (error) {
+    logger.error(`Failed to fetch participating groups: ${error.message || error}`);
+    return [];
   }
 }

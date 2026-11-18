@@ -110,3 +110,39 @@ func (s *CustomerService) UpdateStatus(ctx context.Context, id string, status mo
 
 	return s.repo.UpdateStatus(ctx, id, status)
 }
+
+// GetByPhone retrieves a customer by phone number.
+func (s *CustomerService) GetByPhone(ctx context.Context, phone string) (model.Customer, error) {
+	return s.repo.GetByPhone(ctx, phone)
+}
+
+// GetOrCreateByPhone retrieves an existing customer or automatically creates a new customer.
+func (s *CustomerService) GetOrCreateByPhone(ctx context.Context, phone, fullName, address string) (model.Customer, error) {
+	existing, err := s.repo.GetByPhone(ctx, phone)
+	if err != nil {
+		return model.Customer{}, fmt.Errorf("service: get customer by phone: %w", err)
+	}
+
+	if existing.ID != "" {
+		if address != "" && existing.Address != address {
+			updateReq := model.UpdateCustomerRequest{
+				FullName: existing.FullName,
+				Phone:    existing.Phone,
+				Email:    existing.Email,
+				Address:  address,
+			}
+			return s.repo.Update(ctx, existing.ID, updateReq, existing.Status, existing.DeletedAt)
+		}
+		return existing, nil
+	}
+
+	name := strings.TrimSpace(fullName)
+	if name == "" {
+		name = "Pelanggan " + phone
+	}
+	return s.Create(ctx, model.CreateCustomerRequest{
+		FullName: name,
+		Phone:    phone,
+		Address:  address,
+	})
+}

@@ -31,6 +31,16 @@ func (m *MockOrderRepository) GetLatestOrderNumberToday(ctx context.Context) (st
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockOrderRepository) GetLatestByCustomerPhone(ctx context.Context, phone string) (model.OrderTrackingDetail, error) {
+	args := m.Called(ctx, phone)
+	return args.Get(0).(model.OrderTrackingDetail), args.Error(1)
+}
+
+func (m *MockOrderRepository) GetByOrderNumber(ctx context.Context, orderNumber string) (model.OrderTrackingDetail, error) {
+	args := m.Called(ctx, orderNumber)
+	return args.Get(0).(model.OrderTrackingDetail), args.Error(1)
+}
+
 func (m *MockOrderRepository) List(ctx context.Context) ([]model.Order, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]model.Order), args.Error(1)
