@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/util"
 )
 
 // OrderHandler exposes HTTP endpoints for the order resource.
@@ -35,6 +36,10 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := util.ValidateStruct(req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -100,6 +105,10 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req model.UpdateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := util.ValidateStruct(req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

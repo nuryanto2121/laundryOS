@@ -28,7 +28,11 @@ definitions:
       longitude:
         type: number
       phone:
+        minLength: 8
         type: string
+    required:
+    - full_name
+    - phone
     type: object
   model.CreateOrderRequest:
     properties:
@@ -41,9 +45,14 @@ definitions:
       service_id:
         type: string
       total_price:
+        minimum: 0
         type: number
       total_weight:
+        minimum: 0
         type: number
+    required:
+    - customer_id
+    - service_id
     type: object
   model.Customer:
     properties:
@@ -140,12 +149,23 @@ definitions:
       longitude:
         type: number
       phone:
+        minLength: 8
         type: string
+    required:
+    - full_name
+    - phone
     type: object
   model.UpdateCustomerStatusRequest:
     properties:
       status:
-        $ref: '#/definitions/model.CustomerStatus'
+        allOf:
+        - $ref: '#/definitions/model.CustomerStatus'
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - BLOCKED
+    required:
+    - status
     type: object
   model.UpdateOrderRequest:
     properties:
@@ -158,9 +178,14 @@ definitions:
       service_id:
         type: string
       total_price:
+        minimum: 0
         type: number
       total_weight:
+        minimum: 0
         type: number
+    required:
+    - customer_id
+    - service_id
     type: object
 host: localhost:8080
 info:

@@ -68,8 +68,11 @@ make ps
 ## Health Checks
 
 ```bash
-# Go API
+# Go API Health
 curl http://localhost:8080/health
+
+# Swagger Interactive API Documentation
+open http://localhost:8080/swagger/index.html
 
 # Node Gateway
 curl http://localhost:3000/health
@@ -103,10 +106,12 @@ make ps       # Check container status
 
 ### Build & Test
 ```bash
-make build    # Build all Docker images
-make test     # Run all tests
-make lint     # Run all linters
-make fmt      # Format all code
+make build             # Build all Docker images
+make test              # Run all unit tests
+make test-integration  # Run automated E2E integration & regression tests
+make lint              # Run all linters
+make fmt               # Format all code
+make swagger           # Regenerate Swagger docs from Go code
 ```
 
 ### Local development (without Docker)
@@ -145,9 +150,12 @@ laundryOS/
 
 ## Current Phase
 
-**Phase 1 — WhatsApp Automation**
+**Phase 1 — Core Foundation**
 
-Sprint 0 — Project Foundation (current)
+- Sprint 00 — Project Foundation (Completed)
+- Sprint 01 — WhatsApp Gateway Foundation (Completed)
+- Sprint 02 — Backend Foundation (Completed)
+- Sprint 03 — FAQ Bot (Next)
 
 ---
 

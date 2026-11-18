@@ -1,5 +1,38 @@
 # Release Notes
 
+## v0.2.0 — Sprint 02 / Milestone 6: API Standardization & Test Suite
+
+Status: **Completed** (Sprint 02 Finished)
+
+Date:
+2026-11-18
+
+### Completed
+
+#### Milestone 6 — API Standardization
+- Implemented declarative request validation using `go-playground/validator/v10`
+- Integrated validation rules on Customer (`full_name`, `phone`, `email`, `status`) and Order (`customer_id`, `service_id`, `total_weight`, `total_price`) models
+- Standardized error response format across all endpoints
+- Implemented structured JSON request logging middleware via `slog` (method, path, status, latency, remote address)
+- Built automated End-to-End Integration & Regression Test Suite (`scripts/test-integration.sh` and `make test-integration`)
+- Updated README.md with comprehensive guides and Swagger references
+- Unit tests pass with 100% success (39/39 tests)
+- Integration & Regression test suite passes with 100% success (17/17 tests)
+- `golangci-lint` passes with 0 issues
+- Sprint 02 (Backend Foundation) is officially concluded
+
+### Verification
+
+- Validation rejected empty customer body with HTTP 400 ✔
+- Validation rejected invalid UUID order creation with HTTP 400 ✔
+- Duplicate phone registration rejected with HTTP 400 ✔
+- Full customer lifecycle validated end-to-end ✔
+- Full order lifecycle with sequence generator validated end-to-end ✔
+- Structured request logging confirmed in Docker container logs ✔
+- All 17 automated regression assertions passed ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 5: Swagger Documentation
 
 Status: **Completed**

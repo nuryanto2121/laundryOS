@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/util"
 )
 
 // CustomerHandler exposes HTTP endpoints for the customer resource.
@@ -36,6 +37,10 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateCustomerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := util.ValidateStruct(req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -114,6 +119,10 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	if err := util.ValidateStruct(req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	customer, err := h.svc.Update(r.Context(), id, req)
 	if err != nil {
@@ -143,6 +152,10 @@ func (h *CustomerHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	var req model.UpdateCustomerStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := util.ValidateStruct(req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

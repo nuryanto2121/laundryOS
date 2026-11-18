@@ -485,6 +485,10 @@ const docTemplate = `{
         },
         "model.CreateCustomerRequest": {
             "type": "object",
+            "required": [
+                "full_name",
+                "phone"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -502,12 +506,17 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 8
                 }
             }
         },
         "model.CreateOrderRequest": {
             "type": "object",
+            "required": [
+                "customer_id",
+                "service_id"
+            ],
             "properties": {
                 "customer_id": {
                     "type": "string"
@@ -522,10 +531,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "total_price": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 },
                 "total_weight": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 }
             }
         },
@@ -649,6 +660,10 @@ const docTemplate = `{
         },
         "model.UpdateCustomerRequest": {
             "type": "object",
+            "required": [
+                "full_name",
+                "phone"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -666,20 +681,37 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "phone": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 8
                 }
             }
         },
         "model.UpdateCustomerStatusRequest": {
             "type": "object",
+            "required": [
+                "status"
+            ],
             "properties": {
                 "status": {
-                    "$ref": "#/definitions/model.CustomerStatus"
+                    "enum": [
+                        "ACTIVE",
+                        "INACTIVE",
+                        "BLOCKED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CustomerStatus"
+                        }
+                    ]
                 }
             }
         },
         "model.UpdateOrderRequest": {
             "type": "object",
+            "required": [
+                "customer_id",
+                "service_id"
+            ],
             "properties": {
                 "customer_id": {
                     "type": "string"
@@ -694,10 +726,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "total_price": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 },
                 "total_weight": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0
                 }
             }
         }

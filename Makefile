@@ -2,7 +2,7 @@
 # LaundryOS — Makefile
 # =============================================================================
 
-.PHONY: up down restart logs ps build test clean \
+.PHONY: up down restart logs ps build test test-api test-integration clean \
         lint lint-api lint-gateway lint-dashboard \
         fmt fmt-api fmt-gateway fmt-dashboard \
         api gateway dashboard \
@@ -64,6 +64,10 @@ test: test-api
 ## Run Go API tests
 test-api:
 	cd apps/api && go test ./...
+
+## Run End-to-End Integration & Regression Tests
+test-integration:
+	./scripts/test-integration.sh
 
 # DB_URL constructed from apps/api/.env variables for local migration runs.
 DB_URL ?= postgres://postgres:secret@localhost:5432/laundryos?sslmode=disable
