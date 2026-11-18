@@ -1,3 +1,8 @@
+// @title LaundryOS API
+// @version 0.1.0
+// @description Backend REST API for LaundryOS.
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (
@@ -10,11 +15,13 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	_ "github.com/nuryanto2121/laundryos/apps/api/docs"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/config"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/db"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/handler"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/repository"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func main() {
@@ -48,6 +55,7 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Get("/health", handler.NewHealthHandler(cfg.AppVersion))
+	router.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// Customer routes
 	router.Post("/customers", customerHandler.Create)

@@ -6,19 +6,24 @@ import (
 	"time"
 )
 
-// healthResponse defines the standard health check response shape.
-type healthResponse struct {
-	Status    string `json:"status"`
-	Service   string `json:"service"`
-	Version   string `json:"version"`
-	Timestamp string `json:"timestamp"`
+// HealthResponse defines the standard health check response shape.
+type HealthResponse struct {
+	Status    string `json:"status" example:"ok"`
+	Service   string `json:"service" example:"laundryos-api"`
+	Version   string `json:"version" example:"0.1.0"`
+	Timestamp string `json:"timestamp" example:"2026-11-18T10:00:00Z"`
 }
 
-// NewHealthHandler returns an http.HandlerFunc that responds with the
-// service health status. Version is injected at construction time from config.
+// Health godoc
+// @Summary Health Check
+// @Description Returns the service health status and version
+// @Tags Health
+// @Produce json
+// @Success 200 {object} HealthResponse
+// @Router /health [get]
 func NewHealthHandler(version string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		resp := healthResponse{
+		resp := HealthResponse{
 			Status:    "ok",
 			Service:   "laundryos-api",
 			Version:   version,

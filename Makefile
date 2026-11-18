@@ -7,7 +7,7 @@
         fmt fmt-api fmt-gateway fmt-dashboard \
         api gateway dashboard \
         migrate-up migrate-down \
-        sqlc
+        sqlc swagger
 
 # -----------------------------------------------------------------------------
 # Docker Compose
@@ -79,6 +79,10 @@ migrate-down:
 ## Generate type-safe database access code
 sqlc:
 	cd apps/api && sqlc generate
+
+## Generate Swagger API documentation
+swagger:
+	cd apps/api && swag init -g cmd/api/main.go -o docs
 
 # Node 22 LTS path (keg-only on macOS — takes priority over system node)
 NODE22_BIN := /usr/local/opt/node@22/bin

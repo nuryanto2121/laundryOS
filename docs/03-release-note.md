@@ -1,5 +1,35 @@
 # Release Notes
 
+## v0.2.0 — Sprint 02 / Milestone 5: Swagger Documentation
+
+Status: **Completed**
+
+Date:
+2026-11-18
+
+### Completed
+
+#### Milestone 5 — Swagger Documentation
+- Integrated `swaggo` (`swag` v1.16.4 and `github.com/swaggo/http-swagger/v2`)
+- Added declarative Swaggo annotations for all endpoints across Customer, Order, and Health modules
+- Added `model.ErrorResponse` to document standard JSON error response schemas
+- Exposed interactive Swagger UI at `/swagger/index.html` and raw JSON spec at `/swagger/doc.json`
+- Added `make swagger` target to `Makefile`
+- Synced `spec/api/openapi.yaml` with generated Swagger OpenAPI specification
+- `golangci-lint` passes with 0 issues
+- Unit tests pass with 100% success (39/39 tests)
+- Docker container build and healthcheck pass
+
+### Verification
+
+- GET /swagger/index.html returns HTTP 200 OK with interactive Swagger UI ✔
+- GET /swagger/doc.json returns HTTP 200 OK with valid OpenAPI 2.0 schema ✔
+- All Customer endpoints (`POST`, `GET`, `PUT`, `PATCH /status`, `DELETE`) documented ✔
+- All Order endpoints (`POST`, `GET`, `PUT`, `DELETE`) documented ✔
+- Health check endpoint (`GET /health`) documented ✔
+
+---
+
 ## v0.2.0 — Sprint 02 / Milestone 4: Order Module
 
 Status: **Completed**

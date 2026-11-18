@@ -1,65 +1,466 @@
-openapi: 3.1.0
-
+basePath: /
+definitions:
+  handler.HealthResponse:
+    properties:
+      service:
+        example: laundryos-api
+        type: string
+      status:
+        example: ok
+        type: string
+      timestamp:
+        example: "2026-11-18T10:00:00Z"
+        type: string
+      version:
+        example: 0.1.0
+        type: string
+    type: object
+  model.CreateCustomerRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+    type: object
+  model.CreateOrderRequest:
+    properties:
+      customer_id:
+        type: string
+      notes:
+        type: string
+      pickup_required:
+        type: boolean
+      service_id:
+        type: string
+      total_price:
+        type: number
+      total_weight:
+        type: number
+    type: object
+  model.Customer:
+    properties:
+      address:
+        type: string
+      created_at:
+        type: string
+      customer_code:
+        type: string
+      deleted_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+      status:
+        $ref: '#/definitions/model.CustomerStatus'
+      updated_at:
+        type: string
+    type: object
+  model.CustomerStatus:
+    enum:
+    - ACTIVE
+    - INACTIVE
+    - BLOCKED
+    type: string
+    x-enum-varnames:
+    - CustomerStatusActive
+    - CustomerStatusInactive
+    - CustomerStatusBlocked
+  model.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  model.Order:
+    properties:
+      created_at:
+        type: string
+      customer_id:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      order_number:
+        type: string
+      pickup_required:
+        type: boolean
+      service_id:
+        type: string
+      status:
+        $ref: '#/definitions/model.OrderStatus'
+      total_price:
+        type: number
+      total_weight:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  model.OrderStatus:
+    enum:
+    - NEW
+    - CONFIRMED
+    - CANCELLED
+    - COMPLETED
+    - IN_PROGRESS
+    type: string
+    x-enum-varnames:
+    - OrderStatusNew
+    - OrderStatusConfirmed
+    - OrderStatusCancelled
+    - OrderStatusCompleted
+    - OrderStatusInProgress
+  model.UpdateCustomerRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      phone:
+        type: string
+    type: object
+  model.UpdateCustomerStatusRequest:
+    properties:
+      status:
+        $ref: '#/definitions/model.CustomerStatus'
+    type: object
+  model.UpdateOrderRequest:
+    properties:
+      customer_id:
+        type: string
+      notes:
+        type: string
+      pickup_required:
+        type: boolean
+      service_id:
+        type: string
+      total_price:
+        type: number
+      total_weight:
+        type: number
+    type: object
+host: localhost:8080
 info:
-
+  contact: {}
+  description: Backend REST API for LaundryOS.
   title: LaundryOS API
-
-  version: 1.0
-
-servers:
-
-  - url: http://localhost:8080
-
+  version: 0.1.0
 paths:
-
   /customers:
-
     get:
-
+      description: Retrieve a list of active customers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Customer'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       summary: List Customers
-
       tags:
-
-        - Customer
-
+      - Customers
     post:
-
+      consumes:
+      - application/json
+      description: Register a new customer or reactivate an existing inactive customer
+      parameters:
+      - description: Customer creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       summary: Create Customer
-
       tags:
-
-        - Customer
-
-  /orders:
-
+      - Customers
+  /customers/{id}:
+    delete:
+      description: Soft-delete a customer by setting deleted_at timestamp
+      parameters:
+      - description: Customer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete Customer
+      tags:
+      - Customers
     get:
-
+      description: Retrieve a customer by their unique UUID
+      parameters:
+      - description: Customer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get Customer Detail
+      tags:
+      - Customers
+    put:
+      consumes:
+      - application/json
+      description: Update mutable customer details
+      parameters:
+      - description: Customer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Customer update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update Customer
+      tags:
+      - Customers
+  /customers/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Transition customer lifecycle status (ACTIVE, INACTIVE, BLOCKED)
+      parameters:
+      - description: Customer UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateCustomerStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Customer'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update Customer Status
+      tags:
+      - Customers
+  /health:
+    get:
+      description: Returns the service health status and version
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+      summary: Health Check
+      tags:
+      - Health
+  /orders:
+    get:
+      description: Retrieve a list of all laundry orders
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Order'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       summary: List Orders
-
+      tags:
+      - Orders
     post:
-
+      consumes:
+      - application/json
+      description: Place a new laundry order with auto-generated order sequence
+      parameters:
+      - description: Order creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
       summary: Create Order
-
-components:
-
-  schemas:
-
-    Customer:
-
-      type: object
-
-      properties:
-
-        id:
-
-          type: string
-
-          format: uuid
-
-        full_name:
-
-          type: string
-
-        phone:
-
-          type: string
+      tags:
+      - Orders
+  /orders/{id}:
+    delete:
+      description: Remove an order record by ID
+      parameters:
+      - description: Order UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete Order
+      tags:
+      - Orders
+    get:
+      description: Retrieve order details by order UUID
+      parameters:
+      - description: Order UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Order'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get Order Detail
+      tags:
+      - Orders
+    put:
+      consumes:
+      - application/json
+      description: Update mutable order information (weight, price, notes)
+      parameters:
+      - description: Order UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update Order
+      tags:
+      - Orders
+swagger: "2.0"

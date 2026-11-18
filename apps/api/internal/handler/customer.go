@@ -22,6 +22,16 @@ func NewCustomerHandler(svc *service.CustomerService) *CustomerHandler {
 }
 
 // Create handles POST /customers
+// @Summary Create Customer
+// @Description Register a new customer or reactivate an existing inactive customer
+// @Tags Customers
+// @Accept json
+// @Produce json
+// @Param request body model.CreateCustomerRequest true "Customer creation payload"
+// @Success 201 {object} model.Customer
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /customers [post]
 func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateCustomerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -44,6 +54,14 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get handles GET /customers/{id}
+// @Summary Get Customer Detail
+// @Description Retrieve a customer by their unique UUID
+// @Tags Customers
+// @Produce json
+// @Param id path string true "Customer UUID"
+// @Success 200 {object} model.Customer
+// @Failure 404 {object} model.ErrorResponse
+// @Router /customers/{id} [get]
 func (h *CustomerHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -58,6 +76,13 @@ func (h *CustomerHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // List handles GET /customers
+// @Summary List Customers
+// @Description Retrieve a list of active customers
+// @Tags Customers
+// @Produce json
+// @Success 200 {array} model.Customer
+// @Failure 500 {object} model.ErrorResponse
+// @Router /customers [get]
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 	customers, err := h.svc.List(r.Context())
 	if err != nil {
@@ -70,6 +95,17 @@ func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update handles PUT /customers/{id}
+// @Summary Update Customer
+// @Description Update mutable customer details
+// @Tags Customers
+// @Accept json
+// @Produce json
+// @Param id path string true "Customer UUID"
+// @Param request body model.UpdateCustomerRequest true "Customer update payload"
+// @Success 200 {object} model.Customer
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /customers/{id} [put]
 func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -90,6 +126,17 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateStatus handles PATCH /customers/{id}/status
+// @Summary Update Customer Status
+// @Description Transition customer lifecycle status (ACTIVE, INACTIVE, BLOCKED)
+// @Tags Customers
+// @Accept json
+// @Produce json
+// @Param id path string true "Customer UUID"
+// @Param request body model.UpdateCustomerStatusRequest true "Status update payload"
+// @Success 200 {object} model.Customer
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /customers/{id}/status [patch]
 func (h *CustomerHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -114,6 +161,13 @@ func (h *CustomerHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete handles DELETE /customers/{id}
+// @Summary Delete Customer
+// @Description Soft-delete a customer by setting deleted_at timestamp
+// @Tags Customers
+// @Param id path string true "Customer UUID"
+// @Success 204 "No Content"
+// @Failure 500 {object} model.ErrorResponse
+// @Router /customers/{id} [delete]
 func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -137,5 +191,5 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 // writeError writes a JSON error response.
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	writeJSON(w, status, model.ErrorResponse{Error: msg})
 }

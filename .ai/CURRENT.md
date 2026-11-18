@@ -2,7 +2,7 @@
 
 ## Current Version
 
-v0.2.0-m4
+v0.2.0-m5
 
 ---
 
@@ -14,7 +14,7 @@ Sprint 02 - Backend Foundation
 
 ## Current Milestone
 
-Milestone 5 - Swagger Documentation
+Milestone 6 - API Standardization
 
 ---
 
@@ -36,21 +36,23 @@ Planned
 - ✅ Sprint 02 / Milestone 2 - Database Migration
 - ✅ Sprint 02 / Milestone 3 - Customer Module
 - ✅ Sprint 02 / Milestone 4 - Order Module
+- ✅ Sprint 02 / Milestone 5 - Swagger Documentation
 
 ---
 
 ## Current Goal
 
-Generate Swagger documentation for Backend APIs.
+Standardize the Backend API before integrating with external services.
 
 ---
 
 ## Acceptance Criteria
 
-- Swagger generated.
-- Customer endpoints documented.
-- Order endpoints documented.
-- Swagger accessible.
+- Response format standardized.
+- Error responses standardized.
+- Validation implemented.
+- Logging improved.
+- README updated.
 - Lint passes.
 - Docker build passes.
 
@@ -58,10 +60,9 @@ Generate Swagger documentation for Backend APIs.
 
 ## Out of Scope
 
-- SDK generation
-- API versioning
-- Dashboard
-- Payment
+- Gateway integration
+- Dashboard integration
+- AI integration
 
 ---
 
@@ -74,4 +75,4 @@ Generate Swagger documentation for Backend APIs.
 
 ## Next Milestone
 
-Milestone 5 - Swagger Documentation
+Milestone 6 - API Standardization
