@@ -303,10 +303,10 @@ else
   fail "Turn 2: Failed processing address: $TURN2_RESP"
 fi
 
-# Turn 3: Select Service Option 1
+# Turn 3: Select Service Option (Cuci Reguler)
 TURN3_RESP=$(curl -s -X POST "$BASE_URL/bot/messages" \
   -H "Content-Type: application/json" \
-  -d '{"from":"'"$PICKUP_PHONE"'","text":"1"}')
+  -d '{"from":"'"$PICKUP_PHONE"'","text":"Cuci Reguler"}')
 if echo "$TURN3_RESP" | grep -q "Kapan kurir kami bisa menjemput"; then
   pass "Turn 3: Service selected and schedule prompt displayed"
 else

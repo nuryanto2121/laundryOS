@@ -15,5 +15,6 @@ type OrderRepository interface {
 	GetByOrderNumber(ctx context.Context, orderNumber string) (model.OrderTrackingDetail, error)
 	List(ctx context.Context) ([]model.Order, error)
 	Update(ctx context.Context, id string, req model.UpdateOrderRequest) (model.Order, error)
+	UpdateStatus(ctx context.Context, id string, status model.OrderStatus) (model.Order, error)
 	Delete(ctx context.Context, id string) error
 }

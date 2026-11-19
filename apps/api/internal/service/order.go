@@ -71,6 +71,11 @@ func (s *OrderService) Update(ctx context.Context, id string, req model.UpdateOr
 	return s.repo.Update(ctx, id, req)
 }
 
+// UpdateStatus transitions an order to a new lifecycle status.
+func (s *OrderService) UpdateStatus(ctx context.Context, id string, status model.OrderStatus) (model.Order, error) {
+	return s.repo.UpdateStatus(ctx, id, status)
+}
+
 // Delete permanently removes an order. The current schema has no deleted_at column.
 func (s *OrderService) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)

@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 )
@@ -45,27 +46,8 @@ func FormatResponseWithServices(category string, pushName string, services []mod
 }
 
 func formatDynamicPriceResponse(services []model.ServiceItem) string {
-	var sb strings.Builder
-	sb.WriteString("🧺 *DAFTAR HARGA LAUNDRYOS (UPDATE RESMI)* 🧺\n\n")
-	sb.WriteString("Berikut adalah tarif layanan laundry aktif kami saat ini:\n\n")
-
-	for _, s := range services {
-		durationStr := ""
-		if s.DurationDay > 0 {
-			durationStr = fmt.Sprintf(" (Selesai %d hari)", s.DurationDay)
-		}
-		sb.WriteString(fmt.Sprintf("• *%s*: Rp %s / Kg%s\n", s.ServiceName, formatIDR(s.PricePerKg), durationStr))
-	}
-
-	sb.WriteString("\n*Layanan Satuan & Bedding:*\n")
-	sb.WriteString("• Bed Cover Single: *Rp 20.000 - Rp 25.000*\n")
-	sb.WriteString("• Bed Cover King/Queen: *Rp 30.000 - Rp 35.000*\n")
-	sb.WriteString("• Selimut: *Rp 15.000 - Rp 20.000*\n")
-	sb.WriteString("• Jas / Blazer: *Rp 25.000*\n")
-	sb.WriteString("• Sepatu: *Rp 25.000 - Rp 35.000 / pasang*\n\n")
-	sb.WriteString("_Ketik *PICKUP* untuk pesan jemput cucian atau *MENU* untuk pilihan lainnya._")
-
-	return sb.String()
+	// If dynamic services are provided, format using the canonical 5 groups
+	return formatPriceResponse()
 }
 
 func formatIDR(amount float64) string {
@@ -85,51 +67,72 @@ func formatIDR(amount float64) string {
 	return strings.Join(res, ".")
 }
 
+// FormatIDR formats a numeric amount with thousands dots (e.g. 25000 -> "25.000").
+func FormatIDR(amount float64) string {
+	return formatIDR(amount)
+}
+
 func formatPriceResponse() string {
-	return `🧺 *DAFTAR HARGA LAUNDRYOS* 🧺
+	return `🧺 *DAFTAR HARGA & LAYANAN FAN LAUNDRY* 🧺
 
-Berikut adalah daftar harga layanan laundry kami:
+📍 Jl. Kalibaru Barat I kel. Kalibaru kec. Cilincing, Jakarta Utara 14110
+📞 Hotline: +62 852-8597-7834
 
-*1. Cuci Kiloan (Min. 3 Kg)*
-• Reguler (2 Hari): *Rp 7.000 / Kg* (Cuci + Kering + Setrika Rapi)
-• Kilat (24 Jam): *Rp 10.000 / Kg*
-• Express (6 Jam): *Rp 15.000 / Kg*
-• Cuci Kering Lipat: *Rp 5.000 / Kg*
-• Setrika Saja: *Rp 4.000 / Kg*
+Berikut adalah daftar harga resmi layanan laundry kami:
 
-*2. Satuan & Bedding*
-• Bed Cover Single: *Rp 20.000 - Rp 25.000*
-• Bed Cover King/Queen: *Rp 30.000 - Rp 35.000*
-• Selimut: *Rp 15.000 - Rp 20.000*
-• Jas / Blazer: *Rp 25.000*
-• Sepatu: *Rp 25.000 - Rp 35.000 / pasang*
+*1. CUCI SETRIKA (Min. 4 Kg)*
+• Regular (3 Hari): *Rp 7.000 / Kg*
+• Express (2 Hari): *Rp 9.000 / Kg*
+• Kilat (1 Hari / 24 Jam): *Rp 11.000 / Kg*
+• Super Kilat (12 Jam): *Rp 13.000 / Kg*
+• Turbo (6 Jam): *Rp 16.000 / Kg*
 
-_Ketik *PICKUP* untuk pesan jemput cucian atau *MENU* untuk pilihan lainnya._`
+*2. SETRIKA SAJA (Min. 4 Kg)*
+• Regular (3 Hari): *Rp 6.000 / Kg*
+• Express (2 Hari): *Rp 8.000 / Kg*
+• Kilat (1 Hari / 24 Jam): *Rp 10.000 / Kg*
+• Super Kilat (12 Jam): *Rp 12.000 / Kg*
+• Turbo (6 Jam): *Rp 15.000 / Kg*
+
+*3. KARPET PERMADANI (Pengerjaan 7-8 Hari)*
+• Permadani Sedang: *Rp 20.000 / Mtr*
+• Permadani Rumbai: *Rp 22.000 / Mtr*
+• Permadani Tebal: *Rp 30.000 / Mtr*
+• Kasur Lantai Anti Slip / Busa: *Rp 40.000 - Rp 60.000*
+
+*4. BAD COVER*
+• Regular (3 Hari): *Rp 30.000 / Pcs*
+• Express (2 Hari): *Rp 35.000 / Pcs*
+• Kilat (1 Hari): *Rp 40.000 / Pcs*
+
+*5. BONEKA (Pengerjaan 3 Hari)*
+• Mini: *Rp 15.000 / Pcs*
+• Kecil: *Rp 25.000 / Pcs*
+• Sedang: *Rp 35.000 / Pcs*
+• Besar: *Rp 60.000 / Pcs*
+
+✨ *Mau pakaian kotor dijemput sekarang?*
+Cukup balas paket pilihan Anda (contoh: *'Cuci Reguler'*, *'Kilat'*, atau *'Bad Cover'*), atau ketik *2* untuk request penjemputan! 🛵💨`
 }
 
 func formatServiceResponse() string {
-	return `🧺 *LAYANAN LAUNDRYOS* 🧺
+	return `🧺 *PILIHAN LAYANAN FAN LAUNDRY* 🧺
 
-Kami melayani berbagai kebutuhan cucian Anda dengan deterjen higienis dan pewangi premium:
+Kami melayani 5 kategori utama cucian dengan deterjen higienis dan pewangi premium wangi tahan lama:
 
-✨ *Cuci Komplit Kiloan*
-Pencucian higienis 1 mesin 1 pelanggan (tidak dicampur), dikeringkan mesin, dan disetrika uap wangi rapi.
+1️⃣ *Cuci Setrika (Min. 4 Kg)*: Regular (3 hari), Express (2 hari), Kilat (24 jam), Super Kilat (12 jam), Turbo (6 jam)
+2️⃣ *Setrika Saja (Min. 4 Kg)*: Regular, Express, Kilat, Super Kilat, Turbo
+3️⃣ *Karpet Permadani*: Sedang, Rumbai, Tebal, dan Kasur Busa/Lantai (7-8 hari)
+4️⃣ *Bad Cover*: Regular, Express, Kilat
+5️⃣ *Boneka*: Mini, Kecil, Sedang, Besar
 
-⚡ *Pilihan Kecepatan:*
-• *Reguler*: Selesai 2 hari kerja
-• *Kilat (24 Jam)*: Cocok untuk pakaian kerja mendesak
-• *Express (6 Jam)*: Siap pakai di hari yang sama
+✨ 1 Mesin 1 Pelanggan (Tidak pernah dicampur)
 
-👔 *Layanan Khusus / Satuan:*
-• Cuci & Treatment Sepatu (Deep Clean)
-• Cuci Bed Cover, Selimut, Sprei, Gorden
-• Dry Clean Jas, Gaun, Jaket Kulit / Parasut
-
-_Ketik *HARGA* untuk daftar tarif atau *PICKUP* untuk minta jemput cucian._`
+Cukup balas nama paket (contoh: *'Cuci Reguler'* atau *'Bad Cover'*) untuk memesan jemput cucian Anda! 🛵`
 }
 
 func formatHoursResponse() string {
-	return `⏰ *JAM OPERASIONAL LAUNDRYOS* ⏰
+	return `⏰ *JAM OPERASIONAL FAN LAUNDRY* ⏰
 
 Kami buka setiap hari untuk melayani kebutuhan cucian Anda:
 
@@ -140,90 +143,86 @@ Kami buka setiap hari untuk melayani kebutuhan cucian Anda:
 
 _Pemesanan pickup di luar jam operasional akan dijadwalkan pada pagi hari berikutnya._
 
-_Ketik *ALAMAT* untuk lokasi kami atau *PICKUP* untuk request jemput._`
+Ketik *2* jika ingin request jemput cucian! 🛵`
 }
 
 func formatAddressResponse() string {
-	return `📍 *LOKASI OUTLET LAUNDRYOS* 📍
+	return `📍 *LOKASI OUTLET & ALAMAT FAN LAUNDRY* 📍
 
-Silakan kunjungi outlet kami di:
-
-🏠 *Alamat:*
-Jl. Merdeka No. 45, Kebayoran Baru, Jakarta Selatan, 12160
-(Patokan: 50m sebelah Indomaret Point, seberang Apotek Sehat)
+🏠 *Alamat Outlet:*
+Jl. Kalibaru Barat I kel. Kalibaru kec. Cilincing, Jakarta Utara 14110
+(Patokan: Kalibaru Barat I)
 
 🗺️ *Google Maps:*
-https://maps.google.com/?q=LaundryOS+Outlet
+https://maps.google.com/?q=FAN+Laundry+Cilincing
+
+📞 *Telepon / WhatsApp:*
++62 852-8597-7834
+
+⏰ *Jam Buka:*
+• Outlet Fisik: *07.00 - 21.00 WIB* (Buka Setiap Hari)
+• Antar-Jemput Kurir: *08.00 - 19.00 WIB*
 
 🚗 Tersedia area parkir untuk motor & mobil.
 
-_Ketik *JAM* untuk melihat jam buka atau *AREA* untuk info antar-jemput._`
+Ketik *2* atau balas: *'Mau jemput cucian'* jika ingin pakaian kotor dijemput kurir kami! 🛵`
 }
 
 func formatCoverageResponse() string {
-	return `🚚 *AREA JANGKAUAN ANTAR-JEMPUT* 🚚
+	return `🎁 *PROMO, JANGKAUAN AREA & KETENTUAN* 🎁
 
-Layanan pickup & delivery LaundryOS mencakup area berikut:
+🚚 *Layanan Antar-Jemput FAN Laundry:*
+• *GRATIS ONGKIR* untuk area Kalibaru, Cilincing dan sekitarnya (min. 5 Kg)
+• Di bawah 5 Kg atau jarak lebih jauh: Ongkir flat hemat Rp 5.000 - Rp 10.000
 
-📍 *Wilayah Jangkauan:*
-• Kebayoran Baru, Gandaria, Blok M
-• Senopati, SCBD, Senayan
-• Mampang Prapatan, Bangka, Kemang
-• Pondok Indah & Fatmawati Utara
+✨ *Jaminan Standar Mutu FAN Laundry:*
+• 1 Mesin 1 Pelanggan (Tidak pernah dicampur dengan cucian orang lain)
+• Menggunakan deterjen higienis dan pewangi premium wangi tahan lama
+• Minimal 4 Kg untuk Cuci Setrika dan Setrika Saja
+• Setrika uap rapi tidak merusak serat kain
 
-💰 *Ketentuan Ongkir:*
-• *GRATIS ONGKIR* untuk minimal cucian 5 Kg (radius s/d 5 Km)
-• Di bawah 5 Kg atau jarak 5-10 Km: Biaya flat *Rp 5.000 - Rp 10.000*
-
-_Ketik *PICKUP* untuk memesan jemput cucian Anda sekarang._`
+🛵 *Mau request jemput cucian sekarang?*
+Balas langsung paket pilihan Anda (contoh: *'Cuci Reguler'*) atau ketik *2* untuk mulai penjemputan!`
 }
 
 func formatPickupResponse() string {
-	return `🛵 *CARA REQUEST PICKUP LAUNDRYOS* 🛵
+	return `🛵 *REQUEST PENJEMPUTAN FAN LAUNDRY* 🛵
 
-Ingin cucian dijemput kurir kami langsung ke rumah/kos/kantor? Sangat mudah!
+Kurir kami siap menjemput pakaian kotor langsung ke rumah/kos/apartemen Anda.
 
-Silakan kirim pesan dengan format berikut:
+Boleh share *Alamat Lengkap Penjemputan* dan perkiraan jam berapa mau dijemput?
+Contoh: _Jl. Mawar No. 12, jemput jam 2 siang ya_
 
-*Nama:* [Nama Anda]
-*Alamat Lengkap:* [Jalan, No Rumah, Kos/Apartemen, Patokan]
-*Estimasi Berat / Item:* [Contoh: 5 kg kemeja & celana]
-*Pilihan Layanan:* [Reguler / Kilat 24 Jam / Express]
-*Waktu Pickup:* [Sekarang / Jam yang diinginkan]
-
-Kurir kami akan segera mengonfirmasi dan meluncur ke lokasi Anda! 🛵💨
-
-_Ketik *HARGA* untuk tarif atau *AREA* untuk cek jangkauan pengantaran._`
+_(Ketik BATAL jika ingin membatalkan)_`
 }
 
 func formatHelpResponse(nameGreeting string) string {
-	return fmt.Sprintf(`🧺 *Halo%s! Selamat Datang di LaundryOS* 👋
+	return fmt.Sprintf(`🧺 *Halo%s! Selamat Datang di FAN Laundry* 👋
 
-Ada yang bisa kami bantu? Anda dapat mengetik salah satu kata kunci di bawah ini untuk info cepat:
+Silakan ketik angka berikut untuk info cepat:
 
-• *HARGA* ➔ Info daftar tarif kiloan & satuan
-• *LAYANAN* ➔ Pilihan paket cuci (Reguler, Kilat, Express)
-• *JAM* ➔ Jam operasional outlet & jadwal pickup
-• *ALAMAT* ➔ Lokasi outlet fisik & link Google Maps
-• *AREA* ➔ Wilayah jangkauan antar-jemput & ongkir
-• *PICKUP* ➔ Format dan cara memesan jemput cucian
+1️⃣ *Info Layanan & Harga* ➔ Tarif kiloan, satuan & bed cover
+2️⃣ *Order / Penjemputan Laundry* ➔ Minta kurir jemput pakaian kotor
+3️⃣ *Alamat & Jam Operasional* ➔ Lokasi outlet & jam buka
+4️⃣ *Promo & Syarat* ➔ Gratis ongkir & area jangkauan
 
-Silakan ketik pilihan Anda! 🙏`, nameGreeting)
+Atau Anda juga bisa langsung chat santai seperti:
+• *"Mba saya mau laundry"*
+• *"Cuci regular ya"*
+• *"Neng ambil baju kotor ke rumah ya"* 🙏`, nameGreeting)
 }
 
 func formatUnknownResponse(nameGreeting string) string {
-	return fmt.Sprintf(`🧺 *Halo%s dari LaundryOS!* 👋
+	return fmt.Sprintf(`🧺 *Halo%s dari FAN Laundry!* 👋
 
-Maaf, kami belum memahami pertanyaan Anda. Untuk respon otomatis yang cepat, silakan ketik salah satu pilihan menu berikut:
+Maaf, kami belum memahami pertanyaan Anda. Untuk respon otomatis yang cepat, silakan ketik salah satu pilihan angka berikut:
 
-• *HARGA* ➔ Daftar tarif kiloan & satuan
-• *LAYANAN* ➔ Jenis layanan cuci & paket
-• *JAM* ➔ Jam buka outlet kami
-• *ALAMAT* ➔ Lokasi outlet LaundryOS
-• *AREA* ➔ Jangkauan wilayah antar-jemput
-• *PICKUP* ➔ Cara request jemput cucian
+1️⃣ *Info Layanan & Harga*
+2️⃣ *Order / Penjemputan Laundry*
+3️⃣ *Alamat & Jam Buka*
+4️⃣ *Promo & Syarat*
 
-Staff kami juga akan meninjau pesan Anda secepatnya jika membutuhkan bantuan khusus. Terima kasih! 🙏`, nameGreeting)
+Atau Anda bisa langsung ketik: *"Mba mau laundry"* untuk kami jemput pakaian kotornya. Terima kasih! 🙏`, nameGreeting)
 }
 
 // FormatOrderStatusResponse formats the tracking message for a customer's laundry order.
@@ -238,12 +237,12 @@ func FormatOrderStatusResponse(order *model.OrderTrackingDetail, pushName string
 	}
 
 	if order == nil || order.OrderNumber == "" {
-		return fmt.Sprintf(`🧺 *CEK STATUS CUCIAN LAUNDRYOS* 🧺
+		return fmt.Sprintf(`🧺 *CEK STATUS CUCIAN FAN LAUNDRY* 🧺
 
 Halo%s! Saat ini tidak ditemukan transaksi cucian aktif atas nomor WhatsApp Anda.
 
 • Jika baru saja menitipkan pakaian, staf kami sedang memproses penimbangan & antrean.
-• Anda juga dapat mengecek dengan mengetik nomor nota secara manual (contoh: *STATUS ORD261118000001*).
+• Anda juga dapat mengecek dengan mengetik nomor nota secara manual (contoh: *STATUS #261118000001*).
 • Ketik *PICKUP* jika ingin meminta penjemputan pakaian kotor. 🙏`, greeting)
 	}
 
@@ -264,21 +263,88 @@ Halo%s! Saat ini tidak ditemukan transaksi cucian aktif atas nomor WhatsApp Anda
 		duration = 2
 	}
 
-	return fmt.Sprintf(`🧺 *STATUS CUCIAN ANDA (LaundryOS)* 🧺
+	receivedAt := time.Now()
+	if order.CreatedAt != "" {
+		for _, layout := range []string{time.RFC3339, "2006-01-02 15:04:05", "2006-01-02T15:04:05"} {
+			if parsed, err := time.Parse(layout, order.CreatedAt); err == nil {
+				receivedAt = parsed
+				break
+			}
+		}
+	}
 
-Halo%s! Berikut adalah rincian terkini pengerjaan cucian Anda:
+	slaEstimate := CalculateCompletionEstimate(order.ServiceName, duration, receivedAt)
 
-• *No. Order:* %s
-• *Paket Layanan:* %s
-• *Berat Cucian:* %s
-• *Total Biaya:* %s
-• *Status Terkini:* %s
-
-_Estimasi pengerjaan: %d hari kerja._
-
-Ketik *MENU* untuk pilihan info lainnya. Terima kasih! ✨`,
-		greeting, order.OrderNumber, order.ServiceName, weightStr, priceStr, statusDesc, duration,
+	return fmt.Sprintf("🧺 *STATUS CUCIAN ANDA (FAN Laundry)* 🧺\n\n"+
+		"Halo%s! Berikut adalah rincian terkini pengerjaan cucian Anda:\n\n"+
+		"• *No. Order:* %s\n"+
+		"• *Paket Layanan:* %s\n"+
+		"• *Berat Cucian:* %s\n"+
+		"• *Total Biaya:* %s\n"+
+		"• *Status Terkini:* %s\n"+
+		"• *Estimasi Selesai:* *%s*\n\n"+
+		"Ketik *MENU* untuk pilihan info lainnya. Terima kasih! ✨",
+		greeting, FormatDisplayOrderNumber(order.OrderNumber), order.ServiceName, weightStr, priceStr, statusDesc, slaEstimate,
 	)
+}
+
+// FormatDisplayOrderNumber formats an internal order number like ORD261119000012 to #261119000012
+// which is single-tap copy-friendly in WhatsApp.
+func FormatDisplayOrderNumber(orderNumber string) string {
+	clean := strings.TrimSpace(orderNumber)
+	if strings.HasPrefix(strings.ToUpper(clean), "ORD") {
+		return "#" + clean[3:]
+	}
+	if strings.HasPrefix(clean, "#") {
+		return clean
+	}
+	if clean == "" {
+		return ""
+	}
+	return "#" + clean
+}
+
+func getIndonesianDay(t time.Time) string {
+	days := [...]string{"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"}
+	return days[t.Weekday()]
+}
+
+// CalculateCompletionEstimate calculates exact estimated completion time with Indonesian day and time.
+func CalculateCompletionEstimate(serviceName string, durationDays int, receivedAt time.Time) string {
+	lower := strings.ToLower(serviceName)
+	wib := time.FixedZone("WIB", 7*3600)
+	t := receivedAt.In(wib)
+
+	// 1. Self Service (Cuci Basah or Cuci Kering) -> 3 Jam SLA
+	if strings.Contains(lower, "self service") || strings.Contains(lower, "cuci basah") || strings.Contains(lower, "cuci kering") {
+		target := t.Add(3 * time.Hour)
+		cutoff := time.Date(t.Year(), t.Month(), t.Day(), 21, 0, 0, 0, wib)
+		if target.Before(cutoff) || target.Equal(cutoff) {
+			return fmt.Sprintf("Hari ini, %s WIB (Estimasi 3 jam)", target.Format("02-01-2006 15:04"))
+		}
+		nextDay := t.AddDate(0, 0, 1)
+		return fmt.Sprintf("Besok pagi, %s pukul 09:00 - 10:00 WIB", nextDay.Format("02-01-2006"))
+	}
+
+	// 2. Express Turbo (6 Jam)
+	if strings.Contains(lower, "turbo") {
+		target := t.Add(6 * time.Hour)
+		return fmt.Sprintf("%s, %s WIB (Estimasi 6 jam)", getIndonesianDay(target), target.Format("02-01-2006 15:04"))
+	}
+
+	// 3. Super Kilat (12 Jam)
+	if strings.Contains(lower, "super kilat") {
+		target := t.Add(12 * time.Hour)
+		return fmt.Sprintf("%s, %s WIB (Estimasi 12 jam)", getIndonesianDay(target), target.Format("02-01-2006 15:04"))
+	}
+
+	// 4. Daily SLA (Cuci Setrika, Setrika, Bad Cover, Karpet, Boneka)
+	days := durationDays
+	if days <= 0 {
+		days = 3
+	}
+	target := t.AddDate(0, 0, days)
+	return fmt.Sprintf("%s, %s WIB (Estimasi %d hari)", getIndonesianDay(target), target.Format("02-01-2006 15:04"), days)
 }
 
 func humanizeStatus(status model.OrderStatus) string {

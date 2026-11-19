@@ -132,6 +132,53 @@ func TestMatcher(t *testing.T) {
 			wantCategory: CategoryHelp,
 		},
 
+		// Real Customer Everyday Phrases
+		{
+			name:         "Mba saya mau laundry",
+			input:        "mba saya mau laundry",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Mba ambil laundry",
+			input:        "mba ambil laundry",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Neng kerumah ya ambil baju",
+			input:        "Neng kerumah ya ambil baju",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Umi baju kotor yaa udh disiapin",
+			input:        "Umi baju kotor yaa udh disiapin",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Mba laundry donk",
+			input:        "mba laundry donk",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Numeric menu 1",
+			input:        "1",
+			wantCategory: CategoryPrice,
+		},
+		{
+			name:         "Numeric menu 2",
+			input:        "2",
+			wantCategory: CategoryPickup,
+		},
+		{
+			name:         "Numeric menu 3",
+			input:        "3",
+			wantCategory: CategoryAddress,
+		},
+		{
+			name:         "Numeric menu 4",
+			input:        "4",
+			wantCategory: CategoryCoverage,
+		},
+
 		// Unknown Queries
 		{
 			name:         "Gibberish text",
@@ -183,9 +230,116 @@ func TestFormatResponse(t *testing.T) {
 			if strings.TrimSpace(res) == "" {
 				t.Fatalf("FormatResponse(%q) returned empty response", cat)
 			}
-			if !strings.Contains(res, "LaundryOS") && !strings.Contains(res, "LAUNDRYOS") {
-				t.Errorf("FormatResponse(%q) missing LaundryOS branding", cat)
+			if !strings.Contains(res, "FAN Laundry") && !strings.Contains(res, "FAN LAUNDRY") {
+				t.Errorf("FormatResponse(%q) missing FAN Laundry branding", cat)
 			}
 		})
+	}
+}
+
+func TestExtractCustomerName(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"saya nana teman'a nini mba, boleh liat daftar harga?", "Nana"},
+		{"nama saya budi santoso", "Budi"},
+		{"halo aku rina dari blok b", "Rina"},
+		{"saya mau laundry mba", ""}, // "mau" is a stopword
+		{"harganya berapa?", ""},
+	}
+
+	for _, tt := range tests {
+		got := ExtractCustomerName(tt.input)
+		if got != tt.expected {
+			t.Errorf("ExtractCustomerName(%q) = %q; want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestMatchServiceIntent(t *testing.T) {
+	tests := []struct {
+		input             string
+		expectedCanonical string
+	}{
+		{"cuci regular iah", "Cuci Komplit Reguler"},
+		{"mau yang reguler mba", "Cuci Komplit Reguler"},
+		{"ambil paket kilat ya", "Cuci Setrika Kilat"},
+		{"tolong cuci express ya", "Cuci Setrika Express"},
+		{"mau cuci turbo 6 jam", "Cuci Setrika Turbo"},
+		{"setrika saja ya mba", "Setrika Saja"},
+		{"ada cuci bed cover?", "Cuci Bed Cover"},
+		{"mau cuci bad cover", "Cuci Bed Cover"},
+		{"bisa cuci karpet permadani?", "Karpet Permadani"},
+		{"cuci boneka besar", "Cuci Boneka"},
+	}
+
+	for _, tt := range tests {
+		matched := MatchServiceIntent(tt.input, nil)
+		if matched == nil {
+			t.Fatalf("MatchServiceIntent(%q) returned nil", tt.input)
+		}
+		if matched.ServiceName != tt.expectedCanonical {
+			t.Errorf("MatchServiceIntent(%q) = %q; want %q", tt.input, matched.ServiceName, tt.expectedCanonical)
+		}
+	}
+}
+
+func TestExtractOrderNumber(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"• *No. Order:* #261118000001", "ORD261118000001"},
+		{"timbang #261119000012 9.5", "ORD261119000012"},
+		{"saya ambil ORD261118000001 ya kak", "ORD261118000001"},
+		{"otw ORD261118123456", "ORD261118123456"},
+		{"selesai #261119000015", "ORD261119000015"},
+		{"261119000016", "ORD261119000016"},
+		{"halo apa kabar?", ""},
+		{"ORD123", ""},
+	}
+
+	for _, tt := range tests {
+		got := ExtractOrderNumber(tt.input)
+		if got != tt.expected {
+			t.Errorf("ExtractOrderNumber(%q) = %q; want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestParseWeightCommand(t *testing.T) {
+	tests := []struct {
+		input       string
+		wantWeight  float64
+		wantSuccess bool
+	}{
+		{"TIMBANG #261119000012 9.5", 9.5, true},
+		{"timbang 5,5 kg", 5.5, true},
+		{"berat 8.2", 8.2, true},
+		{"12.4 kg", 12.4, true},
+		{"hanya teks biasa", 0, false},
+	}
+
+	for _, tt := range tests {
+		gotWeight, gotSuccess := ParseWeightCommand(tt.input)
+		if gotSuccess != tt.wantSuccess || gotWeight != tt.wantWeight {
+			t.Errorf("ParseWeightCommand(%q) = (%v, %v); want (%v, %v)", tt.input, gotWeight, gotSuccess, tt.wantWeight, tt.wantSuccess)
+		}
+	}
+}
+
+func TestCommandRecognizers(t *testing.T) {
+	if !IsWeighCommand("TIMBANG #261119000012 9.5") {
+		t.Errorf("expected IsWeighCommand to be true")
+	}
+	if !IsWeighCommand("berat cucian 5kg") {
+		t.Errorf("expected IsWeighCommand to be true")
+	}
+	if !IsCompleteCommand("SELESAI #261119000012") {
+		t.Errorf("expected IsCompleteCommand to be true")
+	}
+	if !IsCompleteCommand("order done ya") {
+		t.Errorf("expected IsCompleteCommand to be true")
 	}
 }

@@ -20,7 +20,7 @@ export function handleMessagesUpsert(upsert) {
     }
 
     const remoteJid = msg.key.remoteJid || '';
-    if (remoteJid.endsWith('@g.us') || remoteJid.endsWith('@broadcast')) {
+    if (remoteJid.endsWith('@broadcast')) {
       continue;
     }
 
@@ -40,16 +40,19 @@ export function handleMessagesUpsert(upsert) {
 
     logger.info(
       `\nIncoming Message\n\n` +
-        `From      : ${normalized.from}\n` +
-        `Push Name : ${normalized.pushName}\n` +
-        `Type      : ${normalized.type}\n` +
-        `Text      : ${normalized.text}\n` +
-        `Time      : ${displayTime}\n` +
+        `From        : ${normalized.from}\n` +
+        `Is Group    : ${normalized.isGroup}\n` +
+        `Participant : ${normalized.participant || '-'}\n` +
+        `Push Name   : ${normalized.pushName}\n` +
+        `Type        : ${normalized.type}\n` +
+        `Text        : ${normalized.text}\n` +
+        `Quoted Text : ${normalized.quotedText || '-'}\n` +
+        `Time        : ${displayTime}\n` +
         `────────────────────────────`
     );
 
-    // Forward text messages to the backend bot endpoint (transport only)
-    if (normalized.text && normalized.from) {
+    // Forward text or reply messages to the backend bot endpoint (transport only)
+    if ((normalized.text || normalized.quotedText) && normalized.from) {
       forwardToBackend(normalized);
     }
   }
@@ -69,9 +72,13 @@ async function forwardToBackend(normalized) {
 
     const payload = {
       from: normalized.from,
-      text: normalized.text,
+      text: normalized.text || '',
       push_name: normalized.pushName || '',
       timestamp: ts,
+      is_group: !!normalized.isGroup,
+      group_jid: normalized.groupJid || '',
+      participant: normalized.participant || '',
+      quoted_text: normalized.quotedText || '',
     };
 
     const res = await fetch(url, {

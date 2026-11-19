@@ -1,12 +1,31 @@
 export function normalizeMessage(msg) {
   const id = msg?.key?.id || '';
   const remoteJid = msg?.key?.remoteJid || '';
-  const from = remoteJid.replace('@s.whatsapp.net', '');
+  const altJid = msg?.key?.remoteJidAlt || msg?.key?.participantAlt || '';
+  const isGroup = remoteJid.endsWith('@g.us');
+
+  // Prefer phone number (@s.whatsapp.net) if remoteJid is a privacy/companion @lid
+  let from = remoteJid.replace('@s.whatsapp.net', '');
+  if (remoteJid.endsWith('@lid') && altJid.endsWith('@s.whatsapp.net')) {
+    from = altJid.replace('@s.whatsapp.net', '');
+  }
+
+  let participant = '';
+  if (isGroup) {
+    const rawPart = msg?.key?.participant || '';
+    const rawAlt = msg?.key?.participantAlt || '';
+    participant = rawPart.replace('@s.whatsapp.net', '');
+    if (rawPart.endsWith('@lid') && rawAlt.endsWith('@s.whatsapp.net')) {
+      participant = rawAlt.replace('@s.whatsapp.net', '');
+    }
+  }
+
   const pushName = msg?.pushName || '';
   const timestamp = msg?.messageTimestamp;
 
   let type = 'unknown';
   let text = '';
+  let quotedText = '';
 
   const message = msg?.message;
   if (message) {
@@ -26,6 +45,19 @@ export function normalizeMessage(msg) {
       type = 'document';
       text = message.documentMessage.caption || '';
     }
+
+    const contextInfo = message.extendedTextMessage?.contextInfo ||
+      message.imageMessage?.contextInfo ||
+      message.videoMessage?.contextInfo;
+
+    if (contextInfo?.quotedMessage) {
+      const qm = contextInfo.quotedMessage;
+      quotedText = qm.conversation ||
+        qm.extendedTextMessage?.text ||
+        qm.imageMessage?.caption ||
+        qm.videoMessage?.caption ||
+        '';
+    }
   }
 
   return {
@@ -35,5 +67,9 @@ export function normalizeMessage(msg) {
     timestamp,
     type,
     text,
+    isGroup,
+    groupJid: isGroup ? remoteJid : '',
+    participant,
+    quotedText,
   };
 }

@@ -51,6 +51,11 @@ func (m *MockOrderRepository) Update(ctx context.Context, id string, req model.U
 	return args.Get(0).(model.Order), args.Error(1)
 }
 
+func (m *MockOrderRepository) UpdateStatus(ctx context.Context, id string, status model.OrderStatus) (model.Order, error) {
+	args := m.Called(ctx, id, status)
+	return args.Get(0).(model.Order), args.Error(1)
+}
+
 func (m *MockOrderRepository) Delete(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

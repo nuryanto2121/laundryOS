@@ -191,10 +191,14 @@ export async function sendMessage(destination, message) {
   }
 
   let jid;
-  if (destination.endsWith('@g.us') || destination.endsWith('@s.whatsapp.net')) {
+  if (destination.includes('@')) {
     jid = destination;
   } else {
-    jid = jidNormalizedUser(jidEncode(destination, 's.whatsapp.net'));
+    let clean = destination.replace(/\D/g, '');
+    if (clean.startsWith('0')) {
+      clean = '62' + clean.slice(1);
+    }
+    jid = jidNormalizedUser(jidEncode(clean, 's.whatsapp.net'));
   }
 
   try {

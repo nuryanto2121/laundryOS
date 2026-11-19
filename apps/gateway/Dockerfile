@@ -30,6 +30,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY src ./src
 COPY package.json ./
 
+# Ensure storage directory exists and appuser has full ownership
+RUN mkdir -p /app/storage/session && chown -R appuser:appgroup /app
+
 USER appuser
 
 EXPOSE 3000

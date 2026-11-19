@@ -2,10 +2,14 @@ package model
 
 // IncomingMessageRequest represents a webhook payload forwarded by WhatsApp Gateway.
 type IncomingMessageRequest struct {
-	From      string `json:"from" validate:"required"`
-	Text      string `json:"text" validate:"required"`
-	PushName  string `json:"push_name"`
-	Timestamp int64  `json:"timestamp"`
+	From        string `json:"from" validate:"required"`
+	Text        string `json:"text" validate:"required"`
+	PushName    string `json:"push_name"`
+	Timestamp   int64  `json:"timestamp"`
+	IsGroup     bool   `json:"is_group"`
+	GroupJID    string `json:"group_jid"`
+	Participant string `json:"participant"`
+	QuotedText  string `json:"quoted_text"`
 }
 
 // BotResponse represents the processed FAQ response.

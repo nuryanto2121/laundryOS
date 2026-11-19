@@ -18,8 +18,11 @@ type Config struct {
 	RedisHost  string `env:"REDIS_HOST"   env-default:"localhost"`
 	RedisPort  string `env:"REDIS_PORT"   env-default:"6379"`
 	GatewayURL string `env:"GATEWAY_URL"  env-default:"http://localhost:3000"`
-	StaffPhone string `env:"STAFF_PHONE"  env-default:""`
-	AppVersion string `env:"APP_VERSION"  env-default:"0.1.0"`
+	StaffPhone   string `env:"STAFF_PHONE"    env-default:""`
+	BrandName    string `env:"BRAND_NAME"    env-default:"FAN Laundry"`
+	BrandPhone   string `env:"BRAND_PHONE"   env-default:"+62 852-8597-7834"`
+	BrandAddress string `env:"BRAND_ADDRESS" env-default:"Jl. Kalibaru Barat I kel. Kalibaru kec. Cilincing, Jakarta Utara 14110"`
+	AppVersion   string `env:"APP_VERSION"    env-default:"0.1.0"`
 }
 
 // Load reads configuration from a .env file (if present in the current directory)

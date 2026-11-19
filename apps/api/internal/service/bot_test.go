@@ -8,6 +8,7 @@ import (
 	"github.com/nuryanto2121/laundryos/apps/api/internal/bot"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestBotService_ProcessMessage(t *testing.T) {
@@ -200,5 +201,292 @@ func TestBotService_PickupCancellation(t *testing.T) {
 	}
 	if !strings.Contains(res.Reply, "dibatalkan") {
 		t.Errorf("expected cancellation message, got: %s", res.Reply)
+	}
+}
+
+func TestBotService_ConversationalRealWorldScenario(t *testing.T) {
+	svc := service.NewBotService(service.BotServiceConfig{
+		GatewayURL: "http://mock-gateway",
+	})
+
+	ctx := context.Background()
+	phone := "6281299998888"
+
+	// Step 1: Customer says "saya mau laundry mba"
+	res1, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "saya mau laundry mba",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 1 error: %v", err)
+	}
+	if res1.Category != bot.CategoryPickup {
+		t.Errorf("expected CategoryPickup, got: %s", res1.Category)
+	}
+	if !strings.Contains(res1.Reply, "Alamat") {
+		t.Errorf("expected address prompt, got: %s", res1.Reply)
+	}
+
+	// Step 2: Customer asks "Harga"
+	res2, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "Harga",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 2 error: %v", err)
+	}
+	if !strings.Contains(res2.Reply, "DAFTAR HARGA") {
+		t.Errorf("expected price list, got: %s", res2.Reply)
+	}
+
+	// Step 3: Customer chooses service "cuci regular iah"
+	res3, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "cuci regular iah",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 3 error: %v", err)
+	}
+	if !strings.Contains(res3.Reply, "Cuci Komplit Reguler") {
+		t.Errorf("expected confirmation of service choice, got: %s", res3.Reply)
+	}
+	if !strings.Contains(res3.Reply, "Alamat") {
+		t.Errorf("expected address prompt, got: %s", res3.Reply)
+	}
+
+	// Step 4: Customer provides address "Jl. Mawar No. 12"
+	res4, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "Jl. Mawar No. 12",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 4 error: %v", err)
+	}
+	if !strings.Contains(res4.Reply, "jam") && !strings.Contains(res4.Reply, "Jam") {
+		t.Errorf("expected schedule/time prompt, got: %s", res4.Reply)
+	}
+
+	// Step 5: Customer provides schedule "jam 2 siang ya"
+	res5, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "jam 2 siang ya",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 5 error: %v", err)
+	}
+	if !strings.Contains(res5.Reply, "RINGKASAN") {
+		t.Errorf("expected summary, got: %s", res5.Reply)
+	}
+
+	// Step 6: Customer confirms with casual "oke"
+	res6, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+		From:     phone,
+		Text:     "oke",
+		PushName: "Nuryanto",
+	})
+	if err != nil {
+		t.Fatalf("turn 6 error: %v", err)
+	}
+	if !strings.Contains(res6.Reply, "BERHASIL") {
+		t.Errorf("expected success order creation, got: %s", res6.Reply)
+	}
+	if !strings.Contains(res6.Reply, "• *No. Order:* #") {
+		t.Errorf("expected hash ready-to-copy order number, got: %s", res6.Reply)
+	}
+}
+
+func TestBotService_StaffGroupPickupClaim(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockOrderRepository)
+	orderSvc := service.NewOrderService(mockRepo)
+
+	mockRepo.On("GetByOrderNumber", ctx, "ORD261118000001").Return(model.OrderTrackingDetail{
+		ID:           "test-order-id",
+		OrderNumber:  "ORD261118000001",
+		CustomerID:   "test-cust-id",
+		CustomerName: "Budi",
+		ServiceName:  "Cuci Setrika Regular",
+		Status:       model.OrderStatusWaitingPickup,
+		Notes:        "Jadwal: jam 2 siang | Alamat: Jl. Mawar 12",
+	}, nil)
+
+	mockRepo.On("Update", ctx, "test-order-id", mock.Anything).Return(model.Order{
+		ID:          "test-order-id",
+		OrderNumber: "ORD261118000001",
+		Notes:       "Jadwal: jam 2 siang | Alamat: Jl. Mawar 12 | Kurir: Rian",
+	}, nil)
+	mockRepo.On("UpdateStatus", ctx, "test-order-id", model.OrderStatusConfirmed).Return(model.Order{
+		ID:          "test-order-id",
+		OrderNumber: "ORD261118000001",
+		Status:      model.OrderStatusConfirmed,
+	}, nil)
+
+	svc := service.NewBotService(service.BotServiceConfig{
+		OrderService: orderSvc,
+		StaffPhone:   "120363416194985610@g.us",
+	})
+
+	// Scenario 1: Staff quotes the pickup notification and replies "saya ambil yaa"
+	req := model.IncomingMessageRequest{
+		From:        "120363416194985610@g.us",
+		Text:        "saya ambil yaa",
+		PushName:    "Rian",
+		IsGroup:     true,
+		GroupJID:    "120363416194985610@g.us",
+		Participant: "6285712345678",
+		QuotedText:  "🚨 *NOTIFIKASI PICKUP BARU (FAN Laundry)* 🚨\n• *No. Order:* #261118000001\n• *Nama Pelanggan:* Budi",
+	}
+
+	res, err := svc.ProcessMessage(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Category != "GROUP_STAFF_CLAIM" {
+		t.Errorf("expected GROUP_STAFF_CLAIM, got: %s", res.Category)
+	}
+	if !strings.Contains(res.Reply, "PENJEMPUTAN DICONFIRM") {
+		t.Errorf("expected ACK confirmation, got: %s", res.Reply)
+	}
+	if !strings.Contains(res.Reply, "#261118000001") {
+		t.Errorf("expected hash order number in ACK, got: %s", res.Reply)
+	}
+	if !strings.Contains(res.Reply, "Rian") {
+		t.Errorf("expected staff name in ACK, got: %s", res.Reply)
+	}
+
+	// Scenario 2: Random group banter without order number is ignored
+	randomReq := model.IncomingMessageRequest{
+		From:     "120363416194985610@g.us",
+		Text:     "siapa yang piket besok?",
+		IsGroup:  true,
+		GroupJID: "120363416194985610@g.us",
+	}
+	res2, err := svc.ProcessMessage(ctx, randomReq)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res2.Category != "GROUP_IGNORED" {
+		t.Errorf("expected GROUP_IGNORED, got: %s", res2.Category)
+	}
+}
+
+func TestBotService_StaffGroupWeighing_And_Completion(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockOrderRepository)
+	orderSvc := service.NewOrderService(mockRepo)
+
+	mockRepo.On("GetByOrderNumber", ctx, "ORD261118000002").Return(model.OrderTrackingDetail{
+		ID:           "order-kiloan-id",
+		OrderNumber:  "ORD261118000002",
+		CustomerID:   "cust-2",
+		CustomerName: "Siti",
+		ServiceName:  "Cuci Setrika Regular",
+		DurationDay:  3,
+		Status:       model.OrderStatusWaitingPickup,
+		Notes:        "Alamat: Kalibaru",
+	}, nil)
+
+	mockRepo.On("Update", ctx, "order-kiloan-id", mock.Anything).Return(model.Order{
+		ID:          "order-kiloan-id",
+		OrderNumber: "ORD261118000002",
+	}, nil)
+	mockRepo.On("UpdateStatus", ctx, "order-kiloan-id", model.OrderStatusInProgress).Return(model.Order{
+		ID:          "order-kiloan-id",
+		OrderNumber: "ORD261118000002",
+		Status:      model.OrderStatusInProgress,
+	}, nil)
+	mockRepo.On("UpdateStatus", ctx, "order-kiloan-id", model.OrderStatusCompleted).Return(model.Order{
+		ID:          "order-kiloan-id",
+		OrderNumber: "ORD261118000002",
+		Status:      model.OrderStatusCompleted,
+	}, nil)
+
+	svc := service.NewBotService(service.BotServiceConfig{
+		OrderService: orderSvc,
+		StaffPhone:   "120363416194985610@g.us",
+	})
+
+	// 1. TIMBANG #261118000002 5.5
+	weighReq := model.IncomingMessageRequest{
+		From:     "120363416194985610@g.us",
+		Text:     "TIMBANG #261118000002 5.5",
+		PushName: "Admin Outlet",
+		IsGroup:  true,
+		GroupJID: "120363416194985610@g.us",
+	}
+	weighRes, err := svc.ProcessMessage(ctx, weighReq)
+	if err != nil {
+		t.Fatalf("weigh error: %v", err)
+	}
+	if weighRes.Category != "GROUP_STAFF_WEIGH_SUCCESS" {
+		t.Errorf("expected GROUP_STAFF_WEIGH_SUCCESS, got: %s", weighRes.Category)
+	}
+	if !strings.Contains(weighRes.Reply, "PENIMBANGAN BERHASIL DICATAT") {
+		t.Errorf("expected weigh ACK, got: %s", weighRes.Reply)
+	}
+
+	// 2. SELESAI #261118000002
+	compReq := model.IncomingMessageRequest{
+		From:     "120363416194985610@g.us",
+		Text:     "SELESAI #261118000002",
+		PushName: "Admin Outlet",
+		IsGroup:  true,
+		GroupJID: "120363416194985610@g.us",
+	}
+	compRes, err := svc.ProcessMessage(ctx, compReq)
+	if err != nil {
+		t.Fatalf("completion error: %v", err)
+	}
+	if compRes.Category != "GROUP_STAFF_COMPLETE_SUCCESS" {
+		t.Errorf("expected GROUP_STAFF_COMPLETE_SUCCESS, got: %s", compRes.Category)
+	}
+	if !strings.Contains(compRes.Reply, "ORDER COMPLETED") {
+		t.Errorf("expected completion ACK, got: %s", compRes.Reply)
+	}
+}
+
+func TestBotService_StaffGroupWeighing_OverloadTabung(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockOrderRepository)
+	orderSvc := service.NewOrderService(mockRepo)
+
+	mockRepo.On("GetByOrderNumber", ctx, "ORD261118000003").Return(model.OrderTrackingDetail{
+		ID:           "order-ss-id",
+		OrderNumber:  "ORD261118000003",
+		CustomerID:   "cust-3",
+		CustomerName: "Ahmad",
+		ServiceName:  "Cuci Kering (Self Service)",
+		DurationDay:  0,
+		Status:       model.OrderStatusWaitingPickup,
+		Notes:        "Self Service",
+	}, nil)
+
+	svc := service.NewBotService(service.BotServiceConfig{
+		OrderService: orderSvc,
+		StaffPhone:   "120363416194985610@g.us",
+	})
+
+	// TIMBANG #261118000003 9.5 (Exceeds 8.5 kg tolerance!)
+	weighReq := model.IncomingMessageRequest{
+		From:     "120363416194985610@g.us",
+		Text:     "TIMBANG #261118000003 9.5",
+		PushName: "Admin Outlet",
+		IsGroup:  true,
+		GroupJID: "120363416194985610@g.us",
+	}
+	weighRes, err := svc.ProcessMessage(ctx, weighReq)
+	if err != nil {
+		t.Fatalf("overload weigh error: %v", err)
+	}
+	if weighRes.Category != "GROUP_STAFF_WEIGH_OVERLOAD" {
+		t.Errorf("expected GROUP_STAFF_WEIGH_OVERLOAD, got: %s", weighRes.Category)
+	}
+	if !strings.Contains(weighRes.Reply, "MENUNGGU KONFIRMASI PELANGGAN") {
+		t.Errorf("expected overload prompt ACK, got: %s", weighRes.Reply)
 	}
 }
