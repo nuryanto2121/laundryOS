@@ -2,6 +2,7 @@
   "name": "laundryos-dashboard",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,16 +16,21 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "lucide-vue-next": "^1.0.0",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
     "@vitejs/plugin-vue": "^5.1.2",
+    "autoprefixer": "^10.6.2",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-vue": "^9.27.0",
+    "postcss": "^8.5.33",
     "prettier": "^3.3.3",
+    "tailwindcss": "^4.3.5",
     "vite": "^5.4.0"
   }
 }

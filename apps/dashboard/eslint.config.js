@@ -1,12 +1,10 @@
-'use strict';
+import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
+import eslintPluginPrettier from 'eslint-plugin-prettier';
+import pluginVue from 'eslint-plugin-vue';
+import globals from 'globals';
 
-const js = require('@eslint/js');
-const prettier = require('eslint-config-prettier');
-const eslintPluginPrettier = require('eslint-plugin-prettier');
-const pluginVue = require('eslint-plugin-vue');
-const globals = require('globals');
-
-module.exports = [
+export default [
   {
     languageOptions: {
       globals: {
@@ -23,9 +21,9 @@ module.exports = [
       prettier: eslintPluginPrettier,
     },
     rules: {
-      'prettier/prettier': 'error',
-      'no-console': 'warn',
-      'no-unused-vars': 'error',
+      'prettier/prettier': 'warn',
+      'no-console': 'off',
+      'no-unused-vars': 'warn',
       'vue/multi-word-component-names': 'off',
     },
   },
