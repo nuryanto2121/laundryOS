@@ -18,7 +18,7 @@ INSERT INTO orders (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
 )
-RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at
+RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at
 `
 
 type CreateOrderParams struct {
@@ -58,6 +58,21 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OutletID,
+		&i.RackNumber,
+		&i.PerfumeID,
+		&i.PerfumeName,
+		&i.DiscountID,
+		&i.DiscountAmount,
+		&i.PaidAmount,
+		&i.PaymentStatus,
+		&i.PaymentMethodID,
+		&i.PaymentMethodName,
+		&i.PaidAt,
+		&i.EstimatedCompletionAt,
+		&i.CompletedAt,
+		&i.CanceledReason,
+		&i.CanceledAt,
 	)
 	return i, err
 }
@@ -141,7 +156,7 @@ func (q *Queries) GetLatestOrderNumberToday(ctx context.Context) (string, error)
 }
 
 const getOrder = `-- name: GetOrder :one
-SELECT id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at FROM orders
+SELECT id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at FROM orders
 WHERE id = $1
 LIMIT 1
 `
@@ -161,6 +176,21 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OutletID,
+		&i.RackNumber,
+		&i.PerfumeID,
+		&i.PerfumeName,
+		&i.DiscountID,
+		&i.DiscountAmount,
+		&i.PaidAmount,
+		&i.PaymentStatus,
+		&i.PaymentMethodID,
+		&i.PaymentMethodName,
+		&i.PaidAt,
+		&i.EstimatedCompletionAt,
+		&i.CompletedAt,
+		&i.CanceledReason,
+		&i.CanceledAt,
 	)
 	return i, err
 }
@@ -219,7 +249,7 @@ func (q *Queries) GetOrderByOrderNumber(ctx context.Context, orderNumber string)
 }
 
 const listOrders = `-- name: ListOrders :many
-SELECT id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at FROM orders
+SELECT id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at FROM orders
 ORDER BY created_at DESC
 `
 
@@ -244,6 +274,21 @@ func (q *Queries) ListOrders(ctx context.Context) ([]Order, error) {
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OutletID,
+			&i.RackNumber,
+			&i.PerfumeID,
+			&i.PerfumeName,
+			&i.DiscountID,
+			&i.DiscountAmount,
+			&i.PaidAmount,
+			&i.PaymentStatus,
+			&i.PaymentMethodID,
+			&i.PaymentMethodName,
+			&i.PaidAt,
+			&i.EstimatedCompletionAt,
+			&i.CompletedAt,
+			&i.CanceledReason,
+			&i.CanceledAt,
 		); err != nil {
 			return nil, err
 		}
@@ -266,7 +311,7 @@ SET
     notes           = $7,
     updated_at      = NOW()
 WHERE id = $1
-RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at
+RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at
 `
 
 type UpdateOrderParams struct {
@@ -302,6 +347,69 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OutletID,
+		&i.RackNumber,
+		&i.PerfumeID,
+		&i.PerfumeName,
+		&i.DiscountID,
+		&i.DiscountAmount,
+		&i.PaidAmount,
+		&i.PaymentStatus,
+		&i.PaymentMethodID,
+		&i.PaymentMethodName,
+		&i.PaidAt,
+		&i.EstimatedCompletionAt,
+		&i.CompletedAt,
+		&i.CanceledReason,
+		&i.CanceledAt,
+	)
+	return i, err
+}
+
+const updateOrderStatus = `-- name: UpdateOrderStatus :one
+UPDATE orders
+SET
+    status     = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at
+`
+
+type UpdateOrderStatusParams struct {
+	ID     pgtype.UUID `json:"id"`
+	Status pgtype.Text `json:"status"`
+}
+
+func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (Order, error) {
+	row := q.db.QueryRow(ctx, updateOrderStatus, arg.ID, arg.Status)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.OrderNumber,
+		&i.CustomerID,
+		&i.ServiceID,
+		&i.Status,
+		&i.TotalWeight,
+		&i.TotalPrice,
+		&i.PickupRequired,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.OutletID,
+		&i.RackNumber,
+		&i.PerfumeID,
+		&i.PerfumeName,
+		&i.DiscountID,
+		&i.DiscountAmount,
+		&i.PaidAmount,
+		&i.PaymentStatus,
+		&i.PaymentMethodID,
+		&i.PaymentMethodName,
+		&i.PaidAt,
+		&i.EstimatedCompletionAt,
+		&i.CompletedAt,
+		&i.CanceledReason,
+		&i.CanceledAt,
 	)
 	return i, err
 }

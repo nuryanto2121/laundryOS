@@ -43,15 +43,38 @@ func Run() error {
 	orderSvc := service.NewOrderService(orderRepo)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 
+	// Initialize Notification module
+	notifSvc := service.NewNotificationService(cfg.GatewayURL, cfg.StaffPhone)
+
+	// Initialize Master Data module
+	masterRepo := repository.NewMasterRepository(dbPool)
+	masterSvc := service.NewMasterService(masterRepo)
+	masterHandler := handler.NewMasterHandler(masterSvc)
+
+	// Initialize Expense module
+	expenseRepo := repository.NewExpenseRepository(dbPool)
+	expenseSvc := service.NewExpenseService(expenseRepo)
+	expenseHandler := handler.NewExpenseHandler(expenseSvc)
+
+	// Initialize Report & Analytics module
+	reportRepo := repository.NewReportRepository(dbPool)
+	reportSvc := service.NewReportService(reportRepo, expenseRepo)
+	reportHandler := handler.NewReportHandler(reportSvc)
+
+	// Initialize Web POS module
+	posRepo := repository.NewPOSRepository(dbPool)
+	posSvc := service.NewPOSService(posRepo, orderRepo, customerRepo, customerSvc, notifSvc)
+	posHandler := handler.NewPOSHandler(posSvc)
+
 	// Initialize Bot module
 	serviceRepo := repository.NewServiceRepository(dbPool)
-	notifSvc := service.NewNotificationService(cfg.GatewayURL, cfg.StaffPhone)
 	botSvc := service.NewBotService(service.BotServiceConfig{
 		CustomerService: customerSvc,
 		OrderService:    orderSvc,
 		ServiceRepo:     serviceRepo,
 		NotificationSvc: notifSvc,
 		GatewayURL:      cfg.GatewayURL,
+		StaffPhone:      cfg.StaffPhone,
 	})
 	botHandler := handler.NewBotHandler(botSvc)
 
@@ -61,6 +84,10 @@ func Run() error {
 		CustomerHandler: customerHandler,
 		OrderHandler:    orderHandler,
 		BotHandler:      botHandler,
+		POSHandler:      posHandler,
+		ExpenseHandler:  expenseHandler,
+		ReportHandler:   reportHandler,
+		MasterHandler:   masterHandler,
 	})
 
 	addr := ":" + cfg.Port

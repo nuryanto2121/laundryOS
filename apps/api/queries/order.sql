@@ -29,6 +29,14 @@ SET
 WHERE id = $1
 RETURNING *;
 
+-- name: UpdateOrderStatus :one
+UPDATE orders
+SET
+    status     = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
 -- name: DeleteOrder :exec
 DELETE FROM orders
 WHERE id = $1;

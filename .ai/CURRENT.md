@@ -2,29 +2,29 @@
 
 ## Current Version
 
-v0.4.0
+v0.5.0
 
 ---
 
 ## Current Sprint
 
-Sprint 05 - Dashboard
+Sprint 05 - Web Dashboard & POS (Point of Sale)
 
 ---
 
 ## Current Milestone
 
-Sprint 04 Completed / Planning Sprint 05
+Sprint 05 / Milestone 1 Completed (Backend & DB Schema) -> Proceeding to Milestone 2 (Frontend Setup & Home Screen)
 
 ---
 
 ## Status
 
-Ready for Sprint 05
+In Progress (Sprint 05 Milestone 1 complete, moving to Milestone 2)
 
 ---
 
-## Completed
+## Completed Sprints & Milestones
 
 - ✅ Sprint 00 - Project Foundation
 - ✅ Sprint 01 - WhatsApp Gateway Foundation
@@ -45,34 +45,33 @@ Ready for Sprint 05
   - ✅ Milestone 2 - Dynamic DB Knowledge Provider, Webhook & Audit Logging
   - ✅ Milestone 3 - Gateway Transport Forwarding
   - ✅ Milestone 4 - Integration & Benchmark Verification
-- ✅ Sprint 04 - Pickup Management
+- ✅ Sprint 04 - Pickup Management & Staff Operations
   - ✅ Milestone 1 - Multi-Turn Conversation State & Session Store
   - ✅ Milestone 2 - Pickup Flow State Machine & Auto-Registration
   - ✅ Milestone 3 - Courier / Staff WhatsApp Alert Service
-  - ✅ Milestone 4 - End-to-End Integration & Regression Test Suite
+  - ✅ Milestone 4 - Courier Claim, Group Commands (`TIMBANG`, `SELESAI`), Overload Guard & SLA Calculation
+  - ✅ Milestone 5 - End-to-End Integration & Regression Test Suite (28/28 verified)
+- 🚀 Sprint 05 - Web Dashboard & POS
+  - ✅ Milestone 1 - Database Schema, Multi-Item POS, Expenses, Reporting, and 2-Way WA Integration
+  - ⏳ Milestone 2 - Frontend Setup, Fresh Modern Layout & Halaman Home (Pending)
+  - ⏳ Milestone 3 - Walk-in POS Kasir & Order Lifecycle Management (Pending)
+  - ⏳ Milestone 4 - Manajemen Pengeluaran Kas Kecil (Pending)
+  - ⏳ Milestone 5 - Laporan Keuangan, Operasional & CRM (Pending)
+  - ⏳ Milestone 6 - Master Settings & Role-Based Access Control (Pending)
 
 ---
 
 ## Current Goal
 
-Sprint 04 completed. Begin Sprint 05: Dashboard.
+Implement Milestone 2 of Sprint 05: Setup Tailwind CSS & Lucide Vue, create fresh modern responsive layout (mobile bottom bar + desktop header), and build Home Screen with real-time KPI cards and quick action buttons.
 
 ---
 
 ## Acceptance Criteria
 
-- Sprint 04 Definition of Done satisfied (Pickup completed end-to-end via WhatsApp).
-- Order creation status WAITING_PICKUP verified in database.
-- Integration test suite passing 26/26 test cases.
-- Ready for Sprint 05 Dashboard.
-
----
-
-## Out of Scope
-
-- Payment
-- Analytics
-- POS
+- [x] Sprint 04 fully completed and verified with all 28 integration tests passing.
+- [x] Sprint 05 Milestone 1 database migrations, SQLC queries, repositories, services, and HTTP handlers completed and tested with 112 passing unit tests.
+- [ ] Milestone 2 UI modern and fresh (not copying Edobi), responsive across mobile and desktop.
 
 ---
 
@@ -81,9 +80,4 @@ Sprint 04 completed. Begin Sprint 05: Dashboard.
 - architecture.md
 - sprint-04.md
 - sprint-05.md
-
----
-
-## Next Milestone
-
-Sprint 05 / Milestone 1 - Web Dashboard Foundation
+- web_pos_and_dashboard_milestones_plan.md

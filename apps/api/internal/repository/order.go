@@ -158,6 +158,22 @@ func (r *OrderRepository) Update(ctx context.Context, id string, req model.Updat
 	return orderToModel(order), nil
 }
 
+// UpdateStatus updates the order lifecycle status.
+func (r *OrderRepository) UpdateStatus(ctx context.Context, id string, status model.OrderStatus) (model.Order, error) {
+	orderID, err := parseOrderUUID(id, "order")
+	if err != nil {
+		return model.Order{}, err
+	}
+	order, err := r.queries.UpdateOrderStatus(ctx, db.UpdateOrderStatusParams{
+		ID:     orderID,
+		Status: pgtype.Text{String: string(status), Valid: true},
+	})
+	if err != nil {
+		return model.Order{}, fmt.Errorf("repository: update order status: %w", err)
+	}
+	return orderToModel(order), nil
+}
+
 // Delete permanently removes an order because orders has no deleted_at column.
 func (r *OrderRepository) Delete(ctx context.Context, id string) error {
 	orderID, err := parseOrderUUID(id, "order")

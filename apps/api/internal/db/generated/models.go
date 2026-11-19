@@ -23,18 +23,118 @@ type Customer struct {
 	Status       string           `json:"status"`
 }
 
-type Order struct {
+type Discount struct {
 	ID             pgtype.UUID      `json:"id"`
-	OrderNumber    string           `json:"order_number"`
-	CustomerID     pgtype.UUID      `json:"customer_id"`
-	ServiceID      pgtype.UUID      `json:"service_id"`
-	Status         pgtype.Text      `json:"status"`
-	TotalWeight    pgtype.Numeric   `json:"total_weight"`
-	TotalPrice     pgtype.Numeric   `json:"total_price"`
-	PickupRequired pgtype.Bool      `json:"pickup_required"`
+	Name           string           `json:"name"`
+	DiscountType   string           `json:"discount_type"`
+	Value          pgtype.Numeric   `json:"value"`
+	MinOrderAmount pgtype.Numeric   `json:"min_order_amount"`
+	IsActive       bool             `json:"is_active"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+}
+
+type Expense struct {
+	ID          pgtype.UUID      `json:"id"`
+	OutletID    pgtype.UUID      `json:"outlet_id"`
+	ExpenseDate pgtype.Date      `json:"expense_date"`
+	Category    string           `json:"category"`
+	Amount      pgtype.Numeric   `json:"amount"`
+	Description string           `json:"description"`
+	CreatedBy   string           `json:"created_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+type Order struct {
+	ID                    pgtype.UUID      `json:"id"`
+	OrderNumber           string           `json:"order_number"`
+	CustomerID            pgtype.UUID      `json:"customer_id"`
+	ServiceID             pgtype.UUID      `json:"service_id"`
+	Status                pgtype.Text      `json:"status"`
+	TotalWeight           pgtype.Numeric   `json:"total_weight"`
+	TotalPrice            pgtype.Numeric   `json:"total_price"`
+	PickupRequired        pgtype.Bool      `json:"pickup_required"`
+	Notes                 pgtype.Text      `json:"notes"`
+	CreatedAt             pgtype.Timestamp `json:"created_at"`
+	UpdatedAt             pgtype.Timestamp `json:"updated_at"`
+	OutletID              pgtype.UUID      `json:"outlet_id"`
+	RackNumber            pgtype.Text      `json:"rack_number"`
+	PerfumeID             pgtype.UUID      `json:"perfume_id"`
+	PerfumeName           pgtype.Text      `json:"perfume_name"`
+	DiscountID            pgtype.UUID      `json:"discount_id"`
+	DiscountAmount        pgtype.Numeric   `json:"discount_amount"`
+	PaidAmount            pgtype.Numeric   `json:"paid_amount"`
+	PaymentStatus         string           `json:"payment_status"`
+	PaymentMethodID       pgtype.UUID      `json:"payment_method_id"`
+	PaymentMethodName     pgtype.Text      `json:"payment_method_name"`
+	PaidAt                pgtype.Timestamp `json:"paid_at"`
+	EstimatedCompletionAt pgtype.Timestamp `json:"estimated_completion_at"`
+	CompletedAt           pgtype.Timestamp `json:"completed_at"`
+	CanceledReason        pgtype.Text      `json:"canceled_reason"`
+	CanceledAt            pgtype.Timestamp `json:"canceled_at"`
+}
+
+type OrderItem struct {
+	ID           pgtype.UUID      `json:"id"`
+	OrderID      pgtype.UUID      `json:"order_id"`
+	ServiceID    pgtype.UUID      `json:"service_id"`
+	ServiceName  string           `json:"service_name"`
+	Category     string           `json:"category"`
+	Quantity     pgtype.Numeric   `json:"quantity"`
+	Unit         string           `json:"unit"`
+	PricePerUnit pgtype.Numeric   `json:"price_per_unit"`
+	Subtotal     pgtype.Numeric   `json:"subtotal"`
+	Notes        pgtype.Text      `json:"notes"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+}
+
+type OrderPhoto struct {
+	ID        pgtype.UUID      `json:"id"`
+	OrderID   pgtype.UUID      `json:"order_id"`
+	PhotoType string           `json:"photo_type"`
+	PhotoUrl  string           `json:"photo_url"`
+	Notes     pgtype.Text      `json:"notes"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type OrderStatusHistory struct {
+	ID             pgtype.UUID      `json:"id"`
+	OrderID        pgtype.UUID      `json:"order_id"`
+	PreviousStatus pgtype.Text      `json:"previous_status"`
+	NewStatus      string           `json:"new_status"`
+	ChangedBy      string           `json:"changed_by"`
 	Notes          pgtype.Text      `json:"notes"`
 	CreatedAt      pgtype.Timestamp `json:"created_at"`
-	UpdatedAt      pgtype.Timestamp `json:"updated_at"`
+}
+
+type Outlet struct {
+	ID        pgtype.UUID      `json:"id"`
+	Name      string           `json:"name"`
+	Code      string           `json:"code"`
+	Address   pgtype.Text      `json:"address"`
+	Phone     pgtype.Text      `json:"phone"`
+	IsActive  bool             `json:"is_active"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
+type PaymentMethod struct {
+	ID            pgtype.UUID      `json:"id"`
+	Code          string           `json:"code"`
+	Name          string           `json:"name"`
+	Category      string           `json:"category"`
+	AccountNumber pgtype.Text      `json:"account_number"`
+	AccountName   pgtype.Text      `json:"account_name"`
+	IsActive      bool             `json:"is_active"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+}
+
+type Perfume struct {
+	ID          pgtype.UUID      `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	IsActive    bool             `json:"is_active"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
 }
 
 type Service struct {
