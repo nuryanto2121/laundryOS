@@ -1,33 +1,51 @@
 # Sprint 05 - Web Dashboard & POS (Point of Sale)
 
+> **Catatan Konsolidasi Arsitektur**:  
+> Sprint 05 telah diekspansi secara strategis untuk menggabungkan dan menyelesaikan kebutuhan inti dari:
+> - **Sprint 06 (Workflow & Status Siklus Cucian)**
+> - **Sprint 08 (POS Kasir Walk-in & Cetak Nota)**
+> - **Sprint 09 (Laporan Keuangan Dasar & CRM Operasional)**
+> Dengan konsolidasi ini, FAN Laundry langsung memiliki sistem operasional mandiri yang 100% menggantikan aplikasi pihak ketiga (**Edobi**).
+
+---
+
 ## Goal
 
-Provide a modern, responsive Web Dashboard & POS for FAN Laundry cashier and owner with seamless 2-way WhatsApp synchronization.
+Membangun Web Dashboard & POS modern, responsif, dan terintegrasi 2-arah dengan WhatsApp Bot untuk kasir, staf operasional, dan owner FAN Laundry.
 
-## Business Problem
+## Scope & 6 Milestones
 
-Counter walk-in orders, petty cash expenses, and order status transitions were disconnected from WhatsApp notifications and reporting.
+1. **Milestone 1 (Selesai ✅)**: Skema Database & Backend REST APIs
+   - Migration `000003_pos_and_expenses.up.sql`
+   - Multi-layanan per order (`order_items`), kas kecil (`expenses`), foto dokumentasi (`order_photos`), audit status, master parfum, diskon, metode bayar & outlet
+   - REST API `/pos/...`, `/expenses/...`, `/reports/...`, `/master/...` dengan CORS
+   - Notifikasi otomatis WhatsApp saat order dibuat & status berganti
+   - 112 unit tests Go passing
 
-## Scope
+2. **Milestone 2 (Sedang Berjalan ⏳)**: Setup Frontend, Fresh Modern Layout & Halaman Home
+   - Setup Tailwind CSS & Lucide icons di `apps/dashboard`
+   - Fresh Modern UI Layout (Mobile-first bottom navigation + Desktop header)
+   - Real-time KPI Cards (Omset Hari Ini, Masuk, Harus Selesai, Terlambat)
+   - Floating Quick Actions (`+ Transaksi`, `+ Pengeluaran`, `Cari Order`) & Outlet Switcher
 
-- **Milestone 1**: Database Schema & Backend REST APIs (Multi-item POS, Expenses, Master Data, Audit Trail)
-- **Milestone 2**: Frontend Setup, Fresh Layout & Halaman Home (KPI Cards, Quick Action Buttons, Multi-Outlet Switcher)
-- **Milestone 3**: Walk-in POS Kasir & Order Lifecycle (5-tab queue, 1-click status progression, payments, 3-type receipt printing, photo documentation)
-- **Milestone 4**: Manajemen Pengeluaran Kas Kecil (Petty Cash categories, history, and profit-loss deduction)
-- **Milestone 5**: Laporan Keuangan, Operasional & CRM (Daily revenue line chart, unpaid receivables, service volume breakdown, top 10 customers)
-- **Milestone 6**: Master Settings & RBAC Pegawai (Role-based privacy toggle for cashier, thermal receipt customizer, perfume & discount master)
+3. **Milestone 3**: Walk-in POS Kasir & Order Lifecycle
+   - Kasir walk-in multi-layanan (timbang desimal, parfum, diskon, opsi bayar)
+   - 5 Tab Status Antrian (`Antrian`, `Proses`, `Siap Ambil`, `Selesai`, `Batal`)
+   - Tombol progresi 1-klik (`PROSES`, `SIAP AMBIL`, `SELESAI`)
+   - Pelunasan pembayaran (Tunai, Transfer BCA, QRIS AstraPay)
+   - Cetak 3 nota thermal (Nota Konsumen, Pertinggal, Produksi) & Upload foto dokumentasi
 
-## Milestones Status
+4. **Milestone 4**: Manajemen Pengeluaran Kas Kecil (Petty Cash)
+   - Catat biaya operasional harian (deterjen, plastik, listrik, air, sewa, gaji)
+   - Rekap pengeluaran untuk perhitungan laba bersih
 
-- [x] **Milestone 1**: Database Schema & Backend REST APIs
-  - Migration `000003_pos_and_expenses.up.sql`
-  - SQLC Queries: `pos.sql`, `expense.sql`, `report.sql`, `master.sql`, `order_item.sql`, `order_photo.sql`, `order_history.sql`
-  - Repositories: `POSRepository`, `ExpenseRepository`, `ReportRepository`, `MasterRepository`
-  - Services: `POSService`, `ExpenseService`, `ReportService`, `MasterService`, `NotificationService`
-  - Handlers: `/pos/...`, `/expenses/...`, `/reports/...`, `/master/...` with CORS middleware
-  - 112/112 Go unit tests passing
-- [ ] **Milestone 2**: Frontend Setup, Fresh Modern Layout & Halaman Home
-- [ ] **Milestone 3**: Walk-in POS Kasir & Order Lifecycle Management
-- [ ] **Milestone 4**: Manajemen Pengeluaran Kas Kecil (Petty Cash)
-- [ ] **Milestone 5**: Laporan Keuangan, Operasional & CRM
-- [ ] **Milestone 6**: Master Settings & Role-Based Access Control
+5. **Milestone 5**: Laporan Keuangan, Operasional & CRM
+   - Grafik garis Omset & Pendapatan Kas harian + Export to Excel
+   - Laporan Piutang & Laporan Laba/Rugi
+   - Rekap volume layanan (Kg, Pcs, Tabung, Meter) & Rak belum diambil
+   - CRM Pelanggan Loyal (Top 10 leaderboard & riwayat 50 transaksi seumur hidup)
+
+6. **Milestone 6**: Master Settings & RBAC Pegawai
+   - Privasi Owner: Saklar toggle untuk sembunyikan omset/keuangan dari kasir
+   - Kustomisasi printer thermal & template nota (logo, header, footer)
+   - Master layanan, parfum, diskon loyalitas, dan toggle *Skip Proses*
