@@ -34,3 +34,4 @@ obj/
 # Gateway session storage (session files are never committed)
 apps/gateway/storage/session/
 !apps/gateway/storage/.gitkeep
+ScreenShoot/*
