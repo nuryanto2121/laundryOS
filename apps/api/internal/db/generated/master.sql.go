@@ -151,6 +151,44 @@ func (q *Queries) CreatePerfume(ctx context.Context, arg CreatePerfumeParams) (P
 	return i, err
 }
 
+const createServiceCategory = `-- name: CreateServiceCategory :one
+INSERT INTO service_categories (id, code, name, default_unit, display_order, is_active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+RETURNING id, code, name, default_unit, display_order, is_active, created_at, updated_at
+`
+
+type CreateServiceCategoryParams struct {
+	ID           pgtype.UUID `json:"id"`
+	Code         string      `json:"code"`
+	Name         string      `json:"name"`
+	DefaultUnit  string      `json:"default_unit"`
+	DisplayOrder pgtype.Int4 `json:"display_order"`
+	IsActive     pgtype.Bool `json:"is_active"`
+}
+
+func (q *Queries) CreateServiceCategory(ctx context.Context, arg CreateServiceCategoryParams) (ServiceCategory, error) {
+	row := q.db.QueryRow(ctx, createServiceCategory,
+		arg.ID,
+		arg.Code,
+		arg.Name,
+		arg.DefaultUnit,
+		arg.DisplayOrder,
+		arg.IsActive,
+	)
+	var i ServiceCategory
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.DefaultUnit,
+		&i.DisplayOrder,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteDiscount = `-- name: DeleteDiscount :exec
 UPDATE discounts
 SET is_active = false
@@ -195,6 +233,17 @@ func (q *Queries) DeletePerfume(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const deleteServiceCategory = `-- name: DeleteServiceCategory :exec
+UPDATE service_categories
+SET is_active = false, updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) DeleteServiceCategory(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteServiceCategory, id)
+	return err
+}
+
 const getDefaultOutlet = `-- name: GetDefaultOutlet :one
 SELECT id, name, code, address, phone, is_active, created_at, updated_at FROM outlets
 WHERE is_active = true
@@ -211,6 +260,27 @@ func (q *Queries) GetDefaultOutlet(ctx context.Context) (Outlet, error) {
 		&i.Code,
 		&i.Address,
 		&i.Phone,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getServiceCategory = `-- name: GetServiceCategory :one
+SELECT id, code, name, default_unit, display_order, is_active, created_at, updated_at FROM service_categories
+WHERE id = $1
+`
+
+func (q *Queries) GetServiceCategory(ctx context.Context, id pgtype.UUID) (ServiceCategory, error) {
+	row := q.db.QueryRow(ctx, getServiceCategory, id)
+	var i ServiceCategory
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.DefaultUnit,
+		&i.DisplayOrder,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -308,6 +378,41 @@ func (q *Queries) ListActivePerfumes(ctx context.Context) ([]Perfume, error) {
 			&i.Description,
 			&i.IsActive,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActiveServiceCategories = `-- name: ListActiveServiceCategories :many
+SELECT id, code, name, default_unit, display_order, is_active, created_at, updated_at FROM service_categories
+WHERE is_active = true
+ORDER BY display_order ASC, name ASC
+`
+
+func (q *Queries) ListActiveServiceCategories(ctx context.Context) ([]ServiceCategory, error) {
+	rows, err := q.db.Query(ctx, listActiveServiceCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ServiceCategory
+	for rows.Next() {
+		var i ServiceCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.DefaultUnit,
+			&i.DisplayOrder,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -438,6 +543,40 @@ func (q *Queries) ListAllPerfumes(ctx context.Context) ([]Perfume, error) {
 			&i.Description,
 			&i.IsActive,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllServiceCategories = `-- name: ListAllServiceCategories :many
+SELECT id, code, name, default_unit, display_order, is_active, created_at, updated_at FROM service_categories
+ORDER BY display_order ASC, name ASC
+`
+
+func (q *Queries) ListAllServiceCategories(ctx context.Context) ([]ServiceCategory, error) {
+	rows, err := q.db.Query(ctx, listAllServiceCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ServiceCategory
+	for rows.Next() {
+		var i ServiceCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.DefaultUnit,
+			&i.DisplayOrder,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -684,6 +823,43 @@ func (q *Queries) UpdatePerfume(ctx context.Context, arg UpdatePerfumeParams) (P
 		&i.Description,
 		&i.IsActive,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateServiceCategory = `-- name: UpdateServiceCategory :one
+UPDATE service_categories
+SET name = $2, default_unit = $3, display_order = $4, is_active = $5, updated_at = NOW()
+WHERE id = $1
+RETURNING id, code, name, default_unit, display_order, is_active, created_at, updated_at
+`
+
+type UpdateServiceCategoryParams struct {
+	ID           pgtype.UUID `json:"id"`
+	Name         string      `json:"name"`
+	DefaultUnit  string      `json:"default_unit"`
+	DisplayOrder pgtype.Int4 `json:"display_order"`
+	IsActive     pgtype.Bool `json:"is_active"`
+}
+
+func (q *Queries) UpdateServiceCategory(ctx context.Context, arg UpdateServiceCategoryParams) (ServiceCategory, error) {
+	row := q.db.QueryRow(ctx, updateServiceCategory,
+		arg.ID,
+		arg.Name,
+		arg.DefaultUnit,
+		arg.DisplayOrder,
+		arg.IsActive,
+	)
+	var i ServiceCategory
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.DefaultUnit,
+		&i.DisplayOrder,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

@@ -96,11 +96,13 @@ func (h *MasterHandler) ListDiscounts(w http.ResponseWriter, r *http.Request) {
 }
 
 type createDiscountRequest struct {
-	Name           string  `json:"name"`
-	DiscountType   string  `json:"discount_type"` // 'PERCENTAGE', 'NOMINAL'
-	Value          float64 `json:"value"`
-	MinOrderAmount float64 `json:"min_order_amount"`
-	IsActive       bool    `json:"is_active"`
+	Name            string  `json:"name"`
+	DiscountType    string  `json:"discount_type"` // 'PERCENTAGE', 'NOMINAL'
+	Value           float64 `json:"value"`
+	DiscountPercent float64 `json:"discount_percent"`
+	FixedAmount     float64 `json:"fixed_amount"`
+	MinOrderAmount  float64 `json:"min_order_amount"`
+	IsActive        bool    `json:"is_active"`
 }
 
 // CreateDiscount handles POST /master/discounts.
@@ -110,12 +112,21 @@ func (h *MasterHandler) CreateDiscount(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if req.Name == "" || req.Value <= 0 {
-		writeError(w, http.StatusBadRequest, "nama dan nilai diskon wajib diisi")
-		return
+	if req.Value == 0 {
+		if req.DiscountPercent > 0 {
+			req.DiscountType = "PERCENTAGE"
+			req.Value = req.DiscountPercent
+		} else if req.FixedAmount > 0 {
+			req.DiscountType = "NOMINAL"
+			req.Value = req.FixedAmount
+		}
 	}
 	if req.DiscountType == "" {
 		req.DiscountType = "NOMINAL"
+	}
+	if req.Name == "" || req.Value <= 0 {
+		writeError(w, http.StatusBadRequest, "nama dan nilai diskon (>0) wajib diisi")
+		return
 	}
 	discount, err := h.svc.CreateDiscount(r.Context(), req.Name, req.DiscountType, req.Value, req.MinOrderAmount, true)
 	if err != nil {
@@ -133,6 +144,18 @@ func (h *MasterHandler) UpdateDiscount(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
+	}
+	if req.Value == 0 {
+		if req.DiscountPercent > 0 {
+			req.DiscountType = "PERCENTAGE"
+			req.Value = req.DiscountPercent
+		} else if req.FixedAmount > 0 {
+			req.DiscountType = "NOMINAL"
+			req.Value = req.FixedAmount
+		}
+	}
+	if req.DiscountType == "" {
+		req.DiscountType = "NOMINAL"
 	}
 	discount, err := h.svc.UpdateDiscount(r.Context(), id, req.Name, req.DiscountType, req.Value, req.MinOrderAmount, req.IsActive)
 	if err != nil {
@@ -188,11 +211,15 @@ func (h *MasterHandler) ListServices(w http.ResponseWriter, r *http.Request) {
 }
 
 type createServiceRequest struct {
-	ServiceCode string  `json:"service_code"`
-	ServiceName string  `json:"service_name"`
-	DurationDay int     `json:"duration_day"`
-	Price       float64 `json:"price"`
-	Active      bool    `json:"active"`
+	ServiceCode  string  `json:"service_code"`
+	ServiceName  string  `json:"service_name"`
+	DurationDay  int     `json:"duration_day"`
+	Price        float64 `json:"price"`
+	Active       bool    `json:"active"`
+	CategoryID   string  `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Category     string  `json:"category"`
+	Unit         string  `json:"unit"`
 }
 
 // CreateService handles POST /master/services.
@@ -206,7 +233,15 @@ func (h *MasterHandler) CreateService(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "kode, nama layanan, dan harga (>0) wajib diisi")
 		return
 	}
-	srv, err := h.svc.CreateService(r.Context(), req.ServiceCode, req.ServiceName, req.DurationDay, req.Price, true)
+	catName := req.CategoryName
+	if catName == "" {
+		catName = req.Category
+	}
+	unit := req.Unit
+	if unit == "" {
+		unit = "Kg"
+	}
+	srv, err := h.svc.CreateService(r.Context(), req.ServiceCode, req.ServiceName, req.DurationDay, req.Price, true, req.CategoryID, catName, unit)
 	if err != nil {
 		slog.Error("master: create service failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal membuat layanan")
@@ -223,7 +258,15 @@ func (h *MasterHandler) UpdateService(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	srv, err := h.svc.UpdateService(r.Context(), id, req.ServiceName, req.DurationDay, req.Price, req.Active)
+	catName := req.CategoryName
+	if catName == "" {
+		catName = req.Category
+	}
+	unit := req.Unit
+	if unit == "" {
+		unit = "Kg"
+	}
+	srv, err := h.svc.UpdateService(r.Context(), id, req.ServiceName, req.DurationDay, req.Price, req.Active, req.CategoryID, catName, unit)
 	if err != nil {
 		slog.Error("master: update service failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal memperbarui layanan")
@@ -238,6 +281,76 @@ func (h *MasterHandler) DeleteService(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.DeleteService(r.Context(), id); err != nil {
 		slog.Error("master: delete service failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal menghapus layanan")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListServiceCategories handles GET /master/service-categories.
+func (h *MasterHandler) ListServiceCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := h.svc.ListAllServiceCategories(r.Context())
+	if err != nil {
+		slog.Error("master: list service categories failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal memuat data kategori layanan")
+		return
+	}
+	writeJSON(w, http.StatusOK, categories)
+}
+
+type createServiceCategoryRequest struct {
+	Code         string `json:"code"`
+	Name         string `json:"name"`
+	DefaultUnit  string `json:"default_unit"`
+	DisplayOrder int    `json:"display_order"`
+	IsActive     bool   `json:"is_active"`
+}
+
+// CreateServiceCategory handles POST /master/service-categories.
+func (h *MasterHandler) CreateServiceCategory(w http.ResponseWriter, r *http.Request) {
+	var req createServiceCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Code == "" || req.Name == "" {
+		writeError(w, http.StatusBadRequest, "kode dan nama kategori wajib diisi")
+		return
+	}
+	if req.DefaultUnit == "" {
+		req.DefaultUnit = "Kg"
+	}
+	cat, err := h.svc.CreateServiceCategory(r.Context(), req.Code, req.Name, req.DefaultUnit, req.DisplayOrder, true)
+	if err != nil {
+		slog.Error("master: create service category failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal membuat kategori layanan")
+		return
+	}
+	writeJSON(w, http.StatusCreated, cat)
+}
+
+// UpdateServiceCategory handles PUT /master/service-categories/{id}.
+func (h *MasterHandler) UpdateServiceCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req createServiceCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	cat, err := h.svc.UpdateServiceCategory(r.Context(), id, req.Name, req.DefaultUnit, req.DisplayOrder, req.IsActive)
+	if err != nil {
+		slog.Error("master: update service category failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal memperbarui kategori layanan")
+		return
+	}
+	writeJSON(w, http.StatusOK, cat)
+}
+
+// DeleteServiceCategory handles DELETE /master/service-categories/{id}.
+func (h *MasterHandler) DeleteServiceCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.svc.DeleteServiceCategory(r.Context(), id); err != nil {
+		slog.Error("master: delete service category failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal menghapus kategori layanan")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

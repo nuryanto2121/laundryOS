@@ -151,6 +151,39 @@ func (s *MasterService) DeleteEmployee(ctx context.Context, idStr string) error 
 	return s.repo.DeleteEmployee(ctx, id)
 }
 
+// ListServiceCategories returns all active service categories.
+func (s *MasterService) ListServiceCategories(ctx context.Context) ([]db.ServiceCategory, error) {
+	return s.repo.ListServiceCategories(ctx)
+}
+
+// ListAllServiceCategories returns all service categories.
+func (s *MasterService) ListAllServiceCategories(ctx context.Context) ([]db.ServiceCategory, error) {
+	return s.repo.ListAllServiceCategories(ctx)
+}
+
+// CreateServiceCategory creates a new service category.
+func (s *MasterService) CreateServiceCategory(ctx context.Context, code, name, defaultUnit string, displayOrder int, isActive bool) (db.ServiceCategory, error) {
+	return s.repo.CreateServiceCategory(ctx, code, name, defaultUnit, displayOrder, isActive)
+}
+
+// UpdateServiceCategory updates an existing service category.
+func (s *MasterService) UpdateServiceCategory(ctx context.Context, idStr, name, defaultUnit string, displayOrder int, isActive bool) (db.ServiceCategory, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.ServiceCategory{}, err
+	}
+	return s.repo.UpdateServiceCategory(ctx, id, name, defaultUnit, displayOrder, isActive)
+}
+
+// DeleteServiceCategory deactivates a service category.
+func (s *MasterService) DeleteServiceCategory(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	return s.repo.DeleteServiceCategory(ctx, id)
+}
+
 // ServiceMasterItem represents a service option in POS.
 type ServiceMasterItem struct {
 	ID          string  `json:"id"`
@@ -170,7 +203,17 @@ func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, 
 		if err == nil && len(active) > 0 {
 			res := make([]ServiceMasterItem, len(active))
 			for i, a := range active {
-				cat, unit := determineCategoryAndUnit(a.ServiceName)
+				cat := a.CategoryName
+				unit := a.Unit
+				if cat == "" || unit == "" {
+					detCat, detUnit := determineCategoryAndUnit(a.ServiceName)
+					if cat == "" {
+						cat = detCat
+					}
+					if unit == "" {
+						unit = detUnit
+					}
+				}
 				res[i] = ServiceMasterItem{
 					ID:          a.ID,
 					ServiceCode: a.ServiceCode,
@@ -191,21 +234,21 @@ func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, 
 }
 
 // CreateService creates a new service in catalog.
-func (s *MasterService) CreateService(ctx context.Context, code, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+func (s *MasterService) CreateService(ctx context.Context, code, name string, duration int, price float64, active bool, categoryID, categoryName, unit string) (model.ServiceItem, error) {
 	if s.serviceRepo != nil {
-		return s.serviceRepo.CreateService(ctx, code, name, duration, price, active)
+		return s.serviceRepo.CreateService(ctx, code, name, duration, price, active, categoryID, categoryName, unit)
 	}
 	return model.ServiceItem{}, nil
 }
 
 // UpdateService updates an existing service in catalog.
-func (s *MasterService) UpdateService(ctx context.Context, idStr, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+func (s *MasterService) UpdateService(ctx context.Context, idStr, name string, duration int, price float64, active bool, categoryID, categoryName, unit string) (model.ServiceItem, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return model.ServiceItem{}, err
 	}
 	if s.serviceRepo != nil {
-		return s.serviceRepo.UpdateService(ctx, id, name, duration, price, active)
+		return s.serviceRepo.UpdateService(ctx, id, name, duration, price, active, categoryID, categoryName, unit)
 	}
 	return model.ServiceItem{}, nil
 }

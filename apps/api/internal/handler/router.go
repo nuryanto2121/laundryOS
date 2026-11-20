@@ -114,6 +114,11 @@ func NewRouter(p RouterParams) http.Handler {
 			m.Put("/services/{id}", p.MasterHandler.UpdateService)
 			m.Delete("/services/{id}", p.MasterHandler.DeleteService)
 
+			m.Get("/service-categories", p.MasterHandler.ListServiceCategories)
+			m.Post("/service-categories", p.MasterHandler.CreateServiceCategory)
+			m.Put("/service-categories/{id}", p.MasterHandler.UpdateServiceCategory)
+			m.Delete("/service-categories/{id}", p.MasterHandler.DeleteServiceCategory)
+
 			m.Get("/expense-categories", p.MasterHandler.ListExpenseCategories)
 			m.Post("/expense-categories", p.MasterHandler.CreateExpenseCategory)
 			m.Put("/expense-categories/{id}", p.MasterHandler.UpdateExpenseCategory)

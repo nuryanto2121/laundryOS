@@ -20,10 +20,16 @@ type BotResponse struct {
 
 // ServiceItem represents a laundry service fetched from database.
 type ServiceItem struct {
-	ID          string  `json:"id"`
-	ServiceCode string  `json:"service_code"`
-	ServiceName string  `json:"service_name"`
-	DurationDay int     `json:"duration_day"`
-	PricePerKg  float64 `json:"price_per_kg"`
-	Active      bool    `json:"active"`
+	ID           string  `json:"id"`
+	ServiceCode  string  `json:"service_code"`
+	ServiceName  string  `json:"service_name"`
+	DurationDay  int     `json:"duration_day"`
+	PricePerKg   float64 `json:"price_per_kg"`
+	Price        float64 `json:"price"`
+	Active       bool    `json:"active"`
+	IsActive     bool    `json:"is_active"`
+	CategoryID   string  `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Category     string  `json:"category"`
+	Unit         string  `json:"unit"`
 }

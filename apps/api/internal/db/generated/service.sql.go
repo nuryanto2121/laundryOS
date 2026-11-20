@@ -12,18 +12,21 @@ import (
 )
 
 const createService = `-- name: CreateService :one
-INSERT INTO services (id, service_code, service_name, duration_day, price_per_kg, active)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, service_code, service_name, duration_day, price_per_kg, active
+INSERT INTO services (id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit
 `
 
 type CreateServiceParams struct {
-	ID          pgtype.UUID    `json:"id"`
-	ServiceCode string         `json:"service_code"`
-	ServiceName string         `json:"service_name"`
-	DurationDay pgtype.Int4    `json:"duration_day"`
-	PricePerKg  pgtype.Numeric `json:"price_per_kg"`
-	Active      pgtype.Bool    `json:"active"`
+	ID           pgtype.UUID    `json:"id"`
+	ServiceCode  string         `json:"service_code"`
+	ServiceName  string         `json:"service_name"`
+	DurationDay  pgtype.Int4    `json:"duration_day"`
+	PricePerKg   pgtype.Numeric `json:"price_per_kg"`
+	Active       pgtype.Bool    `json:"active"`
+	CategoryID   pgtype.UUID    `json:"category_id"`
+	CategoryName pgtype.Text    `json:"category_name"`
+	Unit         pgtype.Text    `json:"unit"`
 }
 
 func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (Service, error) {
@@ -34,6 +37,9 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (S
 		arg.DurationDay,
 		arg.PricePerKg,
 		arg.Active,
+		arg.CategoryID,
+		arg.CategoryName,
+		arg.Unit,
 	)
 	var i Service
 	err := row.Scan(
@@ -43,6 +49,9 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (S
 		&i.DurationDay,
 		&i.PricePerKg,
 		&i.Active,
+		&i.CategoryID,
+		&i.CategoryName,
+		&i.Unit,
 	)
 	return i, err
 }
@@ -59,7 +68,7 @@ func (q *Queries) DeleteService(ctx context.Context, id pgtype.UUID) error {
 }
 
 const listActiveServices = `-- name: ListActiveServices :many
-SELECT id, service_code, service_name, duration_day, price_per_kg, active
+SELECT id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit
 FROM services
 WHERE active = true
 ORDER BY price_per_kg ASC
@@ -81,6 +90,9 @@ func (q *Queries) ListActiveServices(ctx context.Context) ([]Service, error) {
 			&i.DurationDay,
 			&i.PricePerKg,
 			&i.Active,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.Unit,
 		); err != nil {
 			return nil, err
 		}
@@ -93,9 +105,9 @@ func (q *Queries) ListActiveServices(ctx context.Context) ([]Service, error) {
 }
 
 const listAllServices = `-- name: ListAllServices :many
-SELECT id, service_code, service_name, duration_day, price_per_kg, active
+SELECT id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit
 FROM services
-ORDER BY service_name ASC
+ORDER BY category_name ASC, service_name ASC
 `
 
 func (q *Queries) ListAllServices(ctx context.Context) ([]Service, error) {
@@ -114,6 +126,9 @@ func (q *Queries) ListAllServices(ctx context.Context) ([]Service, error) {
 			&i.DurationDay,
 			&i.PricePerKg,
 			&i.Active,
+			&i.CategoryID,
+			&i.CategoryName,
+			&i.Unit,
 		); err != nil {
 			return nil, err
 		}
@@ -127,17 +142,20 @@ func (q *Queries) ListAllServices(ctx context.Context) ([]Service, error) {
 
 const updateService = `-- name: UpdateService :one
 UPDATE services
-SET service_name = $2, duration_day = $3, price_per_kg = $4, active = $5
+SET service_name = $2, duration_day = $3, price_per_kg = $4, active = $5, category_id = $6, category_name = $7, unit = $8
 WHERE id = $1
-RETURNING id, service_code, service_name, duration_day, price_per_kg, active
+RETURNING id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit
 `
 
 type UpdateServiceParams struct {
-	ID          pgtype.UUID    `json:"id"`
-	ServiceName string         `json:"service_name"`
-	DurationDay pgtype.Int4    `json:"duration_day"`
-	PricePerKg  pgtype.Numeric `json:"price_per_kg"`
-	Active      pgtype.Bool    `json:"active"`
+	ID           pgtype.UUID    `json:"id"`
+	ServiceName  string         `json:"service_name"`
+	DurationDay  pgtype.Int4    `json:"duration_day"`
+	PricePerKg   pgtype.Numeric `json:"price_per_kg"`
+	Active       pgtype.Bool    `json:"active"`
+	CategoryID   pgtype.UUID    `json:"category_id"`
+	CategoryName pgtype.Text    `json:"category_name"`
+	Unit         pgtype.Text    `json:"unit"`
 }
 
 func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) (Service, error) {
@@ -147,6 +165,9 @@ func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) (S
 		arg.DurationDay,
 		arg.PricePerKg,
 		arg.Active,
+		arg.CategoryID,
+		arg.CategoryName,
+		arg.Unit,
 	)
 	var i Service
 	err := row.Scan(
@@ -156,6 +177,9 @@ func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) (S
 		&i.DurationDay,
 		&i.PricePerKg,
 		&i.Active,
+		&i.CategoryID,
+		&i.CategoryName,
+		&i.Unit,
 	)
 	return i, err
 }

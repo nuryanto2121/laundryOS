@@ -113,3 +113,33 @@ RETURNING *;
 UPDATE employees
 SET is_active = false, updated_at = NOW()
 WHERE id = $1;
+
+-- name: ListActiveServiceCategories :many
+SELECT * FROM service_categories
+WHERE is_active = true
+ORDER BY display_order ASC, name ASC;
+
+-- name: ListAllServiceCategories :many
+SELECT * FROM service_categories
+ORDER BY display_order ASC, name ASC;
+
+-- name: GetServiceCategory :one
+SELECT * FROM service_categories
+WHERE id = $1;
+
+-- name: CreateServiceCategory :one
+INSERT INTO service_categories (id, code, name, default_unit, display_order, is_active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+RETURNING *;
+
+-- name: UpdateServiceCategory :one
+UPDATE service_categories
+SET name = $2, default_unit = $3, display_order = $4, is_active = $5, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteServiceCategory :exec
+UPDATE service_categories
+SET is_active = false, updated_at = NOW()
+WHERE id = $1;
+

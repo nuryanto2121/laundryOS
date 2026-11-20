@@ -30,13 +30,23 @@ func (r *ServiceRepository) ListActiveServices(ctx context.Context) ([]model.Ser
 
 	items := make([]model.ServiceItem, len(services))
 	for i, s := range services {
+		var catID string
+		if s.CategoryID.Valid {
+			catID = uuid.UUID(s.CategoryID.Bytes).String()
+		}
 		items[i] = model.ServiceItem{
-			ID:          uuid.UUID(s.ID.Bytes).String(),
-			ServiceCode: s.ServiceCode,
-			ServiceName: s.ServiceName,
-			DurationDay: int(s.DurationDay.Int32),
-			PricePerKg:  serviceNumericToFloat64(s.PricePerKg),
-			Active:      s.Active.Bool,
+			ID:           uuid.UUID(s.ID.Bytes).String(),
+			ServiceCode:  s.ServiceCode,
+			ServiceName:  s.ServiceName,
+			DurationDay:  int(s.DurationDay.Int32),
+			PricePerKg:   serviceNumericToFloat64(s.PricePerKg),
+			Price:        serviceNumericToFloat64(s.PricePerKg),
+			Active:       s.Active.Bool,
+			IsActive:     s.Active.Bool,
+			CategoryID:   catID,
+			CategoryName: s.CategoryName.String,
+			Category:     s.CategoryName.String,
+			Unit:         s.Unit.String,
 		}
 	}
 	return items, nil
@@ -51,20 +61,30 @@ func (r *ServiceRepository) ListAllServices(ctx context.Context) ([]model.Servic
 
 	items := make([]model.ServiceItem, len(services))
 	for i, s := range services {
+		var catID string
+		if s.CategoryID.Valid {
+			catID = uuid.UUID(s.CategoryID.Bytes).String()
+		}
 		items[i] = model.ServiceItem{
-			ID:          uuid.UUID(s.ID.Bytes).String(),
-			ServiceCode: s.ServiceCode,
-			ServiceName: s.ServiceName,
-			DurationDay: int(s.DurationDay.Int32),
-			PricePerKg:  serviceNumericToFloat64(s.PricePerKg),
-			Active:      s.Active.Bool,
+			ID:           uuid.UUID(s.ID.Bytes).String(),
+			ServiceCode:  s.ServiceCode,
+			ServiceName:  s.ServiceName,
+			DurationDay:  int(s.DurationDay.Int32),
+			PricePerKg:   serviceNumericToFloat64(s.PricePerKg),
+			Price:        serviceNumericToFloat64(s.PricePerKg),
+			Active:       s.Active.Bool,
+			IsActive:     s.Active.Bool,
+			CategoryID:   catID,
+			CategoryName: s.CategoryName.String,
+			Category:     s.CategoryName.String,
+			Unit:         s.Unit.String,
 		}
 	}
 	return items, nil
 }
 
 // CreateService creates a new service in database.
-func (r *ServiceRepository) CreateService(ctx context.Context, code, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+func (r *ServiceRepository) CreateService(ctx context.Context, code, name string, duration int, price float64, active bool, categoryID string, categoryName, unit string) (model.ServiceItem, error) {
 	id := uuid.New()
 	var idBytes [16]byte
 	copy(idBytes[:], id[:])
@@ -72,54 +92,82 @@ func (r *ServiceRepository) CreateService(ctx context.Context, code, name string
 	priceNumeric := pgtype.Numeric{}
 	_ = priceNumeric.Scan(fmt.Sprintf("%.2f", price))
 
+	var catUUID pgtype.UUID
+	if u, err := uuid.Parse(categoryID); err == nil {
+		catUUID = pgtype.UUID{Bytes: u, Valid: true}
+	}
+
 	created, err := r.queries.CreateService(ctx, db.CreateServiceParams{
-		ID:          pgtype.UUID{Bytes: idBytes, Valid: true},
-		ServiceCode: code,
-		ServiceName: name,
-		DurationDay: pgtype.Int4{Int32: int32(duration), Valid: true},
-		PricePerKg:  priceNumeric,
-		Active:      pgtype.Bool{Bool: active, Valid: true},
+		ID:           pgtype.UUID{Bytes: idBytes, Valid: true},
+		ServiceCode:  code,
+		ServiceName:  name,
+		DurationDay:  pgtype.Int4{Int32: int32(duration), Valid: true},
+		PricePerKg:   priceNumeric,
+		Active:       pgtype.Bool{Bool: active, Valid: true},
+		CategoryID:   catUUID,
+		CategoryName: pgtype.Text{String: categoryName, Valid: categoryName != ""},
+		Unit:         pgtype.Text{String: unit, Valid: unit != ""},
 	})
 	if err != nil {
 		return model.ServiceItem{}, err
 	}
 
 	return model.ServiceItem{
-		ID:          id.String(),
-		ServiceCode: created.ServiceCode,
-		ServiceName: created.ServiceName,
-		DurationDay: int(created.DurationDay.Int32),
-		PricePerKg:  price,
-		Active:      created.Active.Bool,
+		ID:           id.String(),
+		ServiceCode:  created.ServiceCode,
+		ServiceName:  created.ServiceName,
+		DurationDay:  int(created.DurationDay.Int32),
+		PricePerKg:   price,
+		Price:        price,
+		Active:       created.Active.Bool,
+		IsActive:     created.Active.Bool,
+		CategoryID:   categoryID,
+		CategoryName: created.CategoryName.String,
+		Category:     created.CategoryName.String,
+		Unit:         created.Unit.String,
 	}, nil
 }
 
 // UpdateService updates an existing service.
-func (r *ServiceRepository) UpdateService(ctx context.Context, id uuid.UUID, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+func (r *ServiceRepository) UpdateService(ctx context.Context, id uuid.UUID, name string, duration int, price float64, active bool, categoryID string, categoryName, unit string) (model.ServiceItem, error) {
 	var idBytes [16]byte
 	copy(idBytes[:], id[:])
 
 	priceNumeric := pgtype.Numeric{}
 	_ = priceNumeric.Scan(fmt.Sprintf("%.2f", price))
 
+	var catUUID pgtype.UUID
+	if u, err := uuid.Parse(categoryID); err == nil {
+		catUUID = pgtype.UUID{Bytes: u, Valid: true}
+	}
+
 	updated, err := r.queries.UpdateService(ctx, db.UpdateServiceParams{
-		ID:          pgtype.UUID{Bytes: idBytes, Valid: true},
-		ServiceName: name,
-		DurationDay: pgtype.Int4{Int32: int32(duration), Valid: true},
-		PricePerKg:  priceNumeric,
-		Active:      pgtype.Bool{Bool: active, Valid: true},
+		ID:           pgtype.UUID{Bytes: idBytes, Valid: true},
+		ServiceName:  name,
+		DurationDay:  pgtype.Int4{Int32: int32(duration), Valid: true},
+		PricePerKg:   priceNumeric,
+		Active:       pgtype.Bool{Bool: active, Valid: true},
+		CategoryID:   catUUID,
+		CategoryName: pgtype.Text{String: categoryName, Valid: categoryName != ""},
+		Unit:         pgtype.Text{String: unit, Valid: unit != ""},
 	})
 	if err != nil {
 		return model.ServiceItem{}, err
 	}
 
 	return model.ServiceItem{
-		ID:          id.String(),
-		ServiceCode: updated.ServiceCode,
-		ServiceName: updated.ServiceName,
-		DurationDay: int(updated.DurationDay.Int32),
-		PricePerKg:  price,
-		Active:      updated.Active.Bool,
+		ID:           id.String(),
+		ServiceCode:  updated.ServiceCode,
+		ServiceName:  updated.ServiceName,
+		DurationDay:  int(updated.DurationDay.Int32),
+		PricePerKg:   price,
+		Price:        price,
+		Active:       updated.Active.Bool,
+		IsActive:     updated.Active.Bool,
+		CategoryID:   categoryID,
+		CategoryName: updated.CategoryName.String,
+		Category:     updated.CategoryName.String,
+		Unit:         updated.Unit.String,
 	}, nil
 }
 

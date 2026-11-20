@@ -236,3 +236,43 @@ func (r *MasterRepository) UpdateEmployee(ctx context.Context, id uuid.UUID, ful
 func (r *MasterRepository) DeleteEmployee(ctx context.Context, id uuid.UUID) error {
 	return r.queries.DeleteEmployee(ctx, toPgUUID(id))
 }
+
+// ListServiceCategories retrieves active service categories.
+func (r *MasterRepository) ListServiceCategories(ctx context.Context) ([]db.ServiceCategory, error) {
+	return r.queries.ListActiveServiceCategories(ctx)
+}
+
+// ListAllServiceCategories retrieves all service categories.
+func (r *MasterRepository) ListAllServiceCategories(ctx context.Context) ([]db.ServiceCategory, error) {
+	return r.queries.ListAllServiceCategories(ctx)
+}
+
+// CreateServiceCategory creates a new service category.
+func (r *MasterRepository) CreateServiceCategory(ctx context.Context, code, name, defaultUnit string, displayOrder int, isActive bool) (db.ServiceCategory, error) {
+	id := uuid.New()
+	return r.queries.CreateServiceCategory(ctx, db.CreateServiceCategoryParams{
+		ID:           toPgUUID(id),
+		Code:         code,
+		Name:         name,
+		DefaultUnit:  defaultUnit,
+		DisplayOrder: pgtype.Int4{Int32: int32(displayOrder), Valid: true},
+		IsActive:     pgtype.Bool{Bool: isActive, Valid: true},
+	})
+}
+
+// UpdateServiceCategory updates an existing service category.
+func (r *MasterRepository) UpdateServiceCategory(ctx context.Context, id uuid.UUID, name, defaultUnit string, displayOrder int, isActive bool) (db.ServiceCategory, error) {
+	return r.queries.UpdateServiceCategory(ctx, db.UpdateServiceCategoryParams{
+		ID:           toPgUUID(id),
+		Name:         name,
+		DefaultUnit:  defaultUnit,
+		DisplayOrder: pgtype.Int4{Int32: int32(displayOrder), Valid: true},
+		IsActive:     pgtype.Bool{Bool: isActive, Valid: true},
+	})
+}
+
+// DeleteServiceCategory deactivates a service category.
+func (r *MasterRepository) DeleteServiceCategory(ctx context.Context, id uuid.UUID) error {
+	return r.queries.DeleteServiceCategory(ctx, toPgUUID(id))
+}
+

@@ -23,8 +23,7 @@
               </span>
             </div>
             <p class="text-xs text-slate-500 mt-0.5">
-              Kelola privasi kasir, template printer thermal, master layanan, pegawai & hak akses,
-              pengeluaran kas kecil, dan pelanggan.
+              Kelola privasi kasir, template printer thermal, katalog layanan, pegawai, kas kecil, dan pelanggan.
             </p>
           </div>
         </div>
@@ -41,9 +40,7 @@
           >
             <Shield v-if="settings.role === 'OWNER'" class="w-4 h-4 text-purple-600" />
             <User v-else class="w-4 h-4 text-slate-500" />
-            <span
-              >Peran: {{ settings.role === 'OWNER' ? '👑 Owner (Akses Penuh)' : '👤 Kasir' }}</span
-            >
+            <span>Peran: {{ settings.role === 'OWNER' ? '👑 Owner (Akses Penuh)' : '👤 Kasir' }}</span>
           </div>
 
           <button
@@ -59,9 +56,7 @@
 
       <!-- 2. Mobile Quick-Picker Dropdown (< md) -->
       <div class="block md:hidden bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs">
-        <label
-          class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5"
-        >
+        <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">
           Pilih Menu Pengaturan & Master Data
         </label>
         <div class="relative">
@@ -73,14 +68,10 @@
               {{ tab.label }}
             </option>
           </select>
-          <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-600"
-          >
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-600">
             <component :is="activeTabObj.icon" class="w-4 h-4" />
           </div>
-          <div
-            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400"
-          >
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
             <ChevronDown class="w-4 h-4" />
           </div>
         </div>
@@ -94,7 +85,7 @@
           v-for="tab in tabs"
           :key="tab.id"
           type="button"
-          class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0"
           :class="
             activeTab === tab.id
               ? 'bg-white text-slate-900 shadow-xs'
@@ -259,11 +250,12 @@
               </span>
             </div>
 
-            <!-- Receipt Card Container -->
+            <!-- Receipt Card Container (Only this element will print) -->
             <div
               class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 my-4 font-mono text-xs text-slate-900"
             >
               <div
+                id="thermal-preview-receipt"
                 class="mx-auto bg-white p-3.5 shadow-xs border border-dashed border-slate-300 rounded-sm space-y-2 text-center"
                 :class="settings.printer.paperWidth === '80mm' ? 'max-w-[340px]' : 'max-w-[260px]'"
               >
@@ -318,11 +310,11 @@
 
           <button
             type="button"
-            class="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+            class="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             @click="testPrint"
           >
             <Printer class="w-4 h-4 text-brand-600" />
-            <span>Uji Coba Cetak (Browser Print)</span>
+            <span>Uji Coba Cetak Struk Thermal</span>
           </button>
         </div>
       </div>
@@ -333,9 +325,7 @@
       <div v-else-if="activeTab === 'EMPLOYEES'" class="space-y-6">
         <!-- Privacy Toggle & PIN Section -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div
-            class="lg:col-span-7 bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-5"
-          >
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-5">
             <div class="border-b border-slate-100 pb-3">
               <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
                 <ShieldCheck class="w-4 h-4 text-purple-600" />
@@ -360,11 +350,9 @@
                   </span>
                 </div>
                 <p class="text-xs text-slate-500 leading-relaxed">
-                  Saat diaktifkan dan staf berada dalam <strong>Mode Kasir</strong>, total nilai
-                  omset bruto, pendapatan kas, dan laba bersih di halaman Beranda & Laporan akan
-                  disensor (<code class="bg-white px-1 py-0.5 rounded border border-slate-200"
-                    >Rp ••••••</code
-                  >).
+                  Saat diaktifkan dan staf berada dalam <strong>Mode Kasir</strong>, total nilai omset
+                  bruto, pendapatan kas, dan laba bersih di halaman Beranda & Laporan akan disensor
+                  (<code class="bg-white px-1 py-0.5 rounded border border-slate-200">Rp ••••••</code>).
                 </p>
               </div>
 
@@ -383,22 +371,20 @@
           </div>
 
           <!-- Change Owner PIN Form -->
-          <div
-            class="lg:col-span-5 bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4"
-          >
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
             <div class="border-b border-slate-100 pb-3">
               <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
                 <Lock class="w-4 h-4 text-purple-600" />
                 <span>Ubah PIN Akses Owner</span>
               </h3>
-              <p class="text-xs text-slate-500">PIN cepat 4-digit untuk membuka sensor keuangan.</p>
+              <p class="text-xs text-slate-500">
+                PIN cepat 4-digit untuk membuka sensor keuangan.
+              </p>
             </div>
 
             <div class="space-y-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1"
-                  >PIN Lama (Default: 1234)</label
-                >
+                <label class="block text-xs font-semibold text-slate-700 mb-1">PIN Lama (Default: 1234)</label>
                 <input
                   v-model="oldPin"
                   type="password"
@@ -408,9 +394,7 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1"
-                  >PIN Baru (4-8 Digit)</label
-                >
+                <label class="block text-xs font-semibold text-slate-700 mb-1">PIN Baru (4-8 Digit)</label>
                 <input
                   v-model="newPin"
                   type="password"
@@ -434,9 +418,7 @@
 
         <!-- Master Pegawai CRUD Table -->
         <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
-          <div
-            class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"
-          >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
             <div>
               <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
                 <Users class="w-4 h-4 text-purple-600" />
@@ -459,25 +441,36 @@
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr
-                  class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider"
-                >
-                  <th class="py-3 px-3">Username</th>
-                  <th class="py-3 px-3">Nama Lengkap</th>
+                <tr class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <th class="py-3 px-3 cursor-pointer select-none" @click="sortEmployee('username')">
+                    <div class="flex items-center gap-1">
+                      <span>Username</span>
+                      <component :is="getSortIcon('employee', 'username')" class="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                  <th class="py-3 px-3 cursor-pointer select-none" @click="sortEmployee('full_name')">
+                    <div class="flex items-center gap-1">
+                      <span>Nama Lengkap</span>
+                      <component :is="getSortIcon('employee', 'full_name')" class="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
                   <th class="py-3 px-3">No. HP</th>
-                  <th class="py-3 px-3 text-center">Hak Akses (Role)</th>
+                  <th class="py-3 px-3 text-center cursor-pointer select-none" @click="sortEmployee('role')">
+                    <div class="flex items-center justify-center gap-1">
+                      <span>Hak Akses (Role)</span>
+                      <component :is="getSortIcon('employee', 'role')" class="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
                   <th class="py-3 px-3 text-center">Status</th>
                   <th class="py-3 px-3 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
-                <tr v-if="employeesList.length === 0">
-                  <td colspan="6" class="py-6 text-center text-slate-400">
-                    Belum ada pegawai terdaftar.
-                  </td>
+                <tr v-if="sortedEmployees.length === 0">
+                  <td colspan="6" class="py-6 text-center text-slate-400">Belum ada pegawai terdaftar.</td>
                 </tr>
                 <tr
-                  v-for="emp in employeesList"
+                  v-for="emp in sortedEmployees"
                   :key="emp.id"
                   class="hover:bg-slate-50/70 transition-colors"
                 >
@@ -495,16 +488,9 @@
                   <td class="py-2.5 px-3 text-center">
                     <span
                       class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      :class="
-                        emp.is_active
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
-                      "
+                      :class="emp.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
                     >
-                      <span
-                        class="w-1.5 h-1.5 rounded-full"
-                        :class="emp.is_active ? 'bg-emerald-500' : 'bg-slate-400'"
-                      ></span>
+                      <span class="w-1.5 h-1.5 rounded-full" :class="emp.is_active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                       {{ emp.is_active ? 'Aktif' : 'Nonaktif' }}
                     </span>
                   </td>
@@ -522,7 +508,7 @@
                         type="button"
                         class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
                         title="Hapus Pegawai"
-                        @click="confirmDeleteEmployee(emp)"
+                        @click="triggerDeleteModal('Pegawai', emp.full_name, () => deleteEmployee(emp.id))"
                       >
                         <Trash2 class="w-3.5 h-3.5" />
                       </button>
@@ -536,123 +522,140 @@
       </div>
 
       <!-- ============================================================== -->
-      <!-- TAB 3: MASTER LAYANAN & TARIF                                  -->
+      <!-- TAB 3: MASTER LAYANAN & TARIF (GROUPED PER KATEGORI)          -->
       <!-- ============================================================== -->
       <div
         v-else-if="activeTab === 'SERVICES'"
-        class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4"
+        class="space-y-6"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"
-        >
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-              <Tag class="w-4 h-4 text-emerald-600" />
+            <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Tag class="w-5 h-5 text-emerald-600" />
               <span>Katalog Master Layanan & Tarif</span>
             </h3>
-            <p class="text-xs text-slate-500">
-              Daftar layanan aktif yang dapat dipilih oleh kasir di Web POS.
+            <p class="text-xs text-slate-500 mt-0.5">
+              Kelola katalog layanan yang dikelompokkan berdasarkan kategori produk laundry.
             </p>
           </div>
-          <button
-            type="button"
-            class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-            @click="openAddServiceModal"
-          >
-            <Plus class="w-4 h-4" />
-            <span>Tambah Layanan Baru</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              @click="openAddCategoryModal('SERVICE')"
+            >
+              <FolderTree class="w-3.5 h-3.5 text-slate-500" />
+              <span>Kategori Baru</span>
+            </button>
+            <button
+              type="button"
+              class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              @click="openAddServiceModal"
+            >
+              <Plus class="w-4 h-4" />
+              <span>Tambah Layanan Baru</span>
+            </button>
+          </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr
-                class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider"
-              >
-                <th class="py-3 px-3">Kode</th>
-                <th class="py-3 px-3">Nama Layanan</th>
-                <th class="py-3 px-3">Kategori</th>
-                <th class="py-3 px-3">Satuan</th>
-                <th class="py-3 px-3 text-right">Tarif (Rp)</th>
-                <th class="py-3 px-3 text-center">Durasi</th>
-                <th class="py-3 px-3 text-center">Status</th>
-                <th class="py-3 px-3 text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr v-if="servicesList.length === 0">
-                <td colspan="8" class="py-6 text-center text-slate-400">
-                  Belum ada layanan terdaftar.
-                </td>
-              </tr>
-              <tr
-                v-for="s in servicesList"
-                :key="s.id || s.service_code"
-                class="hover:bg-slate-50/70 transition-colors"
-              >
-                <td class="py-2.5 px-3 font-mono font-bold text-slate-700">{{ s.service_code }}</td>
-                <td class="py-2.5 px-3 font-bold text-slate-900">{{ s.service_name }}</td>
-                <td class="py-2.5 px-3">
-                  <span
-                    class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    :class="
-                      s.category === 'TABUNG'
-                        ? 'bg-blue-100 text-blue-800'
-                        : s.category === 'KILOAN'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-purple-100 text-purple-800'
-                    "
-                  >
-                    {{ s.category }}
-                  </span>
-                </td>
-                <td class="py-2.5 px-3 font-semibold text-slate-600">{{ s.unit }}</td>
-                <td class="py-2.5 px-3 text-right font-extrabold text-slate-900">
-                  Rp {{ formatRupiah(s.price) }}
-                </td>
-                <td class="py-2.5 px-3 text-center font-medium text-slate-600">
-                  {{ s.duration_day === 0 ? 'Hari ini' : `${s.duration_day} Hari` }}
-                </td>
-                <td class="py-2.5 px-3 text-center">
-                  <span
-                    class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    :class="
-                      s.is_active !== false
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-slate-100 text-slate-500'
-                    "
-                  >
+        <!-- Grouped Services by Category -->
+        <div v-if="serviceGroups.length === 0" class="bg-white rounded-2xl p-8 text-center text-slate-400 text-xs border border-slate-100">
+          Belum ada layanan terdaftar.
+        </div>
+
+        <div
+          v-for="grp in serviceGroups"
+          :key="grp.categoryName"
+          class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xs space-y-2"
+        >
+          <!-- Category Header -->
+          <div class="bg-slate-50/80 px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h4 class="font-black text-xs sm:text-sm text-slate-900 uppercase tracking-wider">
+                {{ grp.categoryName }}
+              </h4>
+              <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/60">
+                Satuan: {{ grp.defaultUnit }}
+              </span>
+            </div>
+            <span class="text-xs font-extrabold text-slate-500">
+              {{ grp.services.length }} Layanan
+            </span>
+          </div>
+
+          <!-- Services Table inside category -->
+          <div class="overflow-x-auto p-2">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-100 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  <th class="py-2.5 px-3">Kode</th>
+                  <th class="py-2.5 px-3 cursor-pointer select-none" @click="sortService(grp.categoryName, 'service_name')">
+                    <div class="flex items-center gap-1">
+                      <span>Nama Layanan</span>
+                      <component :is="getSortIcon('service_' + grp.categoryName, 'service_name')" class="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3">Satuan</th>
+                  <th class="py-2.5 px-3 text-right cursor-pointer select-none" @click="sortService(grp.categoryName, 'price')">
+                    <div class="flex items-center justify-end gap-1">
+                      <span>Tarif (Rp)</span>
+                      <component :is="getSortIcon('service_' + grp.categoryName, 'price')" class="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                  <th class="py-2.5 px-3 text-center">Durasi</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                  <th class="py-2.5 px-3 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr
+                  v-for="s in grp.services"
+                  :key="s.id || s.service_code"
+                  class="hover:bg-slate-50/70 transition-colors"
+                >
+                  <td class="py-2.5 px-3 font-mono font-bold text-slate-700">{{ s.service_code }}</td>
+                  <td class="py-2.5 px-3 font-bold text-slate-900">{{ s.service_name }}</td>
+                  <td class="py-2.5 px-3 font-semibold text-slate-600">{{ s.unit || grp.defaultUnit }}</td>
+                  <td class="py-2.5 px-3 text-right font-black text-slate-900">
+                    Rp {{ formatRupiah(s.price || s.price_per_kg) }}
+                  </td>
+                  <td class="py-2.5 px-3 text-center font-medium text-slate-600">
+                    {{ s.duration_day === 0 ? 'Hari ini' : `${s.duration_day} Hari` }}
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
                     <span
-                      class="w-1.5 h-1.5 rounded-full"
-                      :class="s.is_active !== false ? 'bg-emerald-500' : 'bg-slate-400'"
-                    ></span>
-                    {{ s.is_active !== false ? 'Aktif' : 'Nonaktif' }}
-                  </span>
-                </td>
-                <td class="py-2.5 px-3 text-center">
-                  <div class="flex items-center justify-center gap-1.5">
-                    <button
-                      type="button"
-                      class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition-all cursor-pointer"
-                      title="Edit Layanan"
-                      @click="openEditServiceModal(s)"
+                      class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      :class="s.is_active !== false && s.active !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
                     >
-                      <Edit2 class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                      title="Hapus Layanan"
-                      @click="confirmDeleteService(s)"
-                    >
-                      <Trash2 class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                      <span class="w-1.5 h-1.5 rounded-full" :class="s.is_active !== false && s.active !== false ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                      {{ s.is_active !== false && s.active !== false ? 'Aktif' : 'Nonaktif' }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition-all cursor-pointer"
+                        title="Edit Layanan"
+                        @click="openEditServiceModal(s)"
+                      >
+                        <Edit2 class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                        title="Hapus Layanan"
+                        @click="triggerDeleteModal('Layanan', s.service_name, () => deleteService(s.id))"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -671,7 +674,9 @@
                 <Sparkles class="w-4 h-4 text-amber-500" />
                 <span>Varian Aroma Parfum</span>
               </h3>
-              <p class="text-xs text-slate-500">Pilihan parfum yang tersedia untuk order cucian.</p>
+              <p class="text-xs text-slate-500">
+                Pilihan parfum yang tersedia untuk order cucian.
+              </p>
             </div>
             <button
               type="button"
@@ -694,32 +699,26 @@
             >
               <div>
                 <span class="font-bold text-xs text-slate-900 block">{{ p.name }}</span>
-                <span class="text-[11px] text-slate-500">{{
-                  p.description || 'Aroma wangi tahan lama'
-                }}</span>
+                <span class="text-[11px] text-slate-500">{{ p.description || 'Aroma wangi tahan lama' }}</span>
               </div>
               <div class="flex items-center gap-1.5">
                 <span
                   class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="
-                    p.is_active !== false
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'bg-slate-100 text-slate-500'
-                  "
+                  :class="p.is_active !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
                 >
                   {{ p.is_active !== false ? 'Aktif' : 'Nonaktif' }}
                 </span>
                 <button
                   type="button"
-                  class="p-1 rounded-md text-slate-400 hover:text-brand-600 hover:bg-slate-200/60"
+                  class="p-1 rounded-md text-slate-400 hover:text-brand-600 hover:bg-slate-200/60 cursor-pointer"
                   @click="openEditPerfumeModal(p)"
                 >
                   <Edit2 class="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
-                  class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                  @click="confirmDeletePerfume(p)"
+                  class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  @click="triggerDeleteModal('Parfum', p.name, () => deletePerfume(p.id))"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -762,17 +761,15 @@
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-xs text-slate-900">{{ d.name }}</span>
-                  <span
-                    class="font-mono text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-slate-200 text-slate-700"
-                  >
-                    {{ d.code }}
+                  <span class="font-mono text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-slate-200 text-slate-700">
+                    {{ d.code || 'PROMO' }}
                   </span>
                 </div>
                 <span class="text-[11px] text-slate-500">
                   {{
-                    d.discount_type === 'PERCENTAGE' || d.discount_percent > 0
-                      ? `Diskon ${Number(d.discount_percent || d.value)}%`
-                      : `Potongan Rp ${formatRupiah(d.fixed_amount || d.value)}`
+                    d.discount_type === 'PERCENTAGE'
+                      ? `Diskon ${Number(d.value || d.discount_percent)}%`
+                      : `Potongan Rp ${formatRupiah(d.value || d.fixed_amount)}`
                   }}
                   <span v-if="Number(d.min_order_amount) > 0">
                     • Min. Order Rp {{ formatRupiah(d.min_order_amount) }}
@@ -782,25 +779,21 @@
               <div class="flex items-center gap-1.5">
                 <span
                   class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="
-                    d.is_active !== false
-                      ? 'bg-rose-50 text-rose-700'
-                      : 'bg-slate-100 text-slate-500'
-                  "
+                  :class="d.is_active !== false ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-500'"
                 >
                   {{ d.is_active !== false ? 'Aktif' : 'Nonaktif' }}
                 </span>
                 <button
                   type="button"
-                  class="p-1 rounded-md text-slate-400 hover:text-brand-600 hover:bg-slate-200/60"
+                  class="p-1 rounded-md text-slate-400 hover:text-brand-600 hover:bg-slate-200/60 cursor-pointer"
                   @click="openEditDiscountModal(d)"
                 >
                   <Edit2 class="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
-                  class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                  @click="confirmDeleteDiscount(d)"
+                  class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  @click="triggerDeleteModal('Diskon/Promo', d.name, () => deleteDiscount(d.id))"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -817,9 +810,7 @@
         v-else-if="activeTab === 'EXPENSE_CATEGORIES'"
         class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"
-        >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
               <Receipt class="w-4 h-4 text-amber-600" />
@@ -832,7 +823,7 @@
           <button
             type="button"
             class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-            @click="openAddCategoryModal"
+            @click="openAddCategoryModal('EXPENSE')"
           >
             <Plus class="w-4 h-4" />
             <span>Tambah Kategori Baru</span>
@@ -842,43 +833,44 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr
-                class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider"
-              >
-                <th class="py-3 px-3">Kode Kategori</th>
-                <th class="py-3 px-3">Nama Kategori Pengeluaran</th>
+              <tr class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <th class="py-3 px-3 cursor-pointer select-none" @click="sortCategory('code')">
+                  <div class="flex items-center gap-1">
+                    <span>Kode Kategori</span>
+                    <component :is="getSortIcon('category', 'code')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
+                <th class="py-3 px-3 cursor-pointer select-none" @click="sortCategory('name')">
+                  <div class="flex items-center gap-1">
+                    <span>Nama Kategori Pengeluaran</span>
+                    <component :is="getSortIcon('category', 'name')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th class="py-3 px-3 text-center">Status</th>
                 <th class="py-3 px-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-if="expenseCategoriesList.length === 0">
-                <td colspan="4" class="py-6 text-center text-slate-400">
-                  Belum ada kategori pengeluaran.
-                </td>
+              <tr v-if="sortedExpenseCategories.length === 0">
+                <td colspan="4" class="py-6 text-center text-slate-400">Belum ada kategori pengeluaran.</td>
               </tr>
               <tr
-                v-for="cat in expenseCategoriesList"
+                v-for="cat in sortedExpenseCategories"
                 :key="cat.id"
                 class="hover:bg-slate-50/70 transition-colors"
               >
                 <td class="py-2.5 px-3 font-mono font-bold text-slate-700">
-                  {{ cat.category_code }}
+                  {{ cat.code || cat.category_code }}
                 </td>
-                <td class="py-2.5 px-3 font-bold text-slate-900">{{ cat.category_name }}</td>
+                <td class="py-2.5 px-3 font-bold text-slate-900">
+                  {{ cat.name || cat.category_name }}
+                </td>
                 <td class="py-2.5 px-3 text-center">
                   <span
                     class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    :class="
-                      cat.is_active
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-slate-100 text-slate-500'
-                    "
+                    :class="cat.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
                   >
-                    <span
-                      class="w-1.5 h-1.5 rounded-full"
-                      :class="cat.is_active ? 'bg-emerald-500' : 'bg-slate-400'"
-                    ></span>
+                    <span class="w-1.5 h-1.5 rounded-full" :class="cat.is_active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                     {{ cat.is_active ? 'Aktif' : 'Nonaktif' }}
                   </span>
                 </td>
@@ -896,7 +888,7 @@
                       type="button"
                       class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
                       title="Hapus Kategori"
-                      @click="confirmDeleteCategory(cat)"
+                      @click="triggerDeleteModal('Kategori', cat.name || cat.category_name, () => deleteCategory(cat.id))"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -915,9 +907,7 @@
         v-else-if="activeTab === 'EXPENSE_CORRECTION'"
         class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-5"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"
-        >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
               <DollarSign class="w-4 h-4 text-rose-600" />
@@ -930,9 +920,7 @@
         </div>
 
         <!-- Filter Bar -->
-        <div
-          class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3"
-        >
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Mulai Tanggal</label>
             <input
@@ -956,8 +944,8 @@
               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
             >
               <option value="">Semua Kategori</option>
-              <option v-for="cat in expenseCategoriesList" :key="cat.id" :value="cat.category_code">
-                {{ cat.category_name }}
+              <option v-for="cat in expenseCategoriesList" :key="cat.id" :value="cat.code || cat.category_code">
+                {{ cat.name || cat.category_name }}
               </option>
             </select>
           </div>
@@ -967,25 +955,33 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr
-                class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider"
-              >
-                <th class="py-3 px-3">Tanggal</th>
+              <tr class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <th class="py-3 px-3 cursor-pointer select-none" @click="sortExpenseAudit('expense_date')">
+                  <div class="flex items-center gap-1">
+                    <span>Tanggal</span>
+                    <component :is="getSortIcon('expense_audit', 'expense_date')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th class="py-3 px-3">Kategori</th>
-                <th class="py-3 px-3 text-right">Nominal (Rp)</th>
+                <th class="py-3 px-3 text-right cursor-pointer select-none" @click="sortExpenseAudit('amount')">
+                  <div class="flex items-center justify-end gap-1">
+                    <span>Nominal (Rp)</span>
+                    <component :is="getSortIcon('expense_audit', 'amount')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th class="py-3 px-3">Keterangan Biaya</th>
                 <th class="py-3 px-3">Dicatat Oleh</th>
                 <th class="py-3 px-3 text-center">Aksi Koreksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-if="expensesAuditList.length === 0">
+              <tr v-if="sortedExpensesAudit.length === 0">
                 <td colspan="6" class="py-8 text-center text-slate-400">
                   Tidak ada catatan pengeluaran pada rentang tanggal ini.
                 </td>
               </tr>
               <tr
-                v-for="exp in expensesAuditList"
+                v-for="exp in sortedExpensesAudit"
                 :key="exp.id"
                 class="hover:bg-slate-50/70 transition-colors"
               >
@@ -993,9 +989,7 @@
                   {{ formatDate(exp.expense_date) }}
                 </td>
                 <td class="py-2.5 px-3">
-                  <span
-                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200"
-                  >
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                     {{ exp.category }}
                   </span>
                 </td>
@@ -1005,8 +999,10 @@
                 <td class="py-2.5 px-3 font-medium text-slate-700 max-w-xs truncate">
                   {{ exp.description || exp.notes || '-' }}
                 </td>
-                <td class="py-2.5 px-3 text-slate-500 font-medium">
-                  {{ exp.created_by || 'Kasir' }}
+                <td class="py-2.5 px-3 text-slate-500 font-medium whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                    {{ exp.created_by || 'Kasir' }}
+                  </span>
                 </td>
                 <td class="py-2.5 px-3 text-center">
                   <div class="flex items-center justify-center gap-1.5">
@@ -1023,7 +1019,7 @@
                       type="button"
                       class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
                       title="Hapus Pengeluaran"
-                      @click="confirmDeleteExpense(exp)"
+                      @click="triggerDeleteModal('Pengeluaran', `Rp ${formatRupiah(exp.amount)}`, () => deleteExpense(exp.id))"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -1050,9 +1046,7 @@
         v-else-if="activeTab === 'CUSTOMERS'"
         class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4"
       >
-        <div
-          class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3"
-        >
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
               <Users class="w-4 h-4 text-brand-600" />
@@ -1083,7 +1077,7 @@
           <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
           <button
             v-if="customerSearchQuery"
-            class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+            class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
             @click="customerSearchQuery = ''"
           >
             <X class="w-4 h-4" />
@@ -1093,24 +1087,32 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr
-                class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider"
-              >
-                <th class="py-3 px-3">Nama Pelanggan</th>
+              <tr class="bg-slate-50 border-y border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <th class="py-3 px-3 cursor-pointer select-none" @click="sortCustomer('full_name')">
+                  <div class="flex items-center gap-1">
+                    <span>Nama Pelanggan</span>
+                    <component :is="getSortIcon('customer', 'full_name')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th class="py-3 px-3">No. WhatsApp</th>
                 <th class="py-3 px-3">Alamat</th>
-                <th class="py-3 px-3">Terdaftar</th>
+                <th class="py-3 px-3 cursor-pointer select-none" @click="sortCustomer('created_at')">
+                  <div class="flex items-center gap-1">
+                    <span>Terdaftar</span>
+                    <component :is="getSortIcon('customer', 'created_at')" class="w-3 h-3 text-slate-400" />
+                  </div>
+                </th>
                 <th class="py-3 px-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-if="customersList.length === 0">
+              <tr v-if="sortedCustomers.length === 0">
                 <td colspan="5" class="py-8 text-center text-slate-400">
                   Tidak ada data pelanggan yang cocok.
                 </td>
               </tr>
               <tr
-                v-for="c in customersList"
+                v-for="c in sortedCustomers"
                 :key="c.id"
                 class="hover:bg-slate-50/70 transition-colors"
               >
@@ -1134,7 +1136,7 @@
                       type="button"
                       class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
                       title="Hapus Pelanggan"
-                      @click="confirmDeleteCustomer(c)"
+                      @click="triggerDeleteModal('Pelanggan', c.full_name, () => deleteCustomer(c.id))"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -1377,7 +1379,7 @@
 
           <button
             type="button"
-            class="w-full py-2.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+            class="w-full py-2.5 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             @click="handleFactoryReset"
           >
             <RotateCcw class="w-4 h-4" />
@@ -1391,22 +1393,14 @@
       <!-- ============================================================== -->
 
       <!-- 1. Modal Tambah/Edit Pegawai -->
-      <div
-        v-if="showEmployeeModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <div v-if="showEmployeeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Users class="w-4 h-4 text-purple-600" />
               <span>{{ isEditingEmployee ? 'Edit Data Pegawai' : 'Tambah Pegawai Baru' }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showEmployeeModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showEmployeeModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
@@ -1434,9 +1428,7 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1"
-                  >Peran / Hak Akses *</label
-                >
+                <label class="block text-xs font-bold text-slate-700 mb-1">Peran / Hak Akses *</label>
                 <select
                   v-model="employeeForm.role"
                   required
@@ -1450,11 +1442,7 @@
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">
-                  {{
-                    isEditingEmployee
-                      ? 'PIN Baru (Kosongkan jika tdk ubah)'
-                      : 'PIN Akses (4 Digit) *'
-                  }}
+                  {{ isEditingEmployee ? 'PIN Baru (Kosongkan jika tdk ubah)' : 'PIN Akses (4 Digit) *' }}
                 </label>
                 <input
                   v-model="employeeForm.pin"
@@ -1467,9 +1455,7 @@
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1"
-                >No. Handphone / WhatsApp</label
-              >
+              <label class="block text-xs font-bold text-slate-700 mb-1">No. Handphone / WhatsApp</label>
               <input
                 v-model="employeeForm.phone"
                 type="text"
@@ -1479,9 +1465,9 @@
             </div>
             <div class="flex items-center gap-2 pt-1">
               <input
-                id="emp-active"
                 v-model="employeeForm.is_active"
                 type="checkbox"
+                id="emp-active"
                 class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
               />
               <label for="emp-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
@@ -1491,7 +1477,7 @@
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showEmployeeModal = false"
               >
                 Batal
@@ -1499,7 +1485,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Pegawai' }}
               </button>
@@ -1508,87 +1494,92 @@
         </div>
       </div>
 
-      <!-- 2. Modal Tambah/Edit Layanan -->
-      <div
-        v-if="showServiceModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <!-- 2. Modal Tambah/Edit Layanan (Flow: Pick Category First -> Auto Code & Unit) -->
+      <div v-if="showServiceModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Tag class="w-4 h-4 text-emerald-600" />
               <span>{{ isEditingService ? 'Edit Layanan' : 'Tambah Layanan Baru' }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showServiceModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showServiceModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
-          <form class="space-y-3" @submit.prevent="submitServiceForm">
+          <form class="space-y-3.5" @submit.prevent="submitServiceForm">
+            <!-- Step 1: Kategori Layanan (Wajib Pilih Dulu) -->
+            <div>
+              <label class="block text-xs font-black text-slate-800 mb-1 flex items-center justify-between">
+                <span>1. Pilih Kategori Layanan *</span>
+                <span class="text-[10px] text-emerald-700 font-bold">Langkah Pertama</span>
+              </label>
+              <select
+                v-model="serviceForm.category_id"
+                required
+                class="w-full px-3 py-2.5 text-xs rounded-xl border border-emerald-300 bg-emerald-50/40 font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                @change="handleCategorySelectionChange"
+              >
+                <option value="" disabled>-- Pilih Kategori Layanan --</option>
+                <option v-for="cat in serviceCategoriesList" :key="cat.id" :value="cat.id">
+                  {{ cat.name }} (Satuan: {{ cat.default_unit }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Step 2: Auto-Generated Code & Satuan -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Kode Layanan *</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  Kode Layanan <span class="text-[10px] text-slate-400 font-normal">(Otomatis)</span>
+                </label>
                 <input
                   v-model="serviceForm.service_code"
                   type="text"
                   required
-                  placeholder="CK-01"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-mono font-bold uppercase focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  readonly
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-100 font-mono font-bold uppercase text-slate-600 cursor-not-allowed select-none"
                 />
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Kategori *</label>
-                <select
-                  v-model="serviceForm.category"
+                <label class="block text-xs font-bold text-slate-700 mb-1">Satuan Tarif *</label>
+                <input
+                  v-model="serviceForm.unit"
+                  type="text"
                   required
+                  placeholder="Kg / Tabung / Pcs"
                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="KILOAN">KILOAN</option>
-                  <option value="TABUNG">TABUNG</option>
-                  <option value="SATUAN">SATUAN</option>
-                  <option value="METERAN">METERAN</option>
-                </select>
+                />
               </div>
             </div>
+
+            <!-- Step 3: Nama Layanan -->
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Nama Layanan *</label>
               <input
                 v-model="serviceForm.service_name"
                 type="text"
                 required
-                placeholder="Contoh: Cuci Kering Seterika"
+                placeholder="Contoh: Cuci Kering Seterika Kilat"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-emerald-500"
               />
             </div>
-            <div class="grid grid-cols-3 gap-3">
+
+            <!-- Step 4: Tarif & Durasi -->
+            <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Satuan *</label>
-                <input
-                  v-model="serviceForm.unit"
-                  type="text"
-                  required
-                  placeholder="Kg / Tabung"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Tarif (Rp) *</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tarif Layanan (Rp) *</label>
                 <input
                   v-model.number="serviceForm.price"
                   type="number"
-                  min="0"
+                  min="500"
                   step="500"
                   required
                   placeholder="10000"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-emerald-500"
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Durasi (Hari)</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Durasi Kerja (Hari)</label>
                 <input
                   v-model.number="serviceForm.duration_day"
                   type="number"
@@ -1598,21 +1589,23 @@
                 />
               </div>
             </div>
+
             <div class="flex items-center gap-2 pt-1">
               <input
-                id="srv-active"
                 v-model="serviceForm.is_active"
                 type="checkbox"
+                id="srv-active"
                 class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
               />
               <label for="srv-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
-                Layanan Aktif (Tampil di POS)
+                Layanan Aktif (Dapat dipilih kasir di Web POS)
               </label>
             </div>
+
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showServiceModal = false"
               >
                 Batal
@@ -1620,7 +1613,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Layanan' }}
               </button>
@@ -1630,22 +1623,14 @@
       </div>
 
       <!-- 3. Modal Tambah/Edit Parfum -->
-      <div
-        v-if="showPerfumeModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <div v-if="showPerfumeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Sparkles class="w-4 h-4 text-amber-500" />
               <span>{{ isEditingPerfume ? 'Edit Aroma Parfum' : 'Tambah Aroma Baru' }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showPerfumeModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showPerfumeModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
@@ -1671,9 +1656,9 @@
             </div>
             <div class="flex items-center gap-2 pt-1">
               <input
-                id="prf-active"
                 v-model="perfumeForm.is_active"
                 type="checkbox"
+                id="prf-active"
                 class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
               />
               <label for="prf-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
@@ -1683,7 +1668,7 @@
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showPerfumeModal = false"
               >
                 Batal
@@ -1691,7 +1676,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Parfum' }}
               </button>
@@ -1700,78 +1685,126 @@
         </div>
       </div>
 
-      <!-- 4. Modal Tambah/Edit Diskon -->
-      <div
-        v-if="showDiscountModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <!-- 4. Modal Tambah/Edit Diskon (Mutually Exclusive: Persentase vs Potongan Tetap) -->
+      <div v-if="showDiscountModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Percent class="w-4 h-4 text-rose-500" />
               <span>{{ isEditingDiscount ? 'Edit Diskon / Promo' : 'Tambah Promo Baru' }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showDiscountModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showDiscountModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
-          <form class="space-y-3" @submit.prevent="submitDiscountForm">
+          <form class="space-y-3.5" @submit.prevent="submitDiscountForm">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Kode Promo *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Kode Promo <span class="text-[10px] text-slate-400 font-normal">(Otomatis oleh Sistem)</span>
+              </label>
               <input
                 v-model="discountForm.code"
                 type="text"
                 required
-                placeholder="PROMO10"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-mono font-bold uppercase focus:bg-white focus:ring-2 focus:ring-rose-500"
+                readonly
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-100 font-mono font-bold uppercase text-slate-600 cursor-not-allowed select-none"
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Diskon *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Diskon / Promo *</label>
               <input
                 v-model="discountForm.name"
                 type="text"
                 required
-                placeholder="Diskon Pelanggan Baru 10%"
+                placeholder="Contoh: Diskon Pelanggan Baru"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-rose-500"
+                @input="handleDiscountNameInput"
               />
             </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Diskon Persen (%)</label>
-                <input
-                  v-model.number="discountForm.discount_percent"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="10"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-rose-500"
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1"
-                  >Potongan Tetap (Rp)</label
+
+            <!-- Tipe Diskon (Mutually Exclusive Toggle) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                Bentuk Potongan Diskon * (Pilih Salah Satu)
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer"
+                  :class="
+                    discountForm.type === 'PERCENTAGE'
+                      ? 'bg-rose-50 border-rose-400 text-rose-700 ring-2 ring-rose-400/20'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  "
+                  @click="setDiscountType('PERCENTAGE')"
                 >
+                  Persentase (%)
+                </button>
+                <button
+                  type="button"
+                  class="py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer"
+                  :class="
+                    discountForm.type === 'NOMINAL'
+                      ? 'bg-rose-50 border-rose-400 text-rose-700 ring-2 ring-rose-400/20'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  "
+                  @click="setDiscountType('NOMINAL')"
+                >
+                  Potongan Tetap (Rp)
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Nilai Sesuai Tipe -->
+            <div v-if="discountForm.type === 'PERCENTAGE'">
+              <label class="block text-xs font-bold text-rose-700 mb-1">Nilai Diskon Persen (%) *</label>
+              <div class="relative">
                 <input
-                  v-model.number="discountForm.fixed_amount"
+                  v-model.number="discountForm.percentValue"
                   type="number"
-                  min="0"
+                  min="1"
+                  max="100"
+                  required
+                  placeholder="Contoh: 10"
+                  class="w-full pr-8 px-3 py-2 text-xs rounded-xl border border-rose-300 bg-rose-50/30 font-black text-rose-700 focus:bg-white focus:ring-2 focus:ring-rose-500"
+                />
+                <span class="absolute right-3 top-2.5 font-bold text-xs text-rose-500">%</span>
+              </div>
+            </div>
+
+            <div v-else>
+              <label class="block text-xs font-bold text-rose-700 mb-1">Nilai Potongan Tetap (Rp) *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 font-bold text-xs text-rose-500">Rp</span>
+                <input
+                  v-model.number="discountForm.nominalValue"
+                  type="number"
+                  min="500"
                   step="500"
-                  placeholder="5000"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-rose-500"
+                  required
+                  placeholder="Contoh: 10000"
+                  class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-rose-300 bg-rose-50/30 font-black text-rose-700 focus:bg-white focus:ring-2 focus:ring-rose-500"
                 />
               </div>
             </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Minimal Order (Rp)</label>
+              <input
+                v-model.number="discountForm.min_order_amount"
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="0 (Tanpa minimum)"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
             <div class="flex items-center gap-2 pt-1">
               <input
-                id="disc-active"
                 v-model="discountForm.is_active"
                 type="checkbox"
+                id="disc-active"
                 class="rounded text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer"
               />
               <label for="disc-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
@@ -1781,7 +1814,7 @@
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showDiscountModal = false"
               >
                 Batal
@@ -1789,7 +1822,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Promo' }}
               </button>
@@ -1798,67 +1831,66 @@
         </div>
       </div>
 
-      <!-- 5. Modal Tambah/Edit Kategori Pengeluaran -->
-      <div
-        v-if="showCategoryModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <!-- 5. Modal Tambah/Edit Kategori (Pengeluaran / Layanan) -->
+      <div v-if="showCategoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Receipt class="w-4 h-4 text-amber-600" />
-              <span>{{
-                isEditingCategory ? 'Edit Kategori Pengeluaran' : 'Tambah Kategori Baru'
-              }}</span>
+              <FolderTree class="w-4 h-4 text-amber-600" />
+              <span>{{ categoryModalTarget === 'SERVICE' ? 'Tambah Kategori Layanan' : (isEditingCategory ? 'Edit Kategori Pengeluaran' : 'Tambah Kategori Pengeluaran') }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showCategoryModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showCategoryModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
           <form class="space-y-3" @submit.prevent="submitCategoryForm">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Kode Kategori *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Kategori *</label>
               <input
-                v-model="categoryForm.category_code"
+                v-model="categoryForm.name"
                 type="text"
                 required
-                :disabled="isEditingCategory"
-                placeholder="Contoh: PLASTIK"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-mono font-bold uppercase focus:bg-white focus:ring-2 focus:ring-amber-500"
+                placeholder="Contoh: Perlengkapan Bayi / Plastik"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-amber-500"
+                @input="handleCategoryNameInput"
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1"
-                >Nama Kategori Pengeluaran *</label
-              >
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Kode Kategori <span class="text-[10px] text-slate-400 font-normal">(Otomatis oleh Sistem)</span>
+              </label>
               <input
-                v-model="categoryForm.category_name"
+                v-model="categoryForm.code"
                 type="text"
                 required
-                placeholder="Plastik & Roll Packaging"
+                readonly
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-100 font-mono font-bold uppercase text-slate-600 cursor-not-allowed select-none"
+              />
+            </div>
+            <div v-if="categoryModalTarget === 'SERVICE'">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Satuan Default Layanan</label>
+              <input
+                v-model="categoryForm.default_unit"
+                type="text"
+                placeholder="Kg / Tabung / Pcs / Meter"
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-amber-500"
               />
             </div>
             <div class="flex items-center gap-2 pt-1">
               <input
-                id="cat-active"
                 v-model="categoryForm.is_active"
                 type="checkbox"
+                id="cat-active"
                 class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
               />
               <label for="cat-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
-                Kategori Aktif (Bisa Dipilih Kasir)
+                Kategori Aktif
               </label>
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showCategoryModal = false"
               >
                 Batal
@@ -1866,7 +1898,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Kategori' }}
               </button>
@@ -1875,23 +1907,15 @@
         </div>
       </div>
 
-      <!-- 6. Modal Koreksi Pengeluaran (Edit Expense) -->
-      <div
-        v-if="showEditExpenseModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <!-- 6. Modal Koreksi Pengeluaran (created_by Strictly Read-Only) -->
+      <div v-if="showEditExpenseModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <DollarSign class="w-4 h-4 text-rose-600" />
               <span>Koreksi Data Pengeluaran Kas Kecil</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showEditExpenseModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showEditExpenseModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
@@ -1911,20 +1935,16 @@
                 <select
                   v-model="editExpenseForm.category"
                   required
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-rose-500"
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-rose-500 cursor-pointer"
                 >
-                  <option
-                    v-for="cat in expenseCategoriesList"
-                    :key="cat.id"
-                    :value="cat.category_code"
-                  >
-                    {{ cat.category_name }}
+                  <option v-for="cat in expenseCategoriesList" :key="cat.id" :value="cat.code || cat.category_code">
+                    {{ cat.name || cat.category_name }}
                   </option>
                 </select>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nominal (Rp) *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nominal Pengeluaran (Rp) *</label>
               <input
                 v-model.number="editExpenseForm.amount"
                 type="number"
@@ -1943,18 +1963,21 @@
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-medium focus:bg-white focus:ring-2 focus:ring-rose-500"
               ></textarea>
             </div>
+            <!-- created_by: STRICTLY READ-ONLY BADGE (Cannot be edited) -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Dicatat Oleh</label>
-              <input
-                v-model="editExpenseForm.created_by"
-                type="text"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-medium focus:bg-white focus:ring-2 focus:ring-rose-500"
-              />
+              <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span>Dicatat Oleh</span>
+                <span class="text-[10px] text-slate-400 font-normal">Terkunci (Audit Keamanan)</span>
+              </label>
+              <div class="px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 select-none flex items-center gap-1.5 cursor-not-allowed">
+                <Shield class="w-3.5 h-3.5 text-slate-400" />
+                <span>{{ editExpenseForm.created_by || 'Kasir Utama' }}</span>
+              </div>
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showEditExpenseModal = false"
               >
                 Batal
@@ -1962,7 +1985,7 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Perbarui Pengeluaran' }}
               </button>
@@ -1972,22 +1995,14 @@
       </div>
 
       <!-- 7. Modal Tambah/Edit Pelanggan -->
-      <div
-        v-if="showCustomerModal"
-        class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
+      <div v-if="showCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Users class="w-4 h-4 text-brand-600" />
               <span>{{ isEditingCustomer ? 'Edit Data Pelanggan' : 'Tambah Pelanggan Baru' }}</span>
             </h4>
-            <button
-              class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              @click="showCustomerModal = false"
-            >
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showCustomerModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
@@ -2003,9 +2018,7 @@
               />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1"
-                >Nomor Handphone / WhatsApp *</label
-              >
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Handphone / WhatsApp *</label>
               <input
                 v-model="customerForm.phone"
                 type="text"
@@ -2026,7 +2039,7 @@
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showCustomerModal = false"
               >
                 Batal
@@ -2034,12 +2047,53 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs"
+                class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 {{ modalSaving ? 'Menyimpan...' : 'Simpan Pelanggan' }}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- 8. UNIVERSAL DELETE CONFIRMATION MODAL (Clean Vue Modal Replacing Alert JS) -->
+      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h4 class="font-bold text-sm text-rose-600 flex items-center gap-2">
+              <AlertTriangle class="w-4 h-4 text-rose-600" />
+              <span>Konfirmasi Hapus Data</span>
+            </h4>
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showDeleteModal = false">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Apakah Anda yakin ingin menghapus {{ deleteModalPayload.type }}
+            <strong class="text-slate-900">"{{ deleteModalPayload.title }}"</strong>?
+          </p>
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-800 space-y-0.5">
+            <span class="font-bold block">Peringatan:</span>
+            <p>Data yang dihapus akan dinonaktifkan dari sistem LaundryOS.</p>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              @click="showDeleteModal = false"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              :disabled="deleteLoading"
+              class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              @click="executeConfirmedDelete"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              <span>{{ deleteLoading ? 'Menghapus...' : 'Ya, Hapus' }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2075,6 +2129,10 @@ import {
   Trash2,
   X,
   Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  FolderTree,
 } from 'lucide-vue-next'
 import { useAppSettings } from '../composables/useAppSettings'
 import { useToast } from '../composables/useToast'
@@ -2110,10 +2168,30 @@ const simulatedWeight = ref(8.5)
 
 // Master Data Lists from API
 const servicesList = ref([])
+const serviceCategoriesList = ref([])
 const perfumesList = ref([])
 const discountsList = ref([])
 const expenseCategoriesList = ref([])
 const employeesList = ref([])
+
+// Sorting state maps
+const sortStates = reactive({})
+
+const getSortIcon = (table, col) => {
+  const current = sortStates[table]
+  if (!current || current.col !== col) return ArrowUpDown
+  return current.dir === 'asc' ? ArrowUp : ArrowDown
+}
+
+const toggleSort = (table, col) => {
+  if (!sortStates[table] || sortStates[table].col !== col) {
+    sortStates[table] = { col, dir: 'asc' }
+  } else if (sortStates[table].dir === 'asc') {
+    sortStates[table].dir = 'desc'
+  } else {
+    delete sortStates[table]
+  }
+}
 
 // Expense Audit & Correction State
 const getThirtyDaysAgoStr = () => {
@@ -2143,6 +2221,35 @@ const totalCustomers = ref(0)
 // Modal states & Loading
 const modalSaving = ref(false)
 
+// Universal Delete Confirmation Modal State
+const showDeleteModal = ref(false)
+const deleteLoading = ref(false)
+const deleteModalPayload = reactive({
+  type: '',
+  title: '',
+  callback: null,
+})
+
+const triggerDeleteModal = (type, title, callback) => {
+  deleteModalPayload.type = type
+  deleteModalPayload.title = title
+  deleteModalPayload.callback = callback
+  showDeleteModal.value = true
+}
+
+const executeConfirmedDelete = async () => {
+  if (!deleteModalPayload.callback) return
+  deleteLoading.value = true
+  try {
+    await deleteModalPayload.callback()
+    showDeleteModal.value = false
+  } catch (err) {
+    error(err.message || 'Gagal menghapus data')
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 // 1. Employee Modal State
 const showEmployeeModal = ref(false)
 const isEditingEmployee = ref(false)
@@ -2156,18 +2263,107 @@ const employeeForm = reactive({
   is_active: true,
 })
 
-// 2. Service Modal State
+const sortEmployee = (col) => toggleSort('employee', col)
+const sortedEmployees = computed(() => {
+  const list = [...employeesList.value]
+  const s = sortStates['employee']
+  if (!s) return list
+  return list.sort((a, b) => {
+    const valA = (a[s.col] || '').toString().toLowerCase()
+    const valB = (b[s.col] || '').toString().toLowerCase()
+    return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+  })
+})
+
+// 2. Service Modal State & Category Flow
 const showServiceModal = ref(false)
 const isEditingService = ref(false)
 const currentServiceId = ref(null)
 const serviceForm = reactive({
+  category_id: '',
+  category_name: '',
   service_code: '',
   service_name: '',
-  category: 'KILOAN',
   unit: 'Kg',
   price: 10000,
   duration_day: 1,
   is_active: true,
+})
+
+const generateServiceCode = (catName) => {
+  if (!catName) return 'SRV-' + Math.floor(100 + Math.random() * 900)
+  const clean = catName.toUpperCase()
+  let prefix = 'SRV'
+  if (clean.includes('SELF SERVICE') || clean.includes('TABUNG')) prefix = 'SLF'
+  else if (clean.includes('SETRIKA') && clean.includes('CUCI')) prefix = 'CS'
+  else if (clean.includes('SETRIKA')) prefix = 'ST'
+  else if (clean.includes('KARPET')) prefix = 'KRP'
+  else if (clean.includes('BONEKA')) prefix = 'BNK'
+  else if (clean.includes('SEPATU') || clean.includes('TAS')) prefix = 'SPT'
+  else if (clean.includes('BED COVER') || clean.includes('SELIMUT')) prefix = 'BC'
+  else if (clean.includes('SATUAN')) prefix = 'SAT'
+
+  const count = servicesList.value.filter((s) => (s.service_code || '').startsWith(prefix)).length + 1
+  return `${prefix}-${String(count).padStart(2, '0')}`
+}
+
+const handleCategorySelectionChange = () => {
+  const selectedCat = serviceCategoriesList.value.find((c) => c.id === serviceForm.category_id)
+  if (selectedCat) {
+    serviceForm.category_name = selectedCat.name
+    serviceForm.unit = selectedCat.default_unit || 'Kg'
+    if (!isEditingService.value) {
+      serviceForm.service_code = generateServiceCode(selectedCat.name)
+    }
+  }
+}
+
+// Grouped Services computation for categorized catalog
+const sortService = (catName, col) => toggleSort('service_' + catName, col)
+
+const serviceGroups = computed(() => {
+  const groupsMap = {}
+
+  // Initialize from serviceCategoriesList to keep order
+  serviceCategoriesList.value.forEach((cat) => {
+    groupsMap[cat.name] = {
+      categoryName: cat.name,
+      defaultUnit: cat.default_unit || 'Kg',
+      services: [],
+    }
+  })
+
+  // Distribute services
+  servicesList.value.forEach((s) => {
+    const grpName = s.category_name || s.category || 'Layanan Lain-lain'
+    if (!groupsMap[grpName]) {
+      groupsMap[grpName] = {
+        categoryName: grpName,
+        defaultUnit: s.unit || 'Kg',
+        services: [],
+      }
+    }
+    groupsMap[grpName].services.push(s)
+  })
+
+  // Apply sorting within each group
+  return Object.values(groupsMap)
+    .filter((g) => g.services.length > 0 || serviceCategoriesList.value.some((c) => c.name === g.categoryName))
+    .map((g) => {
+      const s = sortStates['service_' + g.categoryName]
+      if (!s) return g
+      const sorted = [...g.services].sort((a, b) => {
+        if (s.col === 'price') {
+          const pA = Number(a.price || a.price_per_kg) || 0
+          const pB = Number(b.price || b.price_per_kg) || 0
+          return s.dir === 'asc' ? pA - pB : pB - pA
+        }
+        const valA = (a[s.col] || '').toString().toLowerCase()
+        const valB = (b[s.col] || '').toString().toLowerCase()
+        return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+      })
+      return { ...g, services: sorted }
+    })
 })
 
 // 3. Perfume Modal State
@@ -2180,29 +2376,66 @@ const perfumeForm = reactive({
   is_active: true,
 })
 
-// 4. Discount Modal State
+// 4. Discount Modal State (Mutually Exclusive: Percentage vs Nominal)
 const showDiscountModal = ref(false)
 const isEditingDiscount = ref(false)
 const currentDiscountId = ref(null)
 const discountForm = reactive({
   code: '',
   name: '',
-  discount_percent: 10,
-  fixed_amount: 0,
+  type: 'PERCENTAGE', // 'PERCENTAGE' | 'NOMINAL'
+  percentValue: 10,
+  nominalValue: 5000,
+  min_order_amount: 0,
   is_active: true,
 })
 
-// 5. Category Modal State
+const setDiscountType = (t) => {
+  discountForm.type = t
+}
+
+const handleDiscountNameInput = () => {
+  if (!isEditingDiscount.value && !discountForm.code) {
+    const clean = discountForm.name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6)
+    discountForm.code = clean ? `PRM-${clean}` : 'PRM-' + Math.floor(100 + Math.random() * 900)
+  }
+}
+
+// 5. Category Modal State (Supports either Expense or Service Category)
 const showCategoryModal = ref(false)
+const categoryModalTarget = ref('EXPENSE') // 'EXPENSE' | 'SERVICE'
 const isEditingCategory = ref(false)
 const currentCategoryId = ref(null)
 const categoryForm = reactive({
-  category_code: '',
-  category_name: '',
+  code: '',
+  name: '',
+  default_unit: 'Kg',
   is_active: true,
 })
 
-// 6. Edit Expense Modal State
+const handleCategoryNameInput = () => {
+  if (!isEditingCategory.value) {
+    categoryForm.code = categoryForm.name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+  }
+}
+
+const sortCategory = (col) => toggleSort('category', col)
+const sortedExpenseCategories = computed(() => {
+  const list = [...expenseCategoriesList.value]
+  const s = sortStates['category']
+  if (!s) return list
+  return list.sort((a, b) => {
+    const key = s.col === 'name' ? (a.name || a.category_name || '') : (a.code || a.category_code || '')
+    const keyB = s.col === 'name' ? (b.name || b.category_name || '') : (b.code || b.category_code || '')
+    return s.dir === 'asc' ? key.localeCompare(keyB) : keyB.localeCompare(key)
+  })
+})
+
+// 6. Edit Expense Modal State (created_by strictly read-only)
 const showEditExpenseModal = ref(false)
 const currentExpenseId = ref(null)
 const editExpenseForm = reactive({
@@ -2211,6 +2444,23 @@ const editExpenseForm = reactive({
   amount: 0,
   description: '',
   created_by: '',
+})
+
+const sortExpenseAudit = (col) => toggleSort('expense_audit', col)
+const sortedExpensesAudit = computed(() => {
+  const list = [...expensesAuditList.value]
+  const s = sortStates['expense_audit']
+  if (!s) return list
+  return list.sort((a, b) => {
+    if (s.col === 'amount') {
+      const aVal = Number(a.amount) || 0
+      const bVal = Number(b.amount) || 0
+      return s.dir === 'asc' ? aVal - bVal : bVal - aVal
+    }
+    const valA = (a[s.col] || '').toString()
+    const valB = (b[s.col] || '').toString()
+    return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+  })
 })
 
 // 7. Customer Modal State
@@ -2223,19 +2473,33 @@ const customerForm = reactive({
   address: '',
 })
 
+const sortCustomer = (col) => toggleSort('customer', col)
+const sortedCustomers = computed(() => {
+  const list = [...customersList.value]
+  const s = sortStates['customer']
+  if (!s) return list
+  return list.sort((a, b) => {
+    const valA = (a[s.col] || '').toString().toLowerCase()
+    const valB = (b[s.col] || '').toString().toLowerCase()
+    return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+  })
+})
+
 // ==========================================
 // API Loaders
 // ==========================================
 const fetchMasterData = async () => {
   try {
-    const [srv, prf, disc, expCat, emp] = await Promise.all([
+    const [srv, srvCat, prf, disc, expCat, emp] = await Promise.all([
       api.get('/master/services').catch(() => []),
+      api.get('/master/service-categories').catch(() => []),
       api.get('/master/perfumes').catch(() => []),
       api.get('/master/discounts').catch(() => []),
       api.get('/master/expense-categories').catch(() => []),
       api.get('/master/employees').catch(() => []),
     ])
     if (Array.isArray(srv)) servicesList.value = srv
+    if (Array.isArray(srvCat)) serviceCategoriesList.value = srvCat
     if (Array.isArray(prf)) perfumesList.value = prf
     if (Array.isArray(disc)) discountsList.value = disc
     if (Array.isArray(expCat)) expenseCategoriesList.value = expCat
@@ -2297,11 +2561,7 @@ watch(activeTab, (tab) => {
 })
 
 watch(
-  [
-    () => expenseAuditFilter.startDate,
-    () => expenseAuditFilter.endDate,
-    () => expenseAuditFilter.category,
-  ],
+  [() => expenseAuditFilter.startDate, () => expenseAuditFilter.endDate, () => expenseAuditFilter.category],
   () => {
     pageExpensesAudit.value = 1
     loadExpensesAudit()
@@ -2331,7 +2591,7 @@ onMounted(() => {
 // Handlers: Save All & PIN
 // ==========================================
 const handleSaveAll = () => {
-  success('Seluruh pengaturan berhasil disimpan ke memori sistem!')
+  success('Seluruh preferensi pengaturan berhasil disimpan!')
 }
 
 const handleSavePin = () => {
@@ -2350,10 +2610,14 @@ const testPrint = () => {
 }
 
 const handleFactoryReset = () => {
-  if (confirm('Yakin ingin mereset seluruh preferensi ke pengaturan default pabrik?')) {
-    resetToDefaults()
-    success('Pengaturan telah dikembalikan ke default pabrik.')
-  }
+  triggerDeleteModal(
+    'Pengaturan',
+    'Reset ke Default Pabrik',
+    async () => {
+      resetToDefaults()
+      success('Pengaturan telah dikembalikan ke default pabrik.')
+    }
+  )
 }
 
 const getRoleBadgeClass = (role) => {
@@ -2432,16 +2696,10 @@ const submitEmployeeForm = async () => {
   }
 }
 
-const confirmDeleteEmployee = async (emp) => {
-  if (confirm(`Yakin ingin menonaktifkan/menghapus pegawai "${emp.full_name}"?`)) {
-    try {
-      await api.delete(`/master/employees/${emp.id}`)
-      success('Pegawai berhasil dihapus!')
-      employeesList.value = employeesList.value.filter((e) => e.id !== emp.id)
-    } catch (err) {
-      error(err.message || 'Gagal menghapus pegawai')
-    }
-  }
+const deleteEmployee = async (id) => {
+  await api.delete(`/master/employees/${id}`)
+  success('Pegawai berhasil dihapus!')
+  employeesList.value = employeesList.value.filter((e) => e.id !== id)
 }
 
 // ==========================================
@@ -2450,10 +2708,14 @@ const confirmDeleteEmployee = async (emp) => {
 const openAddServiceModal = () => {
   isEditingService.value = false
   currentServiceId.value = null
-  serviceForm.service_code = ''
+
+  // Default to first service category
+  const firstCat = serviceCategoriesList.value[0]
+  serviceForm.category_id = firstCat ? firstCat.id : ''
+  serviceForm.category_name = firstCat ? firstCat.name : 'Cuci Setrika Reguler'
+  serviceForm.unit = firstCat ? (firstCat.default_unit || 'Kg') : 'Kg'
+  serviceForm.service_code = generateServiceCode(serviceForm.category_name)
   serviceForm.service_name = ''
-  serviceForm.category = 'KILOAN'
-  serviceForm.unit = 'Kg'
   serviceForm.price = 10000
   serviceForm.duration_day = 1
   serviceForm.is_active = true
@@ -2463,40 +2725,37 @@ const openAddServiceModal = () => {
 const openEditServiceModal = (s) => {
   isEditingService.value = true
   currentServiceId.value = s.id
+  serviceForm.category_id = s.category_id || ''
+  serviceForm.category_name = s.category_name || s.category || ''
   serviceForm.service_code = s.service_code
   serviceForm.service_name = s.service_name
-  serviceForm.category = s.category
-  serviceForm.unit = s.unit
-  serviceForm.price = Number(s.price) || 0
+  serviceForm.unit = s.unit || 'Kg'
+  serviceForm.price = Number(s.price || s.price_per_kg) || 0
   serviceForm.duration_day = Number(s.duration_day) || 1
-  serviceForm.is_active = s.is_active !== false
+  serviceForm.is_active = s.is_active !== false && s.active !== false
   showServiceModal.value = true
 }
 
 const submitServiceForm = async () => {
   modalSaving.value = true
   try {
+    const payload = {
+      service_code: serviceForm.service_code,
+      service_name: serviceForm.service_name,
+      category_id: serviceForm.category_id,
+      category_name: serviceForm.category_name,
+      category: serviceForm.category_name,
+      unit: serviceForm.unit,
+      price: serviceForm.price,
+      duration_day: serviceForm.duration_day,
+      active: serviceForm.is_active,
+      is_active: serviceForm.is_active,
+    }
     if (isEditingService.value) {
-      await api.put(`/master/services/${currentServiceId.value}`, {
-        service_code: serviceForm.service_code,
-        service_name: serviceForm.service_name,
-        category: serviceForm.category,
-        unit: serviceForm.unit,
-        price: serviceForm.price,
-        duration_day: serviceForm.duration_day,
-        is_active: serviceForm.is_active,
-      })
+      await api.put(`/master/services/${currentServiceId.value}`, payload)
       success('Layanan berhasil diperbarui!')
     } else {
-      await api.post('/master/services', {
-        service_code: serviceForm.service_code,
-        service_name: serviceForm.service_name,
-        category: serviceForm.category,
-        unit: serviceForm.unit,
-        price: serviceForm.price,
-        duration_day: serviceForm.duration_day,
-        is_active: serviceForm.is_active,
-      })
+      await api.post('/master/services', payload)
       success('Layanan baru berhasil ditambahkan!')
     }
     showServiceModal.value = false
@@ -2509,16 +2768,10 @@ const submitServiceForm = async () => {
   }
 }
 
-const confirmDeleteService = async (s) => {
-  if (confirm(`Yakin ingin menghapus layanan "${s.service_name}"?`)) {
-    try {
-      await api.delete(`/master/services/${s.id}`)
-      success('Layanan berhasil dihapus!')
-      servicesList.value = servicesList.value.filter((item) => item.id !== s.id)
-    } catch (err) {
-      error(err.message || 'Gagal menghapus layanan')
-    }
-  }
+const deleteService = async (id) => {
+  await api.delete(`/master/services/${id}`)
+  success('Layanan berhasil dihapus!')
+  servicesList.value = servicesList.value.filter((item) => item.id !== id)
 }
 
 // ==========================================
@@ -2570,28 +2823,24 @@ const submitPerfumeForm = async () => {
   }
 }
 
-const confirmDeletePerfume = async (p) => {
-  if (confirm(`Yakin ingin menghapus parfum "${p.name}"?`)) {
-    try {
-      await api.delete(`/master/perfumes/${p.id}`)
-      success('Parfum berhasil dihapus!')
-      perfumesList.value = perfumesList.value.filter((item) => item.id !== p.id)
-    } catch (err) {
-      error(err.message || 'Gagal menghapus parfum')
-    }
-  }
+const deletePerfume = async (id) => {
+  await api.delete(`/master/perfumes/${id}`)
+  success('Parfum berhasil dihapus!')
+  perfumesList.value = perfumesList.value.filter((item) => item.id !== id)
 }
 
 // ==========================================
-// CRUD: Diskon (Discounts)
+// CRUD: Diskon & Promo (Mutually Exclusive)
 // ==========================================
 const openAddDiscountModal = () => {
   isEditingDiscount.value = false
   currentDiscountId.value = null
-  discountForm.code = ''
+  discountForm.code = 'PRM-' + Math.floor(100 + Math.random() * 900)
   discountForm.name = ''
-  discountForm.discount_percent = 10
-  discountForm.fixed_amount = 0
+  discountForm.type = 'PERCENTAGE'
+  discountForm.percentValue = 10
+  discountForm.nominalValue = 5000
+  discountForm.min_order_amount = 0
   discountForm.is_active = true
   showDiscountModal.value = true
 }
@@ -2599,10 +2848,14 @@ const openAddDiscountModal = () => {
 const openEditDiscountModal = (d) => {
   isEditingDiscount.value = true
   currentDiscountId.value = d.id
-  discountForm.code = d.code
+  discountForm.code = d.code || 'PRM-' + Math.floor(100 + Math.random() * 900)
   discountForm.name = d.name
-  discountForm.discount_percent = Number(d.discount_percent || d.value) || 0
-  discountForm.fixed_amount = Number(d.fixed_amount || 0)
+
+  const isPercent = d.discount_type === 'PERCENTAGE' || Number(d.discount_percent) > 0
+  discountForm.type = isPercent ? 'PERCENTAGE' : 'NOMINAL'
+  discountForm.percentValue = isPercent ? Number(d.value || d.discount_percent || 10) : 10
+  discountForm.nominalValue = !isPercent ? Number(d.value || d.fixed_amount || 5000) : 5000
+  discountForm.min_order_amount = Number(d.min_order_amount) || 0
   discountForm.is_active = d.is_active !== false
   showDiscountModal.value = true
 }
@@ -2610,23 +2863,25 @@ const openEditDiscountModal = (d) => {
 const submitDiscountForm = async () => {
   modalSaving.value = true
   try {
+    const isPercent = discountForm.type === 'PERCENTAGE'
+    const value = isPercent ? discountForm.percentValue : discountForm.nominalValue
+
+    const payload = {
+      code: discountForm.code,
+      name: discountForm.name,
+      discount_type: discountForm.type,
+      value: value,
+      discount_percent: isPercent ? value : 0,
+      fixed_amount: !isPercent ? value : 0,
+      min_order_amount: discountForm.min_order_amount || 0,
+      is_active: discountForm.is_active,
+    }
+
     if (isEditingDiscount.value) {
-      await api.put(`/master/discounts/${currentDiscountId.value}`, {
-        code: discountForm.code,
-        name: discountForm.name,
-        discount_percent: discountForm.discount_percent,
-        fixed_amount: discountForm.fixed_amount,
-        is_active: discountForm.is_active,
-      })
+      await api.put(`/master/discounts/${currentDiscountId.value}`, payload)
       success('Promo diskon berhasil diperbarui!')
     } else {
-      await api.post('/master/discounts', {
-        code: discountForm.code,
-        name: discountForm.name,
-        discount_percent: discountForm.discount_percent,
-        fixed_amount: discountForm.fixed_amount,
-        is_active: discountForm.is_active,
-      })
+      await api.post('/master/discounts', payload)
       success('Promo diskon baru berhasil ditambahkan!')
     }
     showDiscountModal.value = false
@@ -2639,60 +2894,70 @@ const submitDiscountForm = async () => {
   }
 }
 
-const confirmDeleteDiscount = async (d) => {
-  if (confirm(`Yakin ingin menghapus promo "${d.name}"?`)) {
-    try {
-      await api.delete(`/master/discounts/${d.id}`)
-      success('Diskon berhasil dihapus!')
-      discountsList.value = discountsList.value.filter((item) => item.id !== d.id)
-    } catch (err) {
-      error(err.message || 'Gagal menghapus diskon')
-    }
-  }
+const deleteDiscount = async (id) => {
+  await api.delete(`/master/discounts/${id}`)
+  success('Diskon berhasil dihapus!')
+  discountsList.value = discountsList.value.filter((item) => item.id !== id)
 }
 
 // ==========================================
-// CRUD: Kategori Pengeluaran
+// CRUD: Kategori (Expense & Service)
 // ==========================================
-const openAddCategoryModal = () => {
+const openAddCategoryModal = (target = 'EXPENSE') => {
+  categoryModalTarget.value = target
   isEditingCategory.value = false
   currentCategoryId.value = null
-  categoryForm.category_code = ''
-  categoryForm.category_name = ''
+  categoryForm.name = ''
+  categoryForm.code = ''
+  categoryForm.default_unit = 'Kg'
   categoryForm.is_active = true
   showCategoryModal.value = true
 }
 
 const openEditCategoryModal = (cat) => {
+  categoryModalTarget.value = 'EXPENSE'
   isEditingCategory.value = true
   currentCategoryId.value = cat.id
-  categoryForm.category_code = cat.category_code
-  categoryForm.category_name = cat.category_name
-  categoryForm.is_active = cat.is_active
+  categoryForm.code = cat.code || cat.category_code
+  categoryForm.name = cat.name || cat.category_name
+  categoryForm.is_active = cat.is_active !== false
   showCategoryModal.value = true
 }
 
 const submitCategoryForm = async () => {
   modalSaving.value = true
   try {
-    if (isEditingCategory.value) {
-      await api.put(`/master/expense-categories/${currentCategoryId.value}`, {
-        category_code: categoryForm.category_code,
-        category_name: categoryForm.category_name,
+    if (categoryModalTarget.value === 'SERVICE') {
+      await api.post('/master/service-categories', {
+        code: categoryForm.code,
+        name: categoryForm.name,
+        default_unit: categoryForm.default_unit || 'Kg',
+        display_order: serviceCategoriesList.value.length + 1,
         is_active: categoryForm.is_active,
       })
-      success('Kategori pengeluaran berhasil diperbarui!')
+      success('Kategori layanan baru berhasil ditambahkan!')
+      const srvCat = await api.get('/master/service-categories')
+      if (Array.isArray(srvCat)) serviceCategoriesList.value = srvCat
     } else {
-      await api.post('/master/expense-categories', {
-        category_code: categoryForm.category_code,
-        category_name: categoryForm.category_name,
-        is_active: categoryForm.is_active,
-      })
-      success('Kategori baru berhasil ditambahkan!')
+      if (isEditingCategory.value) {
+        await api.put(`/master/expense-categories/${currentCategoryId.value}`, {
+          code: categoryForm.code,
+          name: categoryForm.name,
+          is_active: categoryForm.is_active,
+        })
+        success('Kategori pengeluaran berhasil diperbarui!')
+      } else {
+        await api.post('/master/expense-categories', {
+          code: categoryForm.code,
+          name: categoryForm.name,
+          is_active: categoryForm.is_active,
+        })
+        success('Kategori pengeluaran baru berhasil ditambahkan!')
+      }
+      const expCat = await api.get('/master/expense-categories')
+      if (Array.isArray(expCat)) expenseCategoriesList.value = expCat
     }
     showCategoryModal.value = false
-    const expCat = await api.get('/master/expense-categories')
-    if (Array.isArray(expCat)) expenseCategoriesList.value = expCat
   } catch (err) {
     error(err.message || 'Gagal menyimpan kategori')
   } finally {
@@ -2700,16 +2965,10 @@ const submitCategoryForm = async () => {
   }
 }
 
-const confirmDeleteCategory = async (cat) => {
-  if (confirm(`Yakin ingin menghapus kategori "${cat.category_name}"?`)) {
-    try {
-      await api.delete(`/master/expense-categories/${cat.id}`)
-      success('Kategori pengeluaran berhasil dihapus!')
-      expenseCategoriesList.value = expenseCategoriesList.value.filter((item) => item.id !== cat.id)
-    } catch (err) {
-      error(err.message || 'Gagal menghapus kategori')
-    }
-  }
+const deleteCategory = async (id) => {
+  await api.delete(`/master/expense-categories/${id}`)
+  success('Kategori berhasil dihapus!')
+  expenseCategoriesList.value = expenseCategoriesList.value.filter((item) => item.id !== id)
 }
 
 // ==========================================
@@ -2745,18 +3004,10 @@ const submitEditExpenseForm = async () => {
   }
 }
 
-const confirmDeleteExpense = async (exp) => {
-  if (
-    confirm(`Yakin ingin menghapus transaksi pengeluaran sebesar Rp ${formatRupiah(exp.amount)}?`)
-  ) {
-    try {
-      await api.delete(`/expenses/${exp.id}`)
-      success('Pengeluaran berhasil dihapus!')
-      loadExpensesAudit()
-    } catch (err) {
-      error(err.message || 'Gagal menghapus pengeluaran')
-    }
-  }
+const deleteExpense = async (id) => {
+  await api.delete(`/expenses/${id}`)
+  success('Pengeluaran berhasil dihapus!')
+  loadExpensesAudit()
 }
 
 // ==========================================
@@ -2807,15 +3058,31 @@ const submitCustomerForm = async () => {
   }
 }
 
-const confirmDeleteCustomer = async (c) => {
-  if (confirm(`Yakin ingin menghapus data pelanggan "${c.full_name}"?`)) {
-    try {
-      await api.delete(`/customers/${c.id}`)
-      success('Pelanggan berhasil dihapus!')
-      loadCustomers()
-    } catch (err) {
-      error(err.message || 'Gagal menghapus pelanggan')
-    }
-  }
+const deleteCustomer = async (id) => {
+  await api.delete(`/customers/${id}`)
+  success('Pelanggan berhasil dihapus!')
+  loadCustomers()
 }
 </script>
+
+<style scoped>
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #thermal-preview-receipt,
+  #thermal-preview-receipt * {
+    visibility: visible;
+  }
+  #thermal-preview-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+</style>

@@ -47,14 +47,14 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Dicatat Oleh *
+              Dicatat Oleh (Otomatis)
             </label>
             <input
-              v-model="form.created_by"
+              :value="form.created_by"
               type="text"
-              required
-              placeholder="Kasir Utama"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-brand-500 transition-all"
+              readonly
+              disabled
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600 cursor-not-allowed select-none shadow-2xs"
             />
           </div>
         </div>

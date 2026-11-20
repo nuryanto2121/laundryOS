@@ -158,10 +158,24 @@ type Perfume struct {
 }
 
 type Service struct {
-	ID          pgtype.UUID    `json:"id"`
-	ServiceCode string         `json:"service_code"`
-	ServiceName string         `json:"service_name"`
-	DurationDay pgtype.Int4    `json:"duration_day"`
-	PricePerKg  pgtype.Numeric `json:"price_per_kg"`
-	Active      pgtype.Bool    `json:"active"`
+	ID           pgtype.UUID    `json:"id"`
+	ServiceCode  string         `json:"service_code"`
+	ServiceName  string         `json:"service_name"`
+	DurationDay  pgtype.Int4    `json:"duration_day"`
+	PricePerKg   pgtype.Numeric `json:"price_per_kg"`
+	Active       pgtype.Bool    `json:"active"`
+	CategoryID   pgtype.UUID    `json:"category_id"`
+	CategoryName pgtype.Text    `json:"category_name"`
+	Unit         pgtype.Text    `json:"unit"`
+}
+
+type ServiceCategory struct {
+	ID           pgtype.UUID      `json:"id"`
+	Code         string           `json:"code"`
+	Name         string           `json:"name"`
+	DefaultUnit  string           `json:"default_unit"`
+	DisplayOrder pgtype.Int4      `json:"display_order"`
+	IsActive     pgtype.Bool      `json:"is_active"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
 }
