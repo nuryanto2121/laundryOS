@@ -104,6 +104,56 @@
         </div>
       </div>
 
+      <!-- Special Filter Alert Banner (from Home KPI Cards) -->
+      <div
+        v-if="specialFilter"
+        class="p-3 sm:p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-xs transition-all"
+        :class="
+          specialFilter === 'OVERDUE'
+            ? 'bg-rose-50 border border-rose-200 text-rose-800'
+            : specialFilter === 'DUE_TODAY'
+              ? 'bg-amber-50 border border-amber-200 text-amber-800'
+              : 'bg-brand-50 border border-brand-200 text-brand-800'
+        "
+      >
+        <div class="flex items-center gap-2.5 text-xs">
+          <AlertCircle v-if="specialFilter === 'OVERDUE'" class="w-4 h-4 text-rose-600 shrink-0" />
+          <Clock
+            v-else-if="specialFilter === 'DUE_TODAY'"
+            class="w-4 h-4 text-amber-600 shrink-0"
+          />
+          <ShoppingBag v-else class="w-4 h-4 text-brand-600 shrink-0" />
+          <div>
+            <span class="font-black">
+              {{
+                specialFilter === 'OVERDUE'
+                  ? 'Filter Aktif: Cucian Terlambat (Melewati Batas SLA)'
+                  : specialFilter === 'DUE_TODAY'
+                    ? 'Filter Aktif: Order Harus Selesai Hari Ini'
+                    : 'Filter Aktif: Order Masuk Hari Ini'
+              }}
+            </span>
+            <span class="text-[11px] block opacity-80">
+              {{
+                specialFilter === 'OVERDUE'
+                  ? 'Menampilkan cucian aktif yang butuh diprioritaskan pengerjaannya.'
+                  : specialFilter === 'DUE_TODAY'
+                    ? 'Menampilkan orderan dengan target selesai hari ini.'
+                    : 'Menampilkan order yang masuk pada hari ini.'
+              }}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="px-2.5 py-1.5 rounded-xl bg-white text-xs font-bold shadow-2xs hover:bg-slate-50 transition-all cursor-pointer shrink-0"
+          @click="clearSpecialFilter"
+        >
+          Hapus Filter (Tampilkan Semua)
+        </button>
+      </div>
+
       <!-- 4. Orders List / Table -->
       <div class="space-y-3">
         <!-- Loading State -->
@@ -332,6 +382,7 @@ import {
   Play,
   CheckCircle2,
   PackageCheck,
+  AlertCircle,
 } from 'lucide-vue-next'
 import AppLayout from '../components/layout/AppLayout.vue'
 import CreateOrderModal from '../components/pos/CreateOrderModal.vue'
@@ -349,7 +400,31 @@ const orders = ref([])
 const activeStatusTab = ref('ALL')
 const searchQuery = ref('')
 const paymentFilter = ref('ALL')
+const specialFilter = ref('')
 const actionInProgressId = ref(null)
+
+const isToday = (dateStr) => {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  const now = new Date()
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  )
+}
+
+const isDueToday = (order) => {
+  if (!order.estimated_completion_at) return false
+  if (order.status === 'SELESAI' || order.status === 'BATAL') return false
+  return isToday(order.estimated_completion_at)
+}
+
+const isOverdue = (order) => {
+  if (!order.estimated_completion_at) return false
+  if (order.status === 'SELESAI' || order.status === 'BATAL') return false
+  return new Date(order.estimated_completion_at) < new Date()
+}
 
 const showCreateModal = ref(false)
 const showDetailModal = ref(false)
@@ -412,6 +487,17 @@ const filteredOrders = computed(() => {
       if (!matchOrderNum && !matchCustomer && !matchPhone && !matchRack) {
         return false
       }
+    }
+
+    // 4. Special Filter (from Home KPI Cards)
+    if (specialFilter.value === 'TODAY' && !isToday(order.created_at)) {
+      return false
+    }
+    if (specialFilter.value === 'DUE_TODAY' && !isDueToday(order)) {
+      return false
+    }
+    if (specialFilter.value === 'OVERDUE' && !isOverdue(order)) {
+      return false
     }
 
     return true
@@ -600,10 +686,17 @@ const clearSearch = () => {
   searchQuery.value = ''
 }
 
+const clearSpecialFilter = () => {
+  specialFilter.value = ''
+  router.replace({ path: '/orders' })
+}
+
 const resetFilters = () => {
   searchQuery.value = ''
   paymentFilter.value = 'ALL'
   activeStatusTab.value = 'ALL'
+  specialFilter.value = ''
+  router.replace({ path: '/orders' })
 }
 
 const loadOrders = async () => {
@@ -634,6 +727,14 @@ watch(
       // Clear query without retriggering
       router.replace({ path: '/orders' })
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.filter,
+  (newFilter) => {
+    specialFilter.value = newFilter || ''
   },
   { immediate: true }
 )

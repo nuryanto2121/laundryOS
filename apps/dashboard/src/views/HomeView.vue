@@ -37,7 +37,9 @@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <!-- KPI 1: Omset Hari Ini -->
         <div
-          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-brand-300 transition-all group"
+          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-brand-400 hover:shadow-md transition-all group cursor-pointer active:scale-[0.99]"
+          title="Klik untuk melihat rincian omset & metode bayar"
+          @click="showOmsetModal = true"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"
@@ -50,19 +52,30 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h3
+              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors"
+            >
               Rp {{ formatRupiah(metrics.omset_hari_ini) }}
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-              <TrendingUp class="w-3.5 h-3.5 text-emerald-500" />
-              <span>Penjualan bruto tercatat</span>
-            </p>
+            <div class="flex items-center justify-between mt-1">
+              <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                <TrendingUp class="w-3.5 h-3.5 text-emerald-500" />
+                <span>Penjualan bruto</span>
+              </p>
+              <span
+                class="text-[10px] font-bold text-brand-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
+              >
+                Rincian <ChevronRight class="w-3 h-3" />
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- KPI 2: Order Masuk -->
         <div
-          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all group"
+          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-emerald-400 hover:shadow-md transition-all group cursor-pointer active:scale-[0.99]"
+          title="Klik untuk melihat orderan masuk hari ini"
+          @click="goToOrders('TODAY')"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"
@@ -75,17 +88,28 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h3
+              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-emerald-600 transition-colors"
+            >
               {{ metrics.order_masuk_hari_ini || 0 }}
               <span class="text-xs sm:text-sm font-semibold text-slate-400">Order</span>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Walk-in & Pickup bot</p>
+            <div class="flex items-center justify-between mt-1">
+              <p class="text-[11px] text-slate-400">Walk-in & Pickup</p>
+              <span
+                class="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
+              >
+                Lihat Antrian <ChevronRight class="w-3 h-3" />
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- KPI 3: Harus Selesai -->
         <div
-          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all group"
+          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-amber-400 hover:shadow-md transition-all group cursor-pointer active:scale-[0.99]"
+          title="Klik untuk melihat order jatuh tempo hari ini"
+          @click="goToOrders('DUE_TODAY')"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"
@@ -98,17 +122,28 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h3
+              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-amber-600 transition-colors"
+            >
               {{ metrics.harus_selesai_hari_ini || 0 }}
               <span class="text-xs sm:text-sm font-semibold text-slate-400">Order</span>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Jatuh tempo SLA hari ini</p>
+            <div class="flex items-center justify-between mt-1">
+              <p class="text-[11px] text-slate-400">Jatuh tempo SLA</p>
+              <span
+                class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
+              >
+                Lihat Order <ChevronRight class="w-3 h-3" />
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- KPI 4: Terlambat -->
         <div
-          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-rose-300 transition-all group"
+          class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-rose-400 hover:shadow-md transition-all group cursor-pointer active:scale-[0.99]"
+          title="Klik untuk melihat orderan yang terlambat/lewat batas SLA"
+          @click="goToOrders('OVERDUE')"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Terlambat</span>
@@ -131,18 +166,25 @@
               {{ metrics.terlambat_hari_ini || 0 }}
               <span class="text-xs sm:text-sm font-semibold text-slate-400">Order</span>
             </h3>
-            <span
-              v-if="metrics.terlambat_hari_ini === 0"
-              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 mt-1 inline-block"
-            >
-              Semua SLA Aman ✨
-            </span>
-            <span
-              v-else
-              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 mt-1 inline-block"
-            >
-              Perlu Dikebut! ⚠️
-            </span>
+            <div class="flex items-center justify-between mt-1">
+              <span
+                v-if="metrics.terlambat_hari_ini === 0"
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700"
+              >
+                Semua SLA Aman ✨
+              </span>
+              <span
+                v-else
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700"
+              >
+                Perlu Dikebut! ⚠️
+              </span>
+              <span
+                class="text-[10px] font-bold text-rose-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
+              >
+                Dikebut <ChevronRight class="w-3 h-3" />
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -329,6 +371,7 @@
       <!-- Quick Modals -->
       <QuickExpenseModal v-model="showExpenseModal" @expense-added="loadHomeData" />
       <SearchOrderModal v-model="showSearchModal" />
+      <OmsetBreakdownModal v-model="showOmsetModal" :metrics="metrics" />
     </div>
   </AppLayout>
 </template>
@@ -356,6 +399,7 @@ import {
 import AppLayout from '../components/layout/AppLayout.vue'
 import QuickExpenseModal from '../components/modals/QuickExpenseModal.vue'
 import SearchOrderModal from '../components/modals/SearchOrderModal.vue'
+import OmsetBreakdownModal from '../components/modals/OmsetBreakdownModal.vue'
 import { api, formatRupiah } from '../api/client'
 
 const router = useRouter()
@@ -364,6 +408,7 @@ const loading = ref(false)
 const loadingOrders = ref(false)
 const showExpenseModal = ref(false)
 const showSearchModal = ref(false)
+const showOmsetModal = ref(false)
 
 const metrics = ref({
   omset_hari_ini: 0,
@@ -391,6 +436,10 @@ const formatDisplayOrder = (num) => {
 
 const navigateToOrder = (id) => {
   router.push({ path: '/orders', query: { id } })
+}
+
+const goToOrders = (filterType) => {
+  router.push({ path: '/orders', query: { filter: filterType } })
 }
 
 const loadHomeData = async () => {
