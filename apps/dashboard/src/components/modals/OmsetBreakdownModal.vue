@@ -354,7 +354,8 @@ const loadTodayOrders = async () => {
   try {
     const data = await api.get('/pos/orders')
     const all = data || []
-    todayOrders.value = all.filter((o) => isToday(o.created_at) || isToday(o.paid_at))
+    // Filter strictly orders created today that are not canceled to match Omset Hari Ini
+    todayOrders.value = all.filter((o) => isToday(o.created_at) && o.status !== 'BATAL')
   } catch (err) {
     console.warn('Failed loading today orders:', err)
   } finally {
