@@ -375,11 +375,12 @@
                 type="text"
                 placeholder="Cari #order / pelanggan..."
                 class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white"
+                @input="pageOrders = 1"
               />
               <button
                 v-if="orderSearchQuery"
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                @click="orderSearchQuery = ''"
+                @click="clearOrderSearch"
               >
                 <X class="w-3.5 h-3.5" />
               </button>
@@ -393,66 +394,75 @@
             Tidak ada transaksi pada periode ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Tanggal Masuk</th>
-                  <th class="py-3 px-4">Status Pengerjaan</th>
-                  <th class="py-3 px-4">Pembayaran</th>
-                  <th class="py-3 px-4 text-right">Total (Rp)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in filteredPeriodOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <p class="font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Walk-in' }}
-                    </p>
-                    <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                    {{ formatDateTime(order.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
-                      :class="getOrderStatusBadgeClass(order.status)"
-                    >
-                      {{ order.status }}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
-                      :class="
-                        order.payment_status === 'PAID'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-rose-100 text-rose-800'
-                      "
-                    >
-                      {{ order.payment_status === 'PAID' ? 'LUNAS' : 'BELUM LUNAS' }}
-                    </span>
-                  </td>
-                  <td
-                    class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
                   >
-                    Rp {{ formatRupiah(order.total_price) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Tanggal Masuk</th>
+                    <th class="py-3 px-4">Status Pengerjaan</th>
+                    <th class="py-3 px-4">Pembayaran</th>
+                    <th class="py-3 px-4 text-right">Total (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedPeriodOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <p class="font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Walk-in' }}
+                      </p>
+                      <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                      {{ formatDateTime(order.created_at) }}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <span
+                        class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        :class="getOrderStatusBadgeClass(order.status)"
+                      >
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        :class="
+                          order.payment_status === 'PAID'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-rose-100 text-rose-800'
+                        "
+                      >
+                        {{ order.payment_status === 'PAID' ? 'LUNAS' : 'BELUM LUNAS' }}
+                      </span>
+                    </td>
+                    <td
+                      class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
+                    >
+                      Rp {{ formatRupiah(order.total_price) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageOrders"
+              v-model:items-per-page="pageSizeOrders"
+              :total-items="filteredPeriodOrders.length"
+            />
           </div>
         </div>
 
@@ -556,55 +566,64 @@
             Belum ada transaksi berstatus selesai pada rentang tanggal ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Tanggal Order</th>
-                  <th class="py-3 px-4">Status Pembayaran</th>
-                  <th class="py-3 px-4 text-right">Total Transaksi</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in completedOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <p class="font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Pelanggan' }}
-                    </p>
-                    <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                    {{ formatDate(order.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
-                      :class="
-                        order.payment_status === 'PAID'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      "
-                    >
-                      {{ order.payment_status }}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-black text-slate-900 whitespace-nowrap">
-                    Rp {{ formatRupiah(order.total_price) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                  >
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Tanggal Order</th>
+                    <th class="py-3 px-4">Status Pembayaran</th>
+                    <th class="py-3 px-4 text-right">Total Transaksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedCompletedOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <p class="font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Pelanggan' }}
+                      </p>
+                      <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                      {{ formatDate(order.created_at) }}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        :class="
+                          order.payment_status === 'PAID'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        "
+                      >
+                        {{ order.payment_status }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-black text-slate-900 whitespace-nowrap">
+                      Rp {{ formatRupiah(order.total_price) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pagePickedUp"
+              v-model:items-per-page="pageSizePickedUp"
+              :total-items="completedOrders.length"
+            />
           </div>
         </div>
 
@@ -636,77 +655,86 @@
             Semua cucian yang siap sudah diambil pelanggan.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Nomor Rak</th>
-                  <th class="py-3 px-4">Status Bayar</th>
-                  <th class="py-3 px-4 text-right">Total Tagihan</th>
-                  <th class="py-3 px-4 text-center">Aksi Reminder</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in readyOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <p class="font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Pelanggan' }}
-                    </p>
-                    <p class="text-[11px] text-slate-400">{{ order.customer?.phone }}</p>
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider"
-                      :class="
-                        order.rack_number
-                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                          : 'bg-slate-100 text-slate-500'
-                      "
-                    >
-                      📍 {{ order.rack_number || 'Belum di Rak' }}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
-                      :class="
-                        order.payment_status === 'PAID'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-rose-100 text-rose-800'
-                      "
-                    >
-                      {{ order.payment_status === 'PAID' ? 'LUNAS' : 'BELUM LUNAS' }}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-black text-slate-900 whitespace-nowrap">
-                    Rp {{ formatRupiah(order.total_price) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                    <a
-                      :href="getReadyOrderWhatsappUrl(order)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
-                      title="Kirim Pesan WhatsApp Pengambilan"
-                    >
-                      <MessageCircle class="w-3.5 h-3.5" />
-                      <span>Ingatkan WA</span>
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                  >
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Nomor Rak</th>
+                    <th class="py-3 px-4">Status Bayar</th>
+                    <th class="py-3 px-4 text-right">Total Tagihan</th>
+                    <th class="py-3 px-4 text-center">Aksi Reminder</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedReadyOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <p class="font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Pelanggan' }}
+                      </p>
+                      <p class="text-[11px] text-slate-400">{{ order.customer?.phone }}</p>
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <span
+                        class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider"
+                        :class="
+                          order.rack_number
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-slate-100 text-slate-500'
+                        "
+                      >
+                        📍 {{ order.rack_number || 'Belum di Rak' }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        :class="
+                          order.payment_status === 'PAID'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-rose-100 text-rose-800'
+                        "
+                      >
+                        {{ order.payment_status === 'PAID' ? 'LUNAS' : 'BELUM LUNAS' }}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-black text-slate-900 whitespace-nowrap">
+                      Rp {{ formatRupiah(order.total_price) }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                      <a
+                        :href="getReadyOrderWhatsappUrl(order)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                        title="Kirim Pesan WhatsApp Pengambilan"
+                      >
+                        <MessageCircle class="w-3.5 h-3.5" />
+                        <span>Ingatkan WA</span>
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageReady"
+              v-model:items-per-page="pageSizeReady"
+              :total-items="readyOrders.length"
+            />
           </div>
         </div>
 
@@ -738,46 +766,55 @@
             Bagus sekali! Tidak ada transaksi yang dibatalkan pada periode ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Waktu Batal</th>
-                  <th class="py-3 px-4">Catatan</th>
-                  <th class="py-3 px-4 text-right">Nominal Dibatalkan</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in cancelledOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-rose-600 line-through whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <p class="font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Pelanggan' }}
-                    </p>
-                    <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                    {{ formatDateTime(order.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 italic">
-                    {{ order.notes || 'Dibatalkan kasir' }}
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
-                    Rp {{ formatRupiah(order.total_price) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                  >
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Waktu Batal</th>
+                    <th class="py-3 px-4">Catatan</th>
+                    <th class="py-3 px-4 text-right">Nominal Dibatalkan</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedCancelledOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-rose-600 line-through whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <p class="font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Pelanggan' }}
+                      </p>
+                      <p class="text-[11px] text-slate-400">{{ order.customer?.phone || '-' }}</p>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                      {{ formatDateTime(order.created_at) }}
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 italic">
+                      {{ order.notes || 'Dibatalkan kasir' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
+                      Rp {{ formatRupiah(order.total_price) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageCancelled"
+              v-model:items-per-page="pageSizeCancelled"
+              :total-items="cancelledOrders.length"
+            />
           </div>
         </div>
       </div>
@@ -881,50 +918,59 @@
             Belum ada transaksi omset pada rentang tanggal ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Tanggal Masuk</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-right">Nilai Omset (Rp)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in omsetOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-800">
-                    {{ order.customer?.full_name || 'Walk-in' }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                    {{ formatDate(order.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
-                      :class="getOrderStatusBadgeClass(order.status)"
-                    >
-                      {{ order.status }}
-                    </span>
-                  </td>
-                  <td
-                    class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
                   >
-                    Rp {{ formatRupiah(order.total_price) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Tanggal Masuk</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Nilai Omset (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedOmsetOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4 font-bold text-slate-800">
+                      {{ order.customer?.full_name || 'Walk-in' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                      {{ formatDate(order.created_at) }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
+                        :class="getOrderStatusBadgeClass(order.status)"
+                      >
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td
+                      class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
+                    >
+                      Rp {{ formatRupiah(order.total_price) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageOmset"
+              v-model:items-per-page="pageSizeOmset"
+              :total-items="omsetOrders.length"
+            />
           </div>
         </div>
 
@@ -957,49 +1003,58 @@
             Belum ada penerimaan pembayaran pada periode ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Pelanggan</th>
-                  <th class="py-3 px-4">Metode Bayar</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-right">Uang Diterima (Rp)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in paidOrders"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ order.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-800">
-                    {{ order.customer?.full_name || 'Walk-in' }}
-                  </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-700 whitespace-nowrap">
-                    {{ order.payment_method || 'CASH / TUNAI' }}
-                  </td>
-                  <td class="py-3.5 px-4">
-                    <span
-                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800"
-                    >
-                      {{ order.payment_status }}
-                    </span>
-                  </td>
-                  <td
-                    class="py-3.5 px-4 text-right font-black text-emerald-600 text-sm whitespace-nowrap"
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
                   >
-                    Rp {{ formatRupiah(order.paid_amount || order.total_price) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4">Metode Bayar</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Uang Diterima (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="order in paginatedPaidOrders"
+                    :key="order.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ order.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4 font-bold text-slate-800">
+                      {{ order.customer?.full_name || 'Walk-in' }}
+                    </td>
+                    <td class="py-3.5 px-4 font-bold text-slate-700 whitespace-nowrap">
+                      {{ order.payment_method || 'CASH / TUNAI' }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800"
+                      >
+                        {{ order.payment_status }}
+                      </span>
+                    </td>
+                    <td
+                      class="py-3.5 px-4 text-right font-black text-emerald-600 text-sm whitespace-nowrap"
+                    >
+                      Rp {{ formatRupiah(order.paid_amount || order.total_price) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pagePaid"
+              v-model:items-per-page="pageSizePaid"
+              :total-items="paidOrders.length"
+            />
           </div>
         </div>
 
@@ -1082,6 +1137,7 @@
                 <select
                   v-model="selectedCategoryFilter"
                   class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-500 cursor-pointer"
+                  @change="pageExpenses = 1"
                 >
                   <option value="ALL">Semua Kategori</option>
                   <option value="BAHAN_BAKU">🧴 Bahan Baku</option>
@@ -1101,11 +1157,12 @@
                     type="text"
                     placeholder="Cari keterangan..."
                     class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white"
+                    @input="pageExpenses = 1"
                   />
                   <button
                     v-if="expenseSearchQuery"
                     class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    @click="expenseSearchQuery = ''"
+                    @click="clearExpenseSearch"
                   >
                     <X class="w-3.5 h-3.5" />
                   </button>
@@ -1120,61 +1177,70 @@
               Tidak ada catatan pengeluaran yang cocok dengan filter.
             </div>
 
-            <div v-else class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr
-                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                  >
-                    <th class="py-3 px-4">Tanggal</th>
-                    <th class="py-3 px-4">Kategori</th>
-                    <th class="py-3 px-4">Keterangan Keperluan</th>
-                    <th class="py-3 px-4">Dicatat Oleh</th>
-                    <th class="py-3 px-4 text-right">Nominal (Rp)</th>
-                    <th class="py-3 px-4 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr
-                    v-for="item in filteredExpenses"
-                    :key="item.id"
-                    class="hover:bg-slate-50 transition-colors"
-                  >
-                    <td class="py-3.5 px-4 font-semibold text-slate-900 whitespace-nowrap">
-                      {{ formatDate(item.expense_date) }}
-                    </td>
-                    <td class="py-3.5 px-4 whitespace-nowrap">
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                        :class="getCategoryBadgeClass(item.category)"
-                      >
-                        <span>{{ getCategoryIcon(item.category) }}</span>
-                        <span>{{ getCategoryLabel(item.category) }}</span>
-                      </span>
-                    </td>
-                    <td class="py-3.5 px-4">
-                      <p class="font-bold text-slate-800">{{ item.description }}</p>
-                    </td>
-                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                      {{ item.created_by || 'Kasir' }}
-                    </td>
-                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                      <span class="font-black text-sm text-rose-600">
-                        - Rp {{ formatRupiah(item.amount) }}
-                      </span>
-                    </td>
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                      <button
-                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                        title="Hapus Pengeluaran"
-                        @click="promptDeleteExpense(item)"
-                      >
-                        <Trash2 class="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-else class="space-y-4">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr
+                      class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                    >
+                      <th class="py-3 px-4">Tanggal</th>
+                      <th class="py-3 px-4">Kategori</th>
+                      <th class="py-3 px-4">Keterangan Keperluan</th>
+                      <th class="py-3 px-4">Dicatat Oleh</th>
+                      <th class="py-3 px-4 text-right">Nominal (Rp)</th>
+                      <th class="py-3 px-4 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr
+                      v-for="item in paginatedExpenses"
+                      :key="item.id"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="py-3.5 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                        {{ formatDate(item.expense_date) }}
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                          :class="getCategoryBadgeClass(item.category)"
+                        >
+                          <span>{{ getCategoryIcon(item.category) }}</span>
+                          <span>{{ getCategoryLabel(item.category) }}</span>
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <p class="font-bold text-slate-800">{{ item.description }}</p>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                        {{ item.created_by || 'Kasir' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                        <span class="font-black text-sm text-rose-600">
+                          - Rp {{ formatRupiah(item.amount) }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <button
+                          class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Hapus Pengeluaran"
+                          @click="promptDeleteExpense(item)"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <PaginationBar
+                v-model:current-page="pageExpenses"
+                v-model:items-per-page="pageSizeExpenses"
+                :total-items="filteredExpenses.length"
+              />
             </div>
           </div>
         </div>
@@ -1207,63 +1273,74 @@
             Luar biasa! Tidak ada piutang yang tertunggak. Semua order lunas.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">No. Order</th>
-                  <th class="py-3 px-4">Nama Pelanggan</th>
-                  <th class="py-3 px-4">Tanggal Order</th>
-                  <th class="py-3 px-4 text-right">Total Tagihan</th>
-                  <th class="py-3 px-4 text-right">Sudah Dibayar</th>
-                  <th class="py-3 px-4 text-right">Sisa Piutang</th>
-                  <th class="py-3 px-4 text-center">Tagih WA</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="item in unpaidOrders"
-                  :key="item.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                    #{{ item.order_number }}
-                  </td>
-                  <td class="py-3.5 px-4 whitespace-nowrap">
-                    <p class="font-bold text-slate-800">{{ item.customer_name }}</p>
-                    <p class="text-[11px] text-slate-400">{{ item.customer_phone }}</p>
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                    {{ formatDate(item.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-semibold text-slate-700 whitespace-nowrap">
-                    Rp {{ formatRupiah(item.total_price) }}
-                  </td>
-                  <td
-                    class="py-3.5 px-4 text-right font-semibold text-emerald-600 whitespace-nowrap"
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
                   >
-                    Rp {{ formatRupiah(item.paid_amount) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
-                    Rp {{ formatRupiah(item.sisa_tagihan) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                    <a
-                      :href="getUnpaidWhatsappUrl(item)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-all cursor-pointer"
-                      title="Kirim Tagihan WhatsApp"
+                    <th class="py-3 px-4">No. Order</th>
+                    <th class="py-3 px-4">Nama Pelanggan</th>
+                    <th class="py-3 px-4">Tanggal Order</th>
+                    <th class="py-3 px-4 text-right">Total Tagihan</th>
+                    <th class="py-3 px-4 text-right">Sudah Dibayar</th>
+                    <th class="py-3 px-4 text-right">Sisa Piutang</th>
+                    <th class="py-3 px-4 text-center">Tagih WA</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="item in paginatedUnpaidOrders"
+                    :key="item.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                      #{{ item.order_number }}
+                    </td>
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                      <p class="font-bold text-slate-800">{{ item.customer_name }}</p>
+                      <p class="text-[11px] text-slate-400">{{ item.customer_phone }}</p>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                      {{ formatDate(item.created_at) }}
+                    </td>
+                    <td
+                      class="py-3.5 px-4 text-right font-semibold text-slate-700 whitespace-nowrap"
                     >
-                      <MessageCircle class="w-3.5 h-3.5" />
-                      <span>Tagih WA</span>
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                      Rp {{ formatRupiah(item.total_price) }}
+                    </td>
+                    <td
+                      class="py-3.5 px-4 text-right font-semibold text-emerald-600 whitespace-nowrap"
+                    >
+                      Rp {{ formatRupiah(item.paid_amount) }}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
+                      Rp {{ formatRupiah(item.sisa_tagihan) }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                      <a
+                        :href="getUnpaidWhatsappUrl(item)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-all cursor-pointer"
+                        title="Kirim Tagihan WhatsApp"
+                      >
+                        <MessageCircle class="w-3.5 h-3.5" />
+                        <span>Tagih WA</span>
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageUnpaid"
+              v-model:items-per-page="pageSizeUnpaid"
+              :total-items="unpaidOrders.length"
+            />
           </div>
         </div>
 
@@ -1362,7 +1439,7 @@
             "
             @click="crmSubTab = 'DETAIL'"
           >
-            Detail Pelanggan ({{ filteredAllCustomers.length }})
+            Detail & Rekap Aktivitas ({{ filteredCustomerWithStats.length }})
           </button>
           <button
             type="button"
@@ -1443,52 +1520,61 @@
             Tidak ada pelanggan baru yang mendaftar pada rentang tanggal ini.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">Kode Pelanggan</th>
-                  <th class="py-3 px-4">Nama Lengkap</th>
-                  <th class="py-3 px-4">No. WhatsApp</th>
-                  <th class="py-3 px-4">Tanggal Daftar</th>
-                  <th class="py-3 px-4 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="c in newCustomersInPeriod"
-                  :key="c.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-purple-700">
-                    {{ c.customer_code || '-' }}
-                  </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-900">
-                    {{ c.full_name }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-600">
-                    {{ c.phone }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                    {{ formatDateTime(c.created_at) }}
-                  </td>
-                  <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                    <button
-                      class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 cursor-pointer"
-                      @click="openCustomerCRM(c)"
-                    >
-                      Lihat CRM
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                  >
+                    <th class="py-3 px-4">Kode Pelanggan</th>
+                    <th class="py-3 px-4">Nama Lengkap</th>
+                    <th class="py-3 px-4">No. WhatsApp</th>
+                    <th class="py-3 px-4">Tanggal Daftar</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="c in paginatedGrowthCustomers"
+                    :key="c.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <td class="py-3.5 px-4 font-black text-purple-700">
+                      {{ c.customer_code || '-' }}
+                    </td>
+                    <td class="py-3.5 px-4 font-bold text-slate-900">
+                      {{ c.full_name }}
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600">
+                      {{ c.phone }}
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                      {{ formatDateTime(c.created_at) }}
+                    </td>
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                      <button
+                        class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 cursor-pointer"
+                        @click="openCustomerCRM(c)"
+                      >
+                        Lihat CRM
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageGrowth"
+              v-model:items-per-page="pageSizeGrowth"
+              :total-items="newCustomersInPeriod.length"
+            />
           </div>
         </div>
 
-        <!-- 3.c. Detail Pelanggan (Direktori Seluruh Pelanggan) -->
+        <!-- 3.c. Detail & Rekap Aktivitas Pelanggan (dengan filter Layanan, Total Kg, Uang & Paging) -->
         <div
           v-else-if="crmSubTab === 'DETAIL'"
           class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
@@ -1501,80 +1587,168 @@
                 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
               >
                 <Users class="w-4 h-4 text-purple-600" />
-                <span>Direktori Lengkap Pelanggan</span>
+                <span>Detail & Rekap Aktivitas Pelanggan (Periode Ini)</span>
               </h3>
               <p class="text-xs text-slate-400 mt-0.5">
-                Database seluruh pelanggan terdaftar FAN Laundry
+                Pantau total transaksi, akumulasi Kg, nominal belanja, dan layanan yang dipakai tiap
+                customer
               </p>
             </div>
-            <!-- Customer Search -->
-            <div class="relative min-w-[200px]">
-              <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                v-model="customerSearchQuery"
-                type="text"
-                placeholder="Cari nama / no. hp / kode..."
-                class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white"
-              />
-              <button
-                v-if="customerSearchQuery"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                @click="customerSearchQuery = ''"
+
+            <!-- Filters & Search Toolbar -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Service Category Filter -->
+              <select
+                v-model="customerServiceFilter"
+                class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-500 cursor-pointer"
+                @change="pageCustomers = 1"
               >
-                <X class="w-3.5 h-3.5" />
-              </button>
+                <option value="ALL">Semua Layanan</option>
+                <option value="KILOAN">🧺 Cuci Kiloan</option>
+                <option value="SELF_SERVICE">🪙 Self Service</option>
+                <option value="SATUAN">👔 Cuci Satuan</option>
+                <option value="SEPATU_TAS">👟 Sepatu & Tas</option>
+                <option value="KARPET">🧶 Cuci Karpet</option>
+              </select>
+
+              <!-- Customer Search -->
+              <div class="relative min-w-[180px]">
+                <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  v-model="customerSearchQuery"
+                  type="text"
+                  placeholder="Cari nama / no. hp / kode..."
+                  class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white"
+                  @input="pageCustomers = 1"
+                />
+                <button
+                  v-if="customerSearchQuery"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  @click="clearCustomerSearch"
+                >
+                  <X class="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
 
           <div
-            v-if="filteredAllCustomers.length === 0"
+            v-if="filteredCustomerWithStats.length === 0"
             class="py-8 text-center text-slate-400 text-xs"
           >
-            Tidak ada pelanggan yang cocok dengan pencarian.
+            Tidak ada pelanggan yang cocok dengan kriteria filter.
           </div>
 
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr
-                  class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                >
-                  <th class="py-3 px-4">Kode</th>
-                  <th class="py-3 px-4">Nama Pelanggan</th>
-                  <th class="py-3 px-4">No. WhatsApp</th>
-                  <th class="py-3 px-4">Alamat</th>
-                  <th class="py-3 px-4 text-center">Aksi CRM</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="c in filteredAllCustomers"
-                  :key="c.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="py-3.5 px-4 font-black text-purple-700 whitespace-nowrap">
-                    {{ c.customer_code || '-' }}
-                  </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-900">
-                    {{ c.full_name }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">
-                    {{ c.phone }}
-                  </td>
-                  <td class="py-3.5 px-4 text-slate-500 truncate max-w-xs">
-                    {{ c.address || '-' }}
-                  </td>
-                  <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                    <button
-                      class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 cursor-pointer"
-                      @click="openCustomerCRM(c)"
+          <div v-else class="space-y-4">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr
+                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                  >
+                    <th class="py-3 px-4">Pelanggan</th>
+                    <th class="py-3 px-4 text-center">Order (Periode Ini)</th>
+                    <th class="py-3 px-4 text-right">Berat (Periode Ini)</th>
+                    <th class="py-3 px-4 text-right">Belanja (Periode Ini)</th>
+                    <th class="py-3 px-4">Layanan yang Digunakan</th>
+                    <th class="py-3 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr
+                    v-for="item in paginatedCustomers"
+                    :key="item.customer.id"
+                    class="hover:bg-slate-50 transition-colors"
+                  >
+                    <!-- Pelanggan info -->
+                    <td class="py-3.5 px-4">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-black text-slate-900">{{ item.customer.full_name }}</span>
+                        <span
+                          v-if="item.customer.customer_code"
+                          class="px-1.5 py-0.2 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200/60"
+                        >
+                          {{ item.customer.customer_code }}
+                        </span>
+                      </div>
+                      <p class="text-[11px] text-slate-400 mt-0.5">
+                        {{ item.customer.phone || '-' }}
+                      </p>
+                    </td>
+
+                    <!-- Order count -->
+                    <td
+                      class="py-3.5 px-4 text-center font-black text-slate-800 text-xs whitespace-nowrap"
                     >
-                      Lihat Profil & LTV
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                      <span
+                        v-if="item.periodOrderCount > 0"
+                        class="px-2 py-0.5 rounded-full bg-slate-100 font-extrabold text-slate-900"
+                      >
+                        {{ item.periodOrderCount }}x order
+                      </span>
+                      <span v-else class="text-slate-300">-</span>
+                    </td>
+
+                    <!-- Total Kg -->
+                    <td
+                      class="py-3.5 px-4 text-right font-semibold text-slate-700 whitespace-nowrap"
+                    >
+                      <span v-if="item.periodWeight > 0" class="font-bold text-brand-600">
+                        {{ item.periodWeight.toFixed(1) }} Kg
+                      </span>
+                      <span v-else class="text-slate-300">-</span>
+                    </td>
+
+                    <!-- Total Spend -->
+                    <td
+                      class="py-3.5 px-4 text-right font-black text-emerald-600 text-xs whitespace-nowrap"
+                    >
+                      <span v-if="item.periodSpend > 0">
+                        Rp {{ formatRupiah(item.periodSpend) }}
+                      </span>
+                      <span v-else class="text-slate-300">-</span>
+                    </td>
+
+                    <!-- Layanan Digunakan -->
+                    <td class="py-3.5 px-4">
+                      <div
+                        v-if="item.servicesUsed.length > 0"
+                        class="flex items-center gap-1 flex-wrap"
+                      >
+                        <span
+                          v-for="s in item.servicesUsed"
+                          :key="s"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-bold"
+                        >
+                          <span>{{ getServiceCategoryIcon(s) }}</span>
+                          <span>{{ formatCategoryName(s) }}</span>
+                        </span>
+                      </div>
+                      <span v-else class="text-slate-400 text-[11px] italic"
+                        >Belum ada transaksi di periode ini</span
+                      >
+                    </td>
+
+                    <!-- Aksi -->
+                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                      <button
+                        class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 cursor-pointer transition-all"
+                        @click="openCustomerCRM(item.customer, item.orders)"
+                      >
+                        Lihat CRM
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <PaginationBar
+              v-model:current-page="pageCustomers"
+              v-model:items-per-page="pageSizeCustomers"
+              :total-items="filteredCustomerWithStats.length"
+            />
           </div>
         </div>
 
@@ -1733,6 +1907,9 @@
         v-model="showCrmModal"
         :customer-id="selectedCrmCustomerId"
         :customer="selectedCrmCustomer"
+        :start-date="startDate"
+        :end-date="endDate"
+        :customer-period-orders="selectedCrmCustomerOrders"
       />
     </div>
   </AppLayout>
@@ -1744,6 +1921,7 @@ import { useRoute } from 'vue-router'
 import AppLayout from '../components/layout/AppLayout.vue'
 import QuickExpenseModal from '../components/modals/QuickExpenseModal.vue'
 import CustomerCrmModal from '../components/modals/CustomerCrmModal.vue'
+import PaginationBar from '../components/ui/PaginationBar.vue'
 import {
   BarChart3,
   Calendar,
@@ -1818,6 +1996,38 @@ const orderSearchQuery = ref('')
 const expenseSearchQuery = ref('')
 const customerSearchQuery = ref('')
 const selectedCategoryFilter = ref('ALL')
+const customerServiceFilter = ref('ALL')
+
+// Pagination States
+const pageOrders = ref(1)
+const pageSizeOrders = ref(10)
+
+const pagePickedUp = ref(1)
+const pageSizePickedUp = ref(10)
+
+const pageReady = ref(1)
+const pageSizeReady = ref(10)
+
+const pageCancelled = ref(1)
+const pageSizeCancelled = ref(10)
+
+const pageOmset = ref(1)
+const pageSizeOmset = ref(10)
+
+const pagePaid = ref(1)
+const pageSizePaid = ref(10)
+
+const pageExpenses = ref(1)
+const pageSizeExpenses = ref(10)
+
+const pageUnpaid = ref(1)
+const pageSizeUnpaid = ref(10)
+
+const pageCustomers = ref(1)
+const pageSizeCustomers = ref(10)
+
+const pageGrowth = ref(1)
+const pageSizeGrowth = ref(10)
 
 // Expense Modals
 const showCreateExpenseModal = ref(false)
@@ -1829,6 +2039,7 @@ const deletingExpense = ref(false)
 const showCrmModal = ref(false)
 const selectedCrmCustomerId = ref('')
 const selectedCrmCustomer = ref(null)
+const selectedCrmCustomerOrders = ref([])
 
 // Date helpers
 const toYMD = (d) => {
@@ -1862,7 +2073,7 @@ const applyPeriod = (presetId) => {
   } else if (presetId === 'CUSTOM') {
     customStartDate.value = startDate.value || toYMD(now)
     customEndDate.value = endDate.value || toYMD(now)
-    return // wait for user click Terapkan
+    return
   }
 
   loadAllReports()
@@ -1880,6 +2091,21 @@ const applyCustomDateRange = () => {
   startDate.value = customStartDate.value
   endDate.value = customEndDate.value
   loadAllReports()
+}
+
+const clearOrderSearch = () => {
+  orderSearchQuery.value = ''
+  pageOrders.value = 1
+}
+
+const clearExpenseSearch = () => {
+  expenseSearchQuery.value = ''
+  pageExpenses.value = 1
+}
+
+const clearCustomerSearch = () => {
+  customerSearchQuery.value = ''
+  pageCustomers.value = 1
 }
 
 // Master DataLoader
@@ -1913,6 +2139,18 @@ const loadAllReports = async () => {
     topCustomers.value = topCustData || []
     allOrders.value = Array.isArray(ordersData) ? ordersData : []
     allCustomers.value = Array.isArray(custData) ? custData : []
+
+    // Reset page numbers
+    pageOrders.value = 1
+    pagePickedUp.value = 1
+    pageReady.value = 1
+    pageCancelled.value = 1
+    pageOmset.value = 1
+    pagePaid.value = 1
+    pageExpenses.value = 1
+    pageUnpaid.value = 1
+    pageCustomers.value = 1
+    pageGrowth.value = 1
   } catch (err) {
     console.error('Failed to load reports', err)
     toast.error('Gagal memuat beberapa data laporan.')
@@ -1922,7 +2160,7 @@ const loadAllReports = async () => {
 }
 
 // ==========================================
-// Tab 1 Transaksi Filters
+// Tab 1 Transaksi Filters & Pagination
 // ==========================================
 const periodOrders = computed(() => {
   if (!startDate.value || !endDate.value) return allOrders.value
@@ -1947,27 +2185,57 @@ const filteredPeriodOrders = computed(() => {
   return list
 })
 
+const paginatedPeriodOrders = computed(() => {
+  const start = (pageOrders.value - 1) * pageSizeOrders.value
+  return filteredPeriodOrders.value.slice(start, start + pageSizeOrders.value)
+})
+
 const completedOrders = computed(() => {
   return periodOrders.value.filter((o) => o.status === 'SELESAI')
+})
+
+const paginatedCompletedOrders = computed(() => {
+  const start = (pagePickedUp.value - 1) * pageSizePickedUp.value
+  return completedOrders.value.slice(start, start + pageSizePickedUp.value)
 })
 
 const readyOrders = computed(() => {
   return allOrders.value.filter((o) => o.status === 'SIAP_AMBIL')
 })
 
+const paginatedReadyOrders = computed(() => {
+  const start = (pageReady.value - 1) * pageSizeReady.value
+  return readyOrders.value.slice(start, start + pageSizeReady.value)
+})
+
 const cancelledOrders = computed(() => {
   return periodOrders.value.filter((o) => o.status === 'BATAL')
 })
 
+const paginatedCancelledOrders = computed(() => {
+  const start = (pageCancelled.value - 1) * pageSizeCancelled.value
+  return cancelledOrders.value.slice(start, start + pageSizeCancelled.value)
+})
+
 // ==========================================
-// Tab 2 Keuangan Filters
+// Tab 2 Keuangan Filters & Pagination
 // ==========================================
 const omsetOrders = computed(() => {
   return periodOrders.value.filter((o) => o.status !== 'BATAL')
 })
 
+const paginatedOmsetOrders = computed(() => {
+  const start = (pageOmset.value - 1) * pageSizeOmset.value
+  return omsetOrders.value.slice(start, start + pageSizeOmset.value)
+})
+
 const paidOrders = computed(() => {
   return periodOrders.value.filter((o) => o.payment_status === 'PAID' || Number(o.paid_amount) > 0)
+})
+
+const paginatedPaidOrders = computed(() => {
+  const start = (pagePaid.value - 1) * pageSizePaid.value
+  return paidOrders.value.slice(start, start + pageSizePaid.value)
 })
 
 const filteredExpenses = computed(() => {
@@ -1984,6 +2252,11 @@ const filteredExpenses = computed(() => {
     )
   }
   return list
+})
+
+const paginatedExpenses = computed(() => {
+  const start = (pageExpenses.value - 1) * pageSizeExpenses.value
+  return filteredExpenses.value.slice(start, start + pageSizeExpenses.value)
 })
 
 const categoryBreakdown = computed(() => {
@@ -2010,6 +2283,11 @@ const totalPiutangNominal = computed(() => {
   return unpaidOrders.value.reduce((sum, o) => sum + (Number(o.sisa_tagihan) || 0), 0)
 })
 
+const paginatedUnpaidOrders = computed(() => {
+  const start = (pageUnpaid.value - 1) * pageSizeUnpaid.value
+  return unpaidOrders.value.slice(start, start + pageSizeUnpaid.value)
+})
+
 const profitMarginPercent = computed(() => {
   const rev = Number(financialReport.value.total_pendapatan) || 0
   const profit = Number(financialReport.value.laba_bersih) || 0
@@ -2018,7 +2296,7 @@ const profitMarginPercent = computed(() => {
 })
 
 // ==========================================
-// Tab 3 CRM Filters
+// Tab 3 CRM Filters, Activity Recap & Pagination
 // ==========================================
 const newCustomersInPeriod = computed(() => {
   if (!startDate.value || !endDate.value) return []
@@ -2027,6 +2305,11 @@ const newCustomersInPeriod = computed(() => {
     const d = c.created_at.slice(0, 10)
     return d >= startDate.value && d <= endDate.value
   })
+})
+
+const paginatedGrowthCustomers = computed(() => {
+  const start = (pageGrowth.value - 1) * pageSizeGrowth.value
+  return newCustomersInPeriod.value.slice(start, start + pageSizeGrowth.value)
 })
 
 const activeCustomerCount = computed(() => {
@@ -2044,21 +2327,93 @@ const avgOrderValue = computed(() => {
   return Math.round(sum / validOrders.length)
 })
 
-const filteredAllCustomers = computed(() => {
-  if (!customerSearchQuery.value.trim()) return allCustomers.value
-  const q = customerSearchQuery.value.toLowerCase()
-  return allCustomers.value.filter(
-    (c) =>
-      (c.full_name && c.full_name.toLowerCase().includes(q)) ||
-      (c.phone && c.phone.includes(q)) ||
-      (c.customer_code && c.customer_code.toLowerCase().includes(q)) ||
-      (c.address && c.address.toLowerCase().includes(q))
-  )
+// Customer Activity Aggregation per Period
+const customerPeriodMap = computed(() => {
+  const map = {}
+  periodOrders.value.forEach((ord) => {
+    if (!ord.customer_id) return
+    const cid = ord.customer_id
+    if (!map[cid]) {
+      map[cid] = {
+        orderCount: 0,
+        totalWeight: 0,
+        totalSpend: 0,
+        servicesUsed: new Set(),
+        orders: [],
+      }
+    }
+    map[cid].orders.push(ord)
+    if (ord.status !== 'BATAL') {
+      map[cid].orderCount += 1
+      map[cid].totalWeight += Number(ord.total_weight) || 0
+      map[cid].totalSpend += Number(ord.total_price) || 0
+    }
+    if (Array.isArray(ord.items)) {
+      ord.items.forEach((item) => {
+        if (item.category) map[cid].servicesUsed.add(item.category)
+      })
+    }
+  })
+  return map
 })
 
-const openCustomerCRM = (cust) => {
+const filteredCustomerWithStats = computed(() => {
+  let list = allCustomers.value.map((c) => {
+    const stats = customerPeriodMap.value[c.id] || {
+      orderCount: 0,
+      totalWeight: 0,
+      totalSpend: 0,
+      servicesUsed: new Set(),
+      orders: [],
+    }
+    return {
+      customer: c,
+      periodOrderCount: stats.orderCount,
+      periodWeight: stats.totalWeight,
+      periodSpend: stats.totalSpend,
+      servicesUsed: Array.from(stats.servicesUsed),
+      orders: stats.orders,
+    }
+  })
+
+  // Filter Service
+  if (customerServiceFilter.value !== 'ALL') {
+    list = list.filter((item) => item.servicesUsed.includes(customerServiceFilter.value))
+  }
+
+  // Filter Search
+  if (customerSearchQuery.value.trim()) {
+    const q = customerSearchQuery.value.toLowerCase()
+    list = list.filter(
+      (item) =>
+        (item.customer.full_name && item.customer.full_name.toLowerCase().includes(q)) ||
+        (item.customer.phone && item.customer.phone.includes(q)) ||
+        (item.customer.customer_code && item.customer.customer_code.toLowerCase().includes(q)) ||
+        (item.customer.address && item.customer.address.toLowerCase().includes(q))
+    )
+  }
+
+  // Sort: Customers with transactions first, then alphabetically
+  return list.sort((a, b) => {
+    if (b.periodSpend !== a.periodSpend) return b.periodSpend - a.periodSpend
+    return a.customer.full_name.localeCompare(b.customer.full_name)
+  })
+})
+
+const paginatedCustomers = computed(() => {
+  const start = (pageCustomers.value - 1) * pageSizeCustomers.value
+  return filteredCustomerWithStats.value.slice(start, start + pageSizeCustomers.value)
+})
+
+const openCustomerCRM = (cust, orders = null) => {
   selectedCrmCustomerId.value = cust.id
   selectedCrmCustomer.value = cust
+  if (orders) {
+    selectedCrmCustomerOrders.value = orders
+  } else {
+    // Lookup from period orders
+    selectedCrmCustomerOrders.value = periodOrders.value.filter((o) => o.customer_id === cust.id)
+  }
   showCrmModal.value = true
 }
 
@@ -2280,11 +2635,20 @@ const exportCurrentTabCSV = () => {
       })
     }
   } else if (activeTab.value === 'CRM') {
-    filename = `laporan-pelanggan-${crmSubTab.value}-${startDate.value}.csv`
-    csvContent += 'Kode,Nama,Telepon,Alamat,Tanggal Daftar\n'
-    allCustomers.value.forEach((c) => {
-      csvContent += `"${c.customer_code}","${c.full_name}","${c.phone}","${(c.address || '').replace(/"/g, '""')}","${c.created_at}"\n`
-    })
+    if (crmSubTab.value === 'DETAIL') {
+      filename = `rekap-aktivitas-pelanggan-${startDate.value}-sd-${endDate.value}.csv`
+      csvContent +=
+        'Kode,Nama,Telepon,Total Order Periode,Total Kg Periode,Total Belanja Periode,Layanan Dipakai\n'
+      filteredCustomerWithStats.value.forEach((item) => {
+        csvContent += `"${item.customer.customer_code || ''}","${item.customer.full_name}","${item.customer.phone}",${item.periodOrderCount},${item.periodWeight},${item.periodSpend},"${item.servicesUsed.join('; ')}"\n`
+      })
+    } else {
+      filename = `laporan-pelanggan-${crmSubTab.value}-${startDate.value}.csv`
+      csvContent += 'Kode,Nama,Telepon,Alamat,Tanggal Daftar\n'
+      allCustomers.value.forEach((c) => {
+        csvContent += `"${c.customer_code}","${c.full_name}","${c.phone}","${(c.address || '').replace(/"/g, '""')}","${c.created_at}"\n`
+      })
+    }
   }
 
   const encodedUri = encodeURI(csvContent)
