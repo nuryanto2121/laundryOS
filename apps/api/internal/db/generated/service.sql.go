@@ -107,11 +107,25 @@ func (q *Queries) ListActiveServices(ctx context.Context) ([]Service, error) {
 const listAllServices = `-- name: ListAllServices :many
 SELECT id, service_code, service_name, duration_day, price_per_kg, active, category_id, category_name, unit
 FROM services
-ORDER BY category_name ASC, service_name ASC
+ORDER BY
+  CASE WHEN $1::VARCHAR = 'service_code' AND $2::VARCHAR = 'asc' THEN service_code END ASC,
+  CASE WHEN $1::VARCHAR = 'service_code' AND $2::VARCHAR = 'desc' THEN service_code END DESC,
+  CASE WHEN $1::VARCHAR = 'service_name' AND $2::VARCHAR = 'asc' THEN service_name END ASC,
+  CASE WHEN $1::VARCHAR = 'service_name' AND $2::VARCHAR = 'desc' THEN service_name END DESC,
+  CASE WHEN $1::VARCHAR = 'price' AND $2::VARCHAR = 'asc' THEN price_per_kg END ASC,
+  CASE WHEN $1::VARCHAR = 'price' AND $2::VARCHAR = 'desc' THEN price_per_kg END DESC,
+  CASE WHEN $1::VARCHAR = 'category_name' AND $2::VARCHAR = 'asc' THEN category_name END ASC,
+  CASE WHEN $1::VARCHAR = 'category_name' AND $2::VARCHAR = 'desc' THEN category_name END DESC,
+  category_name ASC, service_name ASC
 `
 
-func (q *Queries) ListAllServices(ctx context.Context) ([]Service, error) {
-	rows, err := q.db.Query(ctx, listAllServices)
+type ListAllServicesParams struct {
+	SortBy  pgtype.Text `json:"sort_by"`
+	SortDir pgtype.Text `json:"sort_dir"`
+}
+
+func (q *Queries) ListAllServices(ctx context.Context, arg ListAllServicesParams) ([]Service, error) {
+	rows, err := q.db.Query(ctx, listAllServices, arg.SortBy, arg.SortDir)
 	if err != nil {
 		return nil, err
 	}

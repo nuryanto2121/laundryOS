@@ -26,7 +26,16 @@ WHERE deleted_at IS NULL
     OR full_name ILIKE '%' || sqlc.narg('search') || '%'
     OR phone ILIKE '%' || sqlc.narg('search') || '%'
   )
-ORDER BY created_at DESC
+ORDER BY
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'customer_code' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN customer_code END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'customer_code' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN customer_code END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'full_name' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN full_name END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'full_name' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN full_name END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'phone' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN phone END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'phone' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN phone END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN created_at END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN created_at END DESC,
+  created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: CountCustomers :one

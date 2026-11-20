@@ -722,8 +722,9 @@ const loadOrders = async () => {
     if (activeStatusTab.value !== 'ALL') {
       params.status = activeStatusTab.value
     }
-    if (searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim()
+    const q = searchQuery.value.trim()
+    if (q.length >= 3) {
+      params.search = q
     }
 
     const res = await api.get('/pos/orders', params)
@@ -756,9 +757,27 @@ watch([currentPage, itemsPerPage], () => {
   loadOrders()
 })
 
-watch([activeStatusTab, searchQuery], () => {
+watch(activeStatusTab, () => {
   currentPage.value = 1
   loadOrders()
+})
+
+// 3-character threshold filter watcher for order search
+let orderSearchTimer = null
+watch(searchQuery, (val) => {
+  const trimmed = (val || '').trim()
+  if (orderSearchTimer) clearTimeout(orderSearchTimer)
+
+  if (trimmed.length === 0) {
+    currentPage.value = 1
+    loadOrders()
+  } else if (trimmed.length >= 3) {
+    orderSearchTimer = setTimeout(() => {
+      currentPage.value = 1
+      loadOrders()
+    }, 350)
+  }
+  // If 1 or 2 characters: DO NOT hit API
 })
 
 watch(

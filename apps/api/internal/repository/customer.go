@@ -101,16 +101,26 @@ func (r *CustomerRepository) List(ctx context.Context) ([]model.Customer, error)
 }
 
 // ListPaginated returns customers with search filter, pagination, and total count.
-func (r *CustomerRepository) ListPaginated(ctx context.Context, search string, limit, offset int) ([]model.Customer, int64, error) {
+func (r *CustomerRepository) ListPaginated(ctx context.Context, search, sortBy, sortDir string, limit, offset int) ([]model.Customer, int64, error) {
 	var searchParam pgtype.Text
 	if search != "" {
 		searchParam = pgtype.Text{String: search, Valid: true}
 	}
+	var sortByParam pgtype.Text
+	if sortBy != "" {
+		sortByParam = pgtype.Text{String: sortBy, Valid: true}
+	}
+	var sortDirParam pgtype.Text
+	if sortDir != "" {
+		sortDirParam = pgtype.Text{String: sortDir, Valid: true}
+	}
 
 	rows, err := r.queries.ListCustomersPaginated(ctx, db.ListCustomersPaginatedParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
-		Search: searchParam,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
+		Search:  searchParam,
+		SortBy:  sortByParam,
+		SortDir: sortDirParam,
 	})
 	if err != nil {
 		return nil, 0, fmt.Errorf("repository: list customers paginated: %w", err)

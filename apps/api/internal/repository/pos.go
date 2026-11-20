@@ -228,7 +228,7 @@ func (r *POSRepository) ListPOSOrders(ctx context.Context, status, search string
 }
 
 // ListPOSOrdersPaginated lists orders with status, search filter, and pagination, populated with order items.
-func (r *POSRepository) ListPOSOrdersPaginated(ctx context.Context, status, search string, limit, offset int) ([]POSOrderListItem, int64, error) {
+func (r *POSRepository) ListPOSOrdersPaginated(ctx context.Context, status, search, sortBy, sortDir string, limit, offset int) ([]POSOrderListItem, int64, error) {
 	var statusParam pgtype.Text
 	if status != "" && status != "SEMUA" {
 		statusParam = pgtype.Text{String: status, Valid: true}
@@ -237,12 +237,22 @@ func (r *POSRepository) ListPOSOrdersPaginated(ctx context.Context, status, sear
 	if search != "" {
 		searchParam = pgtype.Text{String: search, Valid: true}
 	}
+	var sortByParam pgtype.Text
+	if sortBy != "" {
+		sortByParam = pgtype.Text{String: sortBy, Valid: true}
+	}
+	var sortDirParam pgtype.Text
+	if sortDir != "" {
+		sortDirParam = pgtype.Text{String: sortDir, Valid: true}
+	}
 
 	orders, err := r.queries.ListPOSOrdersPaginated(ctx, db.ListPOSOrdersPaginatedParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
-		Status: statusParam,
-		Search: searchParam,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
+		Status:  statusParam,
+		Search:  searchParam,
+		SortBy:  sortByParam,
+		SortDir: sortDirParam,
 	})
 	if err != nil {
 		return nil, 0, err

@@ -209,7 +209,18 @@ const listExpensesPaginated = `-- name: ListExpensesPaginated :many
 SELECT id, outlet_id, expense_date, category, amount, description, created_by, created_at, updated_at FROM expenses
 WHERE expense_date BETWEEN $1 AND $2
   AND ($5::VARCHAR IS NULL OR category = $5)
-ORDER BY expense_date DESC, created_at DESC
+ORDER BY
+  CASE WHEN $6::VARCHAR = 'expense_date' AND $7::VARCHAR = 'asc' THEN expense_date END ASC,
+  CASE WHEN $6::VARCHAR = 'expense_date' AND $7::VARCHAR = 'desc' THEN expense_date END DESC,
+  CASE WHEN $6::VARCHAR = 'category' AND $7::VARCHAR = 'asc' THEN category END ASC,
+  CASE WHEN $6::VARCHAR = 'category' AND $7::VARCHAR = 'desc' THEN category END DESC,
+  CASE WHEN $6::VARCHAR = 'amount' AND $7::VARCHAR = 'asc' THEN amount END ASC,
+  CASE WHEN $6::VARCHAR = 'amount' AND $7::VARCHAR = 'desc' THEN amount END DESC,
+  CASE WHEN $6::VARCHAR = 'created_by' AND $7::VARCHAR = 'asc' THEN created_by END ASC,
+  CASE WHEN $6::VARCHAR = 'created_by' AND $7::VARCHAR = 'desc' THEN created_by END DESC,
+  CASE WHEN $6::VARCHAR = 'created_at' AND $7::VARCHAR = 'asc' THEN created_at END ASC,
+  CASE WHEN $6::VARCHAR = 'created_at' AND $7::VARCHAR = 'desc' THEN created_at END DESC,
+  expense_date DESC, created_at DESC
 LIMIT $3 OFFSET $4
 `
 
@@ -219,6 +230,8 @@ type ListExpensesPaginatedParams struct {
 	Limit         int32       `json:"limit"`
 	Offset        int32       `json:"offset"`
 	Category      pgtype.Text `json:"category"`
+	SortBy        pgtype.Text `json:"sort_by"`
+	SortDir       pgtype.Text `json:"sort_dir"`
 }
 
 func (q *Queries) ListExpensesPaginated(ctx context.Context, arg ListExpensesPaginatedParams) ([]Expense, error) {
@@ -228,6 +241,8 @@ func (q *Queries) ListExpensesPaginated(ctx context.Context, arg ListExpensesPag
 		arg.Limit,
 		arg.Offset,
 		arg.Category,
+		arg.SortBy,
+		arg.SortDir,
 	)
 	if err != nil {
 		return nil, err

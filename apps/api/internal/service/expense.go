@@ -35,9 +35,9 @@ func (s *ExpenseService) List(ctx context.Context, start, end time.Time) ([]db.E
 }
 
 // ListPaginated retrieves expenses with date range, category filter, and returns a paginated envelope.
-func (s *ExpenseService) ListPaginated(ctx context.Context, start, end time.Time, category string, page, limit int) (model.PaginatedResponse, error) {
+func (s *ExpenseService) ListPaginated(ctx context.Context, start, end time.Time, category, sortBy, sortDir string, page, limit int) (model.PaginatedResponse, error) {
 	offset, meta := model.CalculatePagination(page, limit, 0)
-	expenses, total, err := s.repo.ListPaginated(ctx, start, end, category, meta.Limit, offset)
+	expenses, total, err := s.repo.ListPaginated(ctx, start, end, category, sortBy, sortDir, meta.Limit, offset)
 	if err != nil {
 		return model.PaginatedResponse{}, err
 	}

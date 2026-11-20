@@ -26,7 +26,18 @@ ORDER BY expense_date DESC, created_at DESC;
 SELECT * FROM expenses
 WHERE expense_date BETWEEN $1 AND $2
   AND (sqlc.narg('category')::VARCHAR IS NULL OR category = sqlc.narg('category'))
-ORDER BY expense_date DESC, created_at DESC
+ORDER BY
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'expense_date' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN expense_date END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'expense_date' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN expense_date END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'category' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN category END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'category' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN category END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'amount' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN amount END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'amount' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN amount END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_by' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN created_by END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_by' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN created_by END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN created_at END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN created_at END DESC,
+  expense_date DESC, created_at DESC
 LIMIT $3 OFFSET $4;
 
 -- name: CountExpenses :one

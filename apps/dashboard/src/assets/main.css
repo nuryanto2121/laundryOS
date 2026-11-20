@@ -46,3 +46,14 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* Thermal receipt print isolation */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  #thermal-print-iframe {
+    display: block !important;
+  }
+}

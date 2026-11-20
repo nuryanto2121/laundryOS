@@ -158,9 +158,20 @@ func (r *MasterRepository) ListExpenseCategories(ctx context.Context) ([]db.Expe
 	return r.queries.ListExpenseCategories(ctx)
 }
 
-// ListAllExpenseCategories retrieves all expense categories.
-func (r *MasterRepository) ListAllExpenseCategories(ctx context.Context) ([]db.ExpenseCategory, error) {
-	return r.queries.ListAllExpenseCategories(ctx)
+// ListAllExpenseCategories retrieves all expense categories with optional sorting.
+func (r *MasterRepository) ListAllExpenseCategories(ctx context.Context, sortBy, sortDir string) ([]db.ExpenseCategory, error) {
+	var sortByParam pgtype.Text
+	if sortBy != "" {
+		sortByParam = pgtype.Text{String: sortBy, Valid: true}
+	}
+	var sortDirParam pgtype.Text
+	if sortDir != "" {
+		sortDirParam = pgtype.Text{String: sortDir, Valid: true}
+	}
+	return r.queries.ListAllExpenseCategories(ctx, db.ListAllExpenseCategoriesParams{
+		SortBy:  sortByParam,
+		SortDir: sortDirParam,
+	})
 }
 
 // CreateExpenseCategory creates a new expense category.

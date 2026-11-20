@@ -100,7 +100,10 @@ func (s *MasterService) ListExpenseCategories(ctx context.Context) ([]db.Expense
 	return s.repo.ListExpenseCategories(ctx)
 }
 
-// CreateExpenseCategory creates a new expense category.
+// ListAllExpenseCategories returns all expense categories with optional sorting.
+func (s *MasterService) ListAllExpenseCategories(ctx context.Context, sortBy, sortDir string) ([]db.ExpenseCategory, error) {
+	return s.repo.ListAllExpenseCategories(ctx, sortBy, sortDir)
+}
 func (s *MasterService) CreateExpenseCategory(ctx context.Context, code, name string, isActive bool) (db.ExpenseCategory, error) {
 	return s.repo.CreateExpenseCategory(ctx, code, name, isActive)
 }
@@ -197,9 +200,9 @@ type ServiceMasterItem struct {
 }
 
 // ListServices returns services with category and unit mapping, falling back to FAN Laundry defaults.
-func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, error) {
+func (s *MasterService) ListServices(ctx context.Context, sortBy, sortDir string) ([]ServiceMasterItem, error) {
 	if s.serviceRepo != nil {
-		active, err := s.serviceRepo.ListActiveServices(ctx)
+		active, err := s.serviceRepo.ListAllServices(ctx, sortBy, sortDir)
 		if err == nil && len(active) > 0 {
 			res := make([]ServiceMasterItem, len(active))
 			for i, a := range active {

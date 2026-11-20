@@ -494,11 +494,21 @@ func (q *Queries) ListAllEmployees(ctx context.Context) ([]Employee, error) {
 
 const listAllExpenseCategories = `-- name: ListAllExpenseCategories :many
 SELECT id, code, name, is_active, created_at FROM expense_categories
-ORDER BY name ASC
+ORDER BY
+  CASE WHEN $1::VARCHAR = 'code' AND $2::VARCHAR = 'asc' THEN code END ASC,
+  CASE WHEN $1::VARCHAR = 'code' AND $2::VARCHAR = 'desc' THEN code END DESC,
+  CASE WHEN $1::VARCHAR = 'name' AND $2::VARCHAR = 'asc' THEN name END ASC,
+  CASE WHEN $1::VARCHAR = 'name' AND $2::VARCHAR = 'desc' THEN name END DESC,
+  name ASC
 `
 
-func (q *Queries) ListAllExpenseCategories(ctx context.Context) ([]ExpenseCategory, error) {
-	rows, err := q.db.Query(ctx, listAllExpenseCategories)
+type ListAllExpenseCategoriesParams struct {
+	SortBy  pgtype.Text `json:"sort_by"`
+	SortDir pgtype.Text `json:"sort_dir"`
+}
+
+func (q *Queries) ListAllExpenseCategories(ctx context.Context, arg ListAllExpenseCategoriesParams) ([]ExpenseCategory, error) {
+	rows, err := q.db.Query(ctx, listAllExpenseCategories, arg.SortBy, arg.SortDir)
 	if err != nil {
 		return nil, err
 	}

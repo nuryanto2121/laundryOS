@@ -209,18 +209,35 @@ WHERE deleted_at IS NULL
     OR full_name ILIKE '%' || $3 || '%'
     OR phone ILIKE '%' || $3 || '%'
   )
-ORDER BY created_at DESC
+ORDER BY
+  CASE WHEN $4::VARCHAR = 'customer_code' AND $5::VARCHAR = 'asc' THEN customer_code END ASC,
+  CASE WHEN $4::VARCHAR = 'customer_code' AND $5::VARCHAR = 'desc' THEN customer_code END DESC,
+  CASE WHEN $4::VARCHAR = 'full_name' AND $5::VARCHAR = 'asc' THEN full_name END ASC,
+  CASE WHEN $4::VARCHAR = 'full_name' AND $5::VARCHAR = 'desc' THEN full_name END DESC,
+  CASE WHEN $4::VARCHAR = 'phone' AND $5::VARCHAR = 'asc' THEN phone END ASC,
+  CASE WHEN $4::VARCHAR = 'phone' AND $5::VARCHAR = 'desc' THEN phone END DESC,
+  CASE WHEN $4::VARCHAR = 'created_at' AND $5::VARCHAR = 'asc' THEN created_at END ASC,
+  CASE WHEN $4::VARCHAR = 'created_at' AND $5::VARCHAR = 'desc' THEN created_at END DESC,
+  created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type ListCustomersPaginatedParams struct {
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
-	Search pgtype.Text `json:"search"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
+	Search  pgtype.Text `json:"search"`
+	SortBy  pgtype.Text `json:"sort_by"`
+	SortDir pgtype.Text `json:"sort_dir"`
 }
 
 func (q *Queries) ListCustomersPaginated(ctx context.Context, arg ListCustomersPaginatedParams) ([]Customer, error) {
-	rows, err := q.db.Query(ctx, listCustomersPaginated, arg.Limit, arg.Offset, arg.Search)
+	rows, err := q.db.Query(ctx, listCustomersPaginated,
+		arg.Limit,
+		arg.Offset,
+		arg.Search,
+		arg.SortBy,
+		arg.SortDir,
+	)
 	if err != nil {
 		return nil, err
 	}

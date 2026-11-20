@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -92,12 +93,14 @@ func (h *ExpenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
 	category := r.URL.Query().Get("category")
+	sortBy := strings.TrimSpace(r.URL.Query().Get("sort_by"))
+	sortDir := strings.TrimSpace(r.URL.Query().Get("sort_dir"))
 
 	// If page or limit is requested, return paginated envelope
 	if pageStr != "" || limitStr != "" {
 		page, _ := strconv.Atoi(pageStr)
 		limit, _ := strconv.Atoi(limitStr)
-		paginated, err := h.svc.ListPaginated(r.Context(), start, end, category, page, limit)
+		paginated, err := h.svc.ListPaginated(r.Context(), start, end, category, sortBy, sortDir, page, limit)
 		if err != nil {
 			slog.Error("expense: list paginated failed", "error", err)
 			writeError(w, http.StatusInternalServerError, "gagal memuat daftar pengeluaran")

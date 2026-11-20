@@ -2137,6 +2137,7 @@ import {
 import { useAppSettings } from '../composables/useAppSettings'
 import { useToast } from '../composables/useToast'
 import { api, formatRupiah, formatDate } from '../api/client'
+import { printThermalReceipt } from '../utils/printReceipt'
 
 const { settings, changePin, resetToDefaults } = useAppSettings()
 const { success, error } = useToast()
@@ -2183,13 +2184,24 @@ const getSortIcon = (table, col) => {
   return current.dir === 'asc' ? ArrowUp : ArrowDown
 }
 
-const toggleSort = (table, col) => {
+const toggleSort = async (table, col) => {
   if (!sortStates[table] || sortStates[table].col !== col) {
     sortStates[table] = { col, dir: 'asc' }
   } else if (sortStates[table].dir === 'asc') {
-    sortStates[table].dir = 'desc'
+    sortStates[table] = { col, dir: 'desc' }
   } else {
     delete sortStates[table]
+  }
+
+  // Server-side backend sorting logic
+  if (table === 'customer') {
+    await loadCustomers()
+  } else if (table === 'expense_audit') {
+    await loadExpensesAudit()
+  } else if (table === 'category') {
+    await fetchExpenseCategoriesMaster()
+  } else if (table.startsWith('service')) {
+    await fetchServicesMaster()
   }
 }
 
@@ -2424,16 +2436,7 @@ const handleCategoryNameInput = () => {
 }
 
 const sortCategory = (col) => toggleSort('category', col)
-const sortedExpenseCategories = computed(() => {
-  const list = [...expenseCategoriesList.value]
-  const s = sortStates['category']
-  if (!s) return list
-  return list.sort((a, b) => {
-    const key = s.col === 'name' ? (a.name || a.category_name || '') : (a.code || a.category_code || '')
-    const keyB = s.col === 'name' ? (b.name || b.category_name || '') : (b.code || b.category_code || '')
-    return s.dir === 'asc' ? key.localeCompare(keyB) : keyB.localeCompare(key)
-  })
-})
+const sortedExpenseCategories = computed(() => expenseCategoriesList.value)
 
 // 6. Edit Expense Modal State (created_by strictly read-only)
 const showEditExpenseModal = ref(false)
@@ -2447,21 +2450,7 @@ const editExpenseForm = reactive({
 })
 
 const sortExpenseAudit = (col) => toggleSort('expense_audit', col)
-const sortedExpensesAudit = computed(() => {
-  const list = [...expensesAuditList.value]
-  const s = sortStates['expense_audit']
-  if (!s) return list
-  return list.sort((a, b) => {
-    if (s.col === 'amount') {
-      const aVal = Number(a.amount) || 0
-      const bVal = Number(b.amount) || 0
-      return s.dir === 'asc' ? aVal - bVal : bVal - aVal
-    }
-    const valA = (a[s.col] || '').toString()
-    const valB = (b[s.col] || '').toString()
-    return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
-  })
-})
+const sortedExpensesAudit = computed(() => expensesAuditList.value)
 
 // 7. Customer Modal State
 const showCustomerModal = ref(false)
@@ -2474,28 +2463,60 @@ const customerForm = reactive({
 })
 
 const sortCustomer = (col) => toggleSort('customer', col)
-const sortedCustomers = computed(() => {
-  const list = [...customersList.value]
-  const s = sortStates['customer']
-  if (!s) return list
-  return list.sort((a, b) => {
-    const valA = (a[s.col] || '').toString().toLowerCase()
-    const valB = (b[s.col] || '').toString().toLowerCase()
-    return s.dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
-  })
-})
+const sortedCustomers = computed(() => customersList.value)
 
 // ==========================================
 // API Loaders
 // ==========================================
+const fetchServicesMaster = async () => {
+  try {
+    const params = {}
+    const srvSort = Object.keys(sortStates).find((k) => k.startsWith('service'))
+    if (srvSort && sortStates[srvSort]) {
+      params.sort_by = sortStates[srvSort].col
+      params.sort_dir = sortStates[srvSort].dir
+    }
+    const srv = await api.get('/master/services', params).catch(() => [])
+    if (Array.isArray(srv)) servicesList.value = srv
+  } catch (err) {
+    console.error('Failed to load services master:', err)
+  }
+}
+
+const fetchExpenseCategoriesMaster = async () => {
+  try {
+    const params = {}
+    if (sortStates['category']) {
+      params.sort_by = sortStates['category'].col
+      params.sort_dir = sortStates['category'].dir
+    }
+    const expCat = await api.get('/master/expense-categories', params).catch(() => [])
+    if (Array.isArray(expCat)) expenseCategoriesList.value = expCat
+  } catch (err) {
+    console.error('Failed to load expense categories master:', err)
+  }
+}
+
 const fetchMasterData = async () => {
   try {
+    const srvParams = {}
+    const srvSort = Object.keys(sortStates).find((k) => k.startsWith('service'))
+    if (srvSort && sortStates[srvSort]) {
+      srvParams.sort_by = sortStates[srvSort].col
+      srvParams.sort_dir = sortStates[srvSort].dir
+    }
+    const expParams = {}
+    if (sortStates['category']) {
+      expParams.sort_by = sortStates['category'].col
+      expParams.sort_dir = sortStates['category'].dir
+    }
+
     const [srv, srvCat, prf, disc, expCat, emp] = await Promise.all([
-      api.get('/master/services').catch(() => []),
+      api.get('/master/services', srvParams).catch(() => []),
       api.get('/master/service-categories').catch(() => []),
       api.get('/master/perfumes').catch(() => []),
       api.get('/master/discounts').catch(() => []),
-      api.get('/master/expense-categories').catch(() => []),
+      api.get('/master/expense-categories', expParams).catch(() => []),
       api.get('/master/employees').catch(() => []),
     ])
     if (Array.isArray(srv)) servicesList.value = srv
@@ -2518,6 +2539,10 @@ const loadExpensesAudit = async () => {
       end: expenseAuditFilter.endDate,
       category: expenseAuditFilter.category || undefined,
     }
+    if (sortStates['expense_audit']) {
+      params.sort_by = sortStates['expense_audit'].col
+      params.sort_dir = sortStates['expense_audit'].dir
+    }
     const res = await api.get('/expenses', params)
     if (res && res.data && res.meta) {
       expensesAuditList.value = res.data
@@ -2536,7 +2561,14 @@ const loadCustomers = async () => {
     const params = {
       page: pageCustomers.value,
       limit: limitCustomers.value,
-      search: customerSearchQuery.value.trim() || undefined,
+    }
+    const q = customerSearchQuery.value.trim()
+    if (q.length >= 3) {
+      params.search = q
+    }
+    if (sortStates['customer']) {
+      params.sort_by = sortStates['customer'].col
+      params.sort_dir = sortStates['customer'].dir
     }
     const res = await api.get('/customers', params)
     if (res && res.data && res.meta) {
@@ -2572,9 +2604,22 @@ watch([pageExpensesAudit, limitExpensesAudit], () => {
   loadExpensesAudit()
 })
 
-watch(customerSearchQuery, () => {
-  pageCustomers.value = 1
-  loadCustomers()
+// 3-character threshold filter watcher for customer search
+let customerSearchTimer = null
+watch(customerSearchQuery, (val) => {
+  const trimmed = (val || '').trim()
+  if (customerSearchTimer) clearTimeout(customerSearchTimer)
+
+  if (trimmed.length === 0) {
+    pageCustomers.value = 1
+    loadCustomers()
+  } else if (trimmed.length >= 3) {
+    customerSearchTimer = setTimeout(() => {
+      pageCustomers.value = 1
+      loadCustomers()
+    }, 350)
+  }
+  // If 1 or 2 characters: DO NOT hit API
 })
 
 watch([pageCustomers, limitCustomers], () => {
@@ -2606,7 +2651,10 @@ const handleSavePin = () => {
 }
 
 const testPrint = () => {
-  window.print()
+  printThermalReceipt('thermal-preview-receipt', {
+    paperWidth: printerForm.paperWidth || '58mm',
+    title: 'Uji-Coba-Cetak-Struk',
+  })
 }
 
 const handleFactoryReset = () => {

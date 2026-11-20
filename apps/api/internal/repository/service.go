@@ -52,9 +52,21 @@ func (r *ServiceRepository) ListActiveServices(ctx context.Context) ([]model.Ser
 	return items, nil
 }
 
-// ListAllServices retrieves all services.
-func (r *ServiceRepository) ListAllServices(ctx context.Context) ([]model.ServiceItem, error) {
-	services, err := r.queries.ListAllServices(ctx)
+// ListAllServices retrieves all services with optional sorting.
+func (r *ServiceRepository) ListAllServices(ctx context.Context, sortBy, sortDir string) ([]model.ServiceItem, error) {
+	var sortByParam pgtype.Text
+	if sortBy != "" {
+		sortByParam = pgtype.Text{String: sortBy, Valid: true}
+	}
+	var sortDirParam pgtype.Text
+	if sortDir != "" {
+		sortDirParam = pgtype.Text{String: sortDir, Valid: true}
+	}
+
+	services, err := r.queries.ListAllServices(ctx, db.ListAllServicesParams{
+		SortBy:  sortByParam,
+		SortDir: sortDirParam,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("repository: list all services: %w", err)
 	}

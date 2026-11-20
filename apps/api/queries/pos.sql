@@ -103,7 +103,18 @@ WHERE (sqlc.narg('status')::VARCHAR IS NULL OR o.status = sqlc.narg('status'))
     OR c.phone ILIKE '%' || sqlc.narg('search') || '%'
     OR o.rack_number ILIKE '%' || sqlc.narg('search') || '%'
   )
-ORDER BY o.created_at DESC
+ORDER BY
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'order_number' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN o.order_number END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'order_number' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN o.order_number END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'customer_name' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN c.full_name END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'customer_name' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN c.full_name END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'total_price' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN o.total_price END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'total_price' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN o.total_price END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'status' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN o.status END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'status' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN o.status END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN o.created_at END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'created_at' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN o.created_at END DESC,
+  o.created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: CountPOSOrders :one

@@ -223,6 +223,7 @@ import { ref, computed } from 'vue'
 import { Printer, X } from 'lucide-vue-next'
 import { formatRupiah, formatDateTime } from '../../api/client'
 import { useAppSettings } from '../../composables/useAppSettings'
+import { printThermalReceipt } from '../../utils/printReceipt'
 
 const { settings } = useAppSettings()
 
@@ -263,7 +264,10 @@ const close = () => {
 }
 
 const printReceipt = () => {
-  window.print()
+  printThermalReceipt('thermal-receipt', {
+    paperWidth: settings.value?.printer?.paperWidth || '58mm',
+    title: `Nota-${activeTab.value}`
+  })
 }
 </script>
 

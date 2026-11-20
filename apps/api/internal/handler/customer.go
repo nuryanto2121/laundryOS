@@ -81,16 +81,18 @@ func (h *CustomerHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, customer)
 }
 
-// List handles GET /customers (supporting optional ?page=1&limit=10&search=...).
+// List handles GET /customers (supporting optional ?page=1&limit=10&search=...&sort_by=...&sort_dir=...).
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 	search := strings.TrimSpace(r.URL.Query().Get("search"))
+	sortBy := strings.TrimSpace(r.URL.Query().Get("sort_by"))
+	sortDir := strings.TrimSpace(r.URL.Query().Get("sort_dir"))
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
 
 	if pageStr != "" || limitStr != "" {
 		page, _ := strconv.Atoi(pageStr)
 		limit, _ := strconv.Atoi(limitStr)
-		paginated, err := h.svc.ListPaginated(r.Context(), search, page, limit)
+		paginated, err := h.svc.ListPaginated(r.Context(), search, sortBy, sortDir, page, limit)
 		if err != nil {
 			slog.Error("list customers paginated failed", "error", err)
 			writeError(w, http.StatusInternalServerError, "failed to list customers")

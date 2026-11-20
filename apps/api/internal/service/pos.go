@@ -136,9 +136,9 @@ func (s *POSService) ListOrders(ctx context.Context, status, search string) ([]r
 }
 
 // ListOrdersPaginated returns a paginated envelope of orders with status, search filter, and count.
-func (s *POSService) ListOrdersPaginated(ctx context.Context, status, search string, page, limit int) (model.PaginatedResponse, error) {
+func (s *POSService) ListOrdersPaginated(ctx context.Context, status, search, sortBy, sortDir string, page, limit int) (model.PaginatedResponse, error) {
 	offset, meta := model.CalculatePagination(page, limit, 0)
-	orders, total, err := s.posRepo.ListPOSOrdersPaginated(ctx, status, search, meta.Limit, offset)
+	orders, total, err := s.posRepo.ListPOSOrdersPaginated(ctx, status, search, sortBy, sortDir, meta.Limit, offset)
 	if err != nil {
 		return model.PaginatedResponse{}, err
 	}

@@ -72,16 +72,26 @@ func (r *ExpenseRepository) List(ctx context.Context, start, end time.Time) ([]d
 }
 
 // ListPaginated retrieves expenses with date range, category filter, and pagination.
-func (r *ExpenseRepository) ListPaginated(ctx context.Context, start, end time.Time, category string, limit, offset int) ([]db.Expense, int64, error) {
+func (r *ExpenseRepository) ListPaginated(ctx context.Context, start, end time.Time, category, sortBy, sortDir string, limit, offset int) ([]db.Expense, int64, error) {
 	var catParam pgtype.Text
 	if category != "" && category != "SEMUA" {
 		catParam = pgtype.Text{String: category, Valid: true}
+	}
+	var sortByParam pgtype.Text
+	if sortBy != "" {
+		sortByParam = pgtype.Text{String: sortBy, Valid: true}
+	}
+	var sortDirParam pgtype.Text
+	if sortDir != "" {
+		sortDirParam = pgtype.Text{String: sortDir, Valid: true}
 	}
 
 	rows, err := r.queries.ListExpensesPaginated(ctx, db.ListExpensesPaginatedParams{
 		ExpenseDate:   pgtype.Date{Time: start, Valid: true},
 		ExpenseDate_2: pgtype.Date{Time: end, Valid: true},
 		Category:      catParam,
+		SortBy:        sortByParam,
+		SortDir:       sortDirParam,
 		Limit:         int32(limit),
 		Offset:        int32(offset),
 	})

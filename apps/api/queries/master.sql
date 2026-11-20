@@ -71,7 +71,12 @@ ORDER BY name ASC;
 
 -- name: ListAllExpenseCategories :many
 SELECT * FROM expense_categories
-ORDER BY name ASC;
+ORDER BY
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'code' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN code END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'code' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN code END DESC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'name' AND sqlc.narg('sort_dir')::VARCHAR = 'asc' THEN name END ASC,
+  CASE WHEN sqlc.narg('sort_by')::VARCHAR = 'name' AND sqlc.narg('sort_dir')::VARCHAR = 'desc' THEN name END DESC,
+  name ASC;
 
 -- name: CreateExpenseCategory :one
 INSERT INTO expense_categories (id, code, name, is_active, created_at)

@@ -423,15 +423,28 @@ WHERE ($3::VARCHAR IS NULL OR o.status = $3)
     OR c.phone ILIKE '%' || $4 || '%'
     OR o.rack_number ILIKE '%' || $4 || '%'
   )
-ORDER BY o.created_at DESC
+ORDER BY
+  CASE WHEN $5::VARCHAR = 'order_number' AND $6::VARCHAR = 'asc' THEN o.order_number END ASC,
+  CASE WHEN $5::VARCHAR = 'order_number' AND $6::VARCHAR = 'desc' THEN o.order_number END DESC,
+  CASE WHEN $5::VARCHAR = 'customer_name' AND $6::VARCHAR = 'asc' THEN c.full_name END ASC,
+  CASE WHEN $5::VARCHAR = 'customer_name' AND $6::VARCHAR = 'desc' THEN c.full_name END DESC,
+  CASE WHEN $5::VARCHAR = 'total_price' AND $6::VARCHAR = 'asc' THEN o.total_price END ASC,
+  CASE WHEN $5::VARCHAR = 'total_price' AND $6::VARCHAR = 'desc' THEN o.total_price END DESC,
+  CASE WHEN $5::VARCHAR = 'status' AND $6::VARCHAR = 'asc' THEN o.status END ASC,
+  CASE WHEN $5::VARCHAR = 'status' AND $6::VARCHAR = 'desc' THEN o.status END DESC,
+  CASE WHEN $5::VARCHAR = 'created_at' AND $6::VARCHAR = 'asc' THEN o.created_at END ASC,
+  CASE WHEN $5::VARCHAR = 'created_at' AND $6::VARCHAR = 'desc' THEN o.created_at END DESC,
+  o.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
 type ListPOSOrdersPaginatedParams struct {
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
-	Status pgtype.Text `json:"status"`
-	Search pgtype.Text `json:"search"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
+	Status  pgtype.Text `json:"status"`
+	Search  pgtype.Text `json:"search"`
+	SortBy  pgtype.Text `json:"sort_by"`
+	SortDir pgtype.Text `json:"sort_dir"`
 }
 
 type ListPOSOrdersPaginatedRow struct {
@@ -472,6 +485,8 @@ func (q *Queries) ListPOSOrdersPaginated(ctx context.Context, arg ListPOSOrdersP
 		arg.Offset,
 		arg.Status,
 		arg.Search,
+		arg.SortBy,
+		arg.SortDir,
 	)
 	if err != nil {
 		return nil, err

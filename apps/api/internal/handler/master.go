@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
@@ -201,7 +202,9 @@ func (h *MasterHandler) ListOutlets(w http.ResponseWriter, r *http.Request) {
 
 // ListServices handles GET /master/services.
 func (h *MasterHandler) ListServices(w http.ResponseWriter, r *http.Request) {
-	services, err := h.svc.ListServices(r.Context())
+	sortBy := strings.TrimSpace(r.URL.Query().Get("sort_by"))
+	sortDir := strings.TrimSpace(r.URL.Query().Get("sort_dir"))
+	services, err := h.svc.ListServices(r.Context(), sortBy, sortDir)
 	if err != nil {
 		slog.Error("master: list services failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal memuat data layanan")
@@ -358,7 +361,9 @@ func (h *MasterHandler) DeleteServiceCategory(w http.ResponseWriter, r *http.Req
 
 // ListExpenseCategories handles GET /master/expense-categories.
 func (h *MasterHandler) ListExpenseCategories(w http.ResponseWriter, r *http.Request) {
-	cats, err := h.svc.ListExpenseCategories(r.Context())
+	sortBy := strings.TrimSpace(r.URL.Query().Get("sort_by"))
+	sortDir := strings.TrimSpace(r.URL.Query().Get("sort_dir"))
+	cats, err := h.svc.ListAllExpenseCategories(r.Context(), sortBy, sortDir)
 	if err != nil {
 		slog.Error("master: list expense categories failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal memuat kategori pengeluaran")

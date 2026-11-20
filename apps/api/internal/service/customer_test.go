@@ -42,8 +42,8 @@ func (m *MockCustomerRepository) List(ctx context.Context) ([]model.Customer, er
 	return args.Get(0).([]model.Customer), args.Error(1)
 }
 
-func (m *MockCustomerRepository) ListPaginated(ctx context.Context, search string, limit, offset int) ([]model.Customer, int64, error) {
-	args := m.Called(ctx, search, limit, offset)
+func (m *MockCustomerRepository) ListPaginated(ctx context.Context, search, sortBy, sortDir string, limit, offset int) ([]model.Customer, int64, error) {
+	args := m.Called(ctx, search, sortBy, sortDir, limit, offset)
 	return args.Get(0).([]model.Customer), args.Get(1).(int64), args.Error(2)
 }
 

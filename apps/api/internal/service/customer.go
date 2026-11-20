@@ -79,9 +79,9 @@ func (s *CustomerService) List(ctx context.Context) ([]model.Customer, error) {
 }
 
 // ListPaginated returns a paginated envelope of customers with search and count.
-func (s *CustomerService) ListPaginated(ctx context.Context, search string, page, limit int) (model.PaginatedResponse, error) {
+func (s *CustomerService) ListPaginated(ctx context.Context, search, sortBy, sortDir string, page, limit int) (model.PaginatedResponse, error) {
 	offset, meta := model.CalculatePagination(page, limit, 0)
-	customers, total, err := s.repo.ListPaginated(ctx, search, meta.Limit, offset)
+	customers, total, err := s.repo.ListPaginated(ctx, search, sortBy, sortDir, meta.Limit, offset)
 	if err != nil {
 		return model.PaginatedResponse{}, err
 	}
