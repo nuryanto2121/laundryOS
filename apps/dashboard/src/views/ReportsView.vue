@@ -2443,10 +2443,17 @@ const customerPeriodMap = computed(() => {
       map[cid].totalWeight += Number(ord.total_weight) || 0
       map[cid].totalSpend += Number(ord.total_price) || 0
     }
-    if (Array.isArray(ord.items)) {
+    if (Array.isArray(ord.items) && ord.items.length > 0) {
       ord.items.forEach((item) => {
         if (item.category) map[cid].servicesUsed.add(item.category)
+        else if (item.service_name) map[cid].servicesUsed.add(item.service_name)
       })
+    } else if (ord.primary_service_name) {
+      const lower = ord.primary_service_name.toLowerCase()
+      if (lower.includes('self service')) map[cid].servicesUsed.add('SELF_SERVICE')
+      else if (lower.includes('kiloan')) map[cid].servicesUsed.add('KILOAN')
+      else if (lower.includes('satuan')) map[cid].servicesUsed.add('SATUAN')
+      else map[cid].servicesUsed.add(ord.primary_service_name)
     }
   })
   return map

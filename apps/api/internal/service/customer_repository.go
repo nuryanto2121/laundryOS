@@ -14,6 +14,7 @@ type CustomerRepository interface {
 	GetByPhone(ctx context.Context, phone string) (model.Customer, error)
 	GetLatestCustomerCodeToday(ctx context.Context) (string, error)
 	List(ctx context.Context) ([]model.Customer, error)
+	ListPaginated(ctx context.Context, search string, limit, offset int) ([]model.Customer, int64, error)
 	Update(ctx context.Context, id string, req model.UpdateCustomerRequest, status model.CustomerStatus, deletedAt *string) (model.Customer, error)
 	UpdateStatus(ctx context.Context, id string, status model.CustomerStatus) (model.Customer, error)
 	Delete(ctx context.Context, id string) error

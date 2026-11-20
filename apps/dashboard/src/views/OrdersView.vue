@@ -347,6 +347,14 @@
             </button>
           </div>
         </div>
+
+        <!-- Server-side Pagination Bar -->
+        <PaginationBar
+          v-if="totalOrders > 0"
+          v-model:current-page="currentPage"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="totalOrders"
+        />
       </div>
 
       <!-- Modals -->
@@ -388,6 +396,7 @@ import AppLayout from '../components/layout/AppLayout.vue'
 import CreateOrderModal from '../components/pos/CreateOrderModal.vue'
 import OrderDetailModal from '../components/pos/OrderDetailModal.vue'
 import ReceiptPrintModal from '../components/pos/ReceiptPrintModal.vue'
+import PaginationBar from '../components/ui/PaginationBar.vue'
 import { api, formatRupiah, formatDateTime } from '../api/client'
 import { useToast } from '../composables/useToast'
 
@@ -402,6 +411,10 @@ const searchQuery = ref('')
 const paymentFilter = ref('ALL')
 const specialFilter = ref('')
 const actionInProgressId = ref(null)
+
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const totalOrders = ref(0)
 
 const isToday = (dateStr) => {
   if (!dateStr) return false
@@ -444,7 +457,7 @@ const statusTabs = [
 
 const tabCounts = computed(() => {
   const counts = {
-    ALL: orders.value.length,
+    ALL: totalOrders.value || orders.value.length,
     ANTRIAN: 0,
     PROSES: 0,
     'SIAP AMBIL': 0,
@@ -702,8 +715,28 @@ const resetFilters = () => {
 const loadOrders = async () => {
   loading.value = true
   try {
-    const data = await api.get('/pos/orders')
-    orders.value = data || []
+    const params = {
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    }
+    if (activeStatusTab.value !== 'ALL') {
+      params.status = activeStatusTab.value
+    }
+    if (searchQuery.value.trim()) {
+      params.search = searchQuery.value.trim()
+    }
+
+    const res = await api.get('/pos/orders', params)
+    if (res && res.data && res.meta) {
+      orders.value = res.data
+      totalOrders.value = res.meta.total_items
+    } else if (Array.isArray(res)) {
+      orders.value = res
+      totalOrders.value = res.length
+    } else {
+      orders.value = []
+      totalOrders.value = 0
+    }
 
     // Check if route query has an order id to open
     if (route.query.id) {
@@ -718,6 +751,15 @@ const loadOrders = async () => {
     loading.value = false
   }
 }
+
+watch([currentPage, itemsPerPage], () => {
+  loadOrders()
+})
+
+watch([activeStatusTab, searchQuery], () => {
+  currentPage.value = 1
+  loadOrders()
+})
 
 watch(
   () => route.query.new,

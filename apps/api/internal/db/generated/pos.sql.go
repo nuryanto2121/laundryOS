@@ -61,6 +61,32 @@ func (q *Queries) CancelPOSOrder(ctx context.Context, arg CancelPOSOrderParams) 
 	return i, err
 }
 
+const countPOSOrders = `-- name: CountPOSOrders :one
+SELECT COUNT(*)
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE ($1::VARCHAR IS NULL OR o.status = $1)
+  AND (
+    $2::VARCHAR IS NULL 
+    OR o.order_number ILIKE '%' || $2 || '%'
+    OR c.full_name ILIKE '%' || $2 || '%'
+    OR c.phone ILIKE '%' || $2 || '%'
+    OR o.rack_number ILIKE '%' || $2 || '%'
+  )
+`
+
+type CountPOSOrdersParams struct {
+	Status pgtype.Text `json:"status"`
+	Search pgtype.Text `json:"search"`
+}
+
+func (q *Queries) CountPOSOrders(ctx context.Context, arg CountPOSOrdersParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPOSOrders, arg.Status, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createPOSOrder = `-- name: CreatePOSOrder :one
 INSERT INTO orders (
     id, order_number, customer_id, service_id, status,
@@ -333,6 +359,127 @@ func (q *Queries) ListPOSOrders(ctx context.Context, arg ListPOSOrdersParams) ([
 	var items []ListPOSOrdersRow
 	for rows.Next() {
 		var i ListPOSOrdersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderNumber,
+			&i.CustomerID,
+			&i.ServiceID,
+			&i.Status,
+			&i.TotalWeight,
+			&i.TotalPrice,
+			&i.PickupRequired,
+			&i.Notes,
+			&i.OutletID,
+			&i.RackNumber,
+			&i.PerfumeID,
+			&i.PerfumeName,
+			&i.DiscountID,
+			&i.DiscountAmount,
+			&i.PaidAmount,
+			&i.PaymentStatus,
+			&i.PaymentMethodID,
+			&i.PaymentMethodName,
+			&i.PaidAt,
+			&i.EstimatedCompletionAt,
+			&i.CompletedAt,
+			&i.CanceledReason,
+			&i.CanceledAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CustomerName,
+			&i.CustomerPhone,
+			&i.PrimaryServiceName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPOSOrdersPaginated = `-- name: ListPOSOrdersPaginated :many
+SELECT 
+    o.id, o.order_number, o.customer_id, o.service_id, o.status,
+    o.total_weight, o.total_price, o.pickup_required, o.notes,
+    o.outlet_id, o.rack_number, o.perfume_id, o.perfume_name,
+    o.discount_id, o.discount_amount, o.paid_amount, o.payment_status,
+    o.payment_method_id, o.payment_method_name, o.paid_at,
+    o.estimated_completion_at, o.completed_at, o.canceled_reason, o.canceled_at,
+    o.created_at, o.updated_at,
+    c.full_name AS customer_name,
+    c.phone AS customer_phone,
+    COALESCE(s.service_name, '') AS primary_service_name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+LEFT JOIN services s ON o.service_id = s.id
+WHERE ($3::VARCHAR IS NULL OR o.status = $3)
+  AND (
+    $4::VARCHAR IS NULL 
+    OR o.order_number ILIKE '%' || $4 || '%'
+    OR c.full_name ILIKE '%' || $4 || '%'
+    OR c.phone ILIKE '%' || $4 || '%'
+    OR o.rack_number ILIKE '%' || $4 || '%'
+  )
+ORDER BY o.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListPOSOrdersPaginatedParams struct {
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+	Status pgtype.Text `json:"status"`
+	Search pgtype.Text `json:"search"`
+}
+
+type ListPOSOrdersPaginatedRow struct {
+	ID                    pgtype.UUID      `json:"id"`
+	OrderNumber           string           `json:"order_number"`
+	CustomerID            pgtype.UUID      `json:"customer_id"`
+	ServiceID             pgtype.UUID      `json:"service_id"`
+	Status                pgtype.Text      `json:"status"`
+	TotalWeight           pgtype.Numeric   `json:"total_weight"`
+	TotalPrice            pgtype.Numeric   `json:"total_price"`
+	PickupRequired        pgtype.Bool      `json:"pickup_required"`
+	Notes                 pgtype.Text      `json:"notes"`
+	OutletID              pgtype.UUID      `json:"outlet_id"`
+	RackNumber            pgtype.Text      `json:"rack_number"`
+	PerfumeID             pgtype.UUID      `json:"perfume_id"`
+	PerfumeName           pgtype.Text      `json:"perfume_name"`
+	DiscountID            pgtype.UUID      `json:"discount_id"`
+	DiscountAmount        pgtype.Numeric   `json:"discount_amount"`
+	PaidAmount            pgtype.Numeric   `json:"paid_amount"`
+	PaymentStatus         string           `json:"payment_status"`
+	PaymentMethodID       pgtype.UUID      `json:"payment_method_id"`
+	PaymentMethodName     pgtype.Text      `json:"payment_method_name"`
+	PaidAt                pgtype.Timestamp `json:"paid_at"`
+	EstimatedCompletionAt pgtype.Timestamp `json:"estimated_completion_at"`
+	CompletedAt           pgtype.Timestamp `json:"completed_at"`
+	CanceledReason        pgtype.Text      `json:"canceled_reason"`
+	CanceledAt            pgtype.Timestamp `json:"canceled_at"`
+	CreatedAt             pgtype.Timestamp `json:"created_at"`
+	UpdatedAt             pgtype.Timestamp `json:"updated_at"`
+	CustomerName          string           `json:"customer_name"`
+	CustomerPhone         string           `json:"customer_phone"`
+	PrimaryServiceName    string           `json:"primary_service_name"`
+}
+
+func (q *Queries) ListPOSOrdersPaginated(ctx context.Context, arg ListPOSOrdersPaginatedParams) ([]ListPOSOrdersPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listPOSOrdersPaginated,
+		arg.Limit,
+		arg.Offset,
+		arg.Status,
+		arg.Search,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPOSOrdersPaginatedRow
+	for rows.Next() {
+		var i ListPOSOrdersPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrderNumber,

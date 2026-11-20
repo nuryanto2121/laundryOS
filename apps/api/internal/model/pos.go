@@ -83,3 +83,11 @@ type CreateExpenseRequest struct {
 	Description string  `json:"description"`
 	CreatedBy   string  `json:"created_by"`
 }
+
+// UpdateExpenseRequest represents payload to edit/correct an expense.
+type UpdateExpenseRequest struct {
+	ExpenseDate string  `json:"expense_date"` // YYYY-MM-DD
+	Category    string  `json:"category"`
+	Amount      float64 `json:"amount"`
+	Description string  `json:"description"`
+}

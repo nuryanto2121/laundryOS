@@ -100,6 +100,34 @@ func (r *CustomerRepository) List(ctx context.Context) ([]model.Customer, error)
 	return result, nil
 }
 
+// ListPaginated returns customers with search filter, pagination, and total count.
+func (r *CustomerRepository) ListPaginated(ctx context.Context, search string, limit, offset int) ([]model.Customer, int64, error) {
+	var searchParam pgtype.Text
+	if search != "" {
+		searchParam = pgtype.Text{String: search, Valid: true}
+	}
+
+	rows, err := r.queries.ListCustomersPaginated(ctx, db.ListCustomersPaginatedParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+		Search: searchParam,
+	})
+	if err != nil {
+		return nil, 0, fmt.Errorf("repository: list customers paginated: %w", err)
+	}
+
+	count, err := r.queries.CountCustomers(ctx, searchParam)
+	if err != nil {
+		return nil, 0, fmt.Errorf("repository: count customers: %w", err)
+	}
+
+	result := make([]model.Customer, len(rows))
+	for i, c := range rows {
+		result[i] = toModel(c)
+	}
+	return result, count, nil
+}
+
 // Update updates customer fields and returns the updated record.
 func (r *CustomerRepository) Update(ctx context.Context, id string, req model.UpdateCustomerRequest, status model.CustomerStatus, deletedAt *string) (model.Customer, error) {
 	pgID, err := parseUUID(id)

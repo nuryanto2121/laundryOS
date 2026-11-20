@@ -17,6 +17,28 @@ SELECT * FROM customers
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC;
 
+-- name: ListCustomersPaginated :many
+SELECT * FROM customers
+WHERE deleted_at IS NULL
+  AND (
+    sqlc.narg('search')::VARCHAR IS NULL
+    OR customer_code ILIKE '%' || sqlc.narg('search') || '%'
+    OR full_name ILIKE '%' || sqlc.narg('search') || '%'
+    OR phone ILIKE '%' || sqlc.narg('search') || '%'
+  )
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountCustomers :one
+SELECT COUNT(*) FROM customers
+WHERE deleted_at IS NULL
+  AND (
+    sqlc.narg('search')::VARCHAR IS NULL
+    OR customer_code ILIKE '%' || sqlc.narg('search') || '%'
+    OR full_name ILIKE '%' || sqlc.narg('search') || '%'
+    OR phone ILIKE '%' || sqlc.narg('search') || '%'
+  );
+
 -- name: UpdateCustomer :one
 UPDATE customers
 SET

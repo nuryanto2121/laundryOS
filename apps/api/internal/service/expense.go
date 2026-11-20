@@ -24,9 +24,28 @@ func (s *ExpenseService) Create(ctx context.Context, req model.CreateExpenseRequ
 	return s.repo.Create(ctx, req)
 }
 
+// Update corrects an existing operational expense.
+func (s *ExpenseService) Update(ctx context.Context, id string, req model.UpdateExpenseRequest) (db.Expense, error) {
+	return s.repo.Update(ctx, id, req)
+}
+
 // List retrieves expenses between a given date range.
 func (s *ExpenseService) List(ctx context.Context, start, end time.Time) ([]db.Expense, error) {
 	return s.repo.List(ctx, start, end)
+}
+
+// ListPaginated retrieves expenses with date range, category filter, and returns a paginated envelope.
+func (s *ExpenseService) ListPaginated(ctx context.Context, start, end time.Time, category string, page, limit int) (model.PaginatedResponse, error) {
+	offset, meta := model.CalculatePagination(page, limit, 0)
+	expenses, total, err := s.repo.ListPaginated(ctx, start, end, category, meta.Limit, offset)
+	if err != nil {
+		return model.PaginatedResponse{}, err
+	}
+	_, meta = model.CalculatePagination(page, limit, total)
+	return model.PaginatedResponse{
+		Data: expenses,
+		Meta: meta,
+	}, nil
 }
 
 // Get retrieves a single expense by ID.

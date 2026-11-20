@@ -75,6 +75,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Route("/expenses", func(exp chi.Router) {
 			exp.Post("/", p.ExpenseHandler.Create)
 			exp.Get("/", p.ExpenseHandler.List)
+			exp.Put("/{id}", p.ExpenseHandler.Update)
 			exp.Get("/summary", p.ExpenseHandler.GetSummary)
 			exp.Delete("/{id}", p.ExpenseHandler.Delete)
 		})
@@ -96,10 +97,32 @@ func NewRouter(p RouterParams) http.Handler {
 	if p.MasterHandler != nil {
 		r.Route("/master", func(m chi.Router) {
 			m.Get("/perfumes", p.MasterHandler.ListPerfumes)
+			m.Post("/perfumes", p.MasterHandler.CreatePerfume)
+			m.Put("/perfumes/{id}", p.MasterHandler.UpdatePerfume)
+			m.Delete("/perfumes/{id}", p.MasterHandler.DeletePerfume)
+
 			m.Get("/discounts", p.MasterHandler.ListDiscounts)
+			m.Post("/discounts", p.MasterHandler.CreateDiscount)
+			m.Put("/discounts/{id}", p.MasterHandler.UpdateDiscount)
+			m.Delete("/discounts/{id}", p.MasterHandler.DeleteDiscount)
+
 			m.Get("/payment-methods", p.MasterHandler.ListPaymentMethods)
 			m.Get("/outlets", p.MasterHandler.ListOutlets)
+
 			m.Get("/services", p.MasterHandler.ListServices)
+			m.Post("/services", p.MasterHandler.CreateService)
+			m.Put("/services/{id}", p.MasterHandler.UpdateService)
+			m.Delete("/services/{id}", p.MasterHandler.DeleteService)
+
+			m.Get("/expense-categories", p.MasterHandler.ListExpenseCategories)
+			m.Post("/expense-categories", p.MasterHandler.CreateExpenseCategory)
+			m.Put("/expense-categories/{id}", p.MasterHandler.UpdateExpenseCategory)
+			m.Delete("/expense-categories/{id}", p.MasterHandler.DeleteExpenseCategory)
+
+			m.Get("/employees", p.MasterHandler.ListEmployees)
+			m.Post("/employees", p.MasterHandler.CreateEmployee)
+			m.Put("/employees/{id}", p.MasterHandler.UpdateEmployee)
+			m.Delete("/employees/{id}", p.MasterHandler.DeleteEmployee)
 		})
 	}
 

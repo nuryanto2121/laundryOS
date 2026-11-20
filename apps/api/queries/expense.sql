@@ -6,10 +6,33 @@ INSERT INTO expenses (
 )
 RETURNING *;
 
+-- name: UpdateExpense :one
+UPDATE expenses
+SET
+    expense_date = $2,
+    category     = $3,
+    amount       = $4,
+    description  = $5,
+    updated_at   = NOW()
+WHERE id = $1
+RETURNING *;
+
 -- name: ListExpenses :many
 SELECT * FROM expenses
 WHERE expense_date BETWEEN $1 AND $2
 ORDER BY expense_date DESC, created_at DESC;
+
+-- name: ListExpensesPaginated :many
+SELECT * FROM expenses
+WHERE expense_date BETWEEN $1 AND $2
+  AND (sqlc.narg('category')::VARCHAR IS NULL OR category = sqlc.narg('category'))
+ORDER BY expense_date DESC, created_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: CountExpenses :one
+SELECT COUNT(*) FROM expenses
+WHERE expense_date BETWEEN $1 AND $2
+  AND (sqlc.narg('category')::VARCHAR IS NULL OR category = sqlc.narg('category'));
 
 -- name: GetExpense :one
 SELECT * FROM expenses

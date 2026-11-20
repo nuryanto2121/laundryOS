@@ -7,7 +7,56 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createService = `-- name: CreateService :one
+INSERT INTO services (id, service_code, service_name, duration_day, price_per_kg, active)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, service_code, service_name, duration_day, price_per_kg, active
+`
+
+type CreateServiceParams struct {
+	ID          pgtype.UUID    `json:"id"`
+	ServiceCode string         `json:"service_code"`
+	ServiceName string         `json:"service_name"`
+	DurationDay pgtype.Int4    `json:"duration_day"`
+	PricePerKg  pgtype.Numeric `json:"price_per_kg"`
+	Active      pgtype.Bool    `json:"active"`
+}
+
+func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (Service, error) {
+	row := q.db.QueryRow(ctx, createService,
+		arg.ID,
+		arg.ServiceCode,
+		arg.ServiceName,
+		arg.DurationDay,
+		arg.PricePerKg,
+		arg.Active,
+	)
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.ServiceCode,
+		&i.ServiceName,
+		&i.DurationDay,
+		&i.PricePerKg,
+		&i.Active,
+	)
+	return i, err
+}
+
+const deleteService = `-- name: DeleteService :exec
+UPDATE services
+SET active = false
+WHERE id = $1
+`
+
+func (q *Queries) DeleteService(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteService, id)
+	return err
+}
 
 const listActiveServices = `-- name: ListActiveServices :many
 SELECT id, service_code, service_name, duration_day, price_per_kg, active
@@ -41,4 +90,72 @@ func (q *Queries) ListActiveServices(ctx context.Context) ([]Service, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const listAllServices = `-- name: ListAllServices :many
+SELECT id, service_code, service_name, duration_day, price_per_kg, active
+FROM services
+ORDER BY service_name ASC
+`
+
+func (q *Queries) ListAllServices(ctx context.Context) ([]Service, error) {
+	rows, err := q.db.Query(ctx, listAllServices)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Service
+	for rows.Next() {
+		var i Service
+		if err := rows.Scan(
+			&i.ID,
+			&i.ServiceCode,
+			&i.ServiceName,
+			&i.DurationDay,
+			&i.PricePerKg,
+			&i.Active,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateService = `-- name: UpdateService :one
+UPDATE services
+SET service_name = $2, duration_day = $3, price_per_kg = $4, active = $5
+WHERE id = $1
+RETURNING id, service_code, service_name, duration_day, price_per_kg, active
+`
+
+type UpdateServiceParams struct {
+	ID          pgtype.UUID    `json:"id"`
+	ServiceName string         `json:"service_name"`
+	DurationDay pgtype.Int4    `json:"duration_day"`
+	PricePerKg  pgtype.Numeric `json:"price_per_kg"`
+	Active      pgtype.Bool    `json:"active"`
+}
+
+func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) (Service, error) {
+	row := q.db.QueryRow(ctx, updateService,
+		arg.ID,
+		arg.ServiceName,
+		arg.DurationDay,
+		arg.PricePerKg,
+		arg.Active,
+	)
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.ServiceCode,
+		&i.ServiceName,
+		&i.DurationDay,
+		&i.PricePerKg,
+		&i.Active,
+	)
+	return i, err
 }

@@ -523,7 +523,20 @@ const fetchFullDetails = async () => {
   try {
     const detail = await api.get(`/pos/orders/${props.order.id}`)
     if (detail) {
-      if (Array.isArray(detail.items)) loadedItems.value = detail.items
+      if (Array.isArray(detail.items) && detail.items.length > 0) {
+        loadedItems.value = detail.items
+      } else if (detail.order?.primary_service_name) {
+        loadedItems.value = [
+          {
+            id: 'primary-service',
+            service_name: detail.order.primary_service_name,
+            quantity: Number(detail.order.total_weight) || 1,
+            unit: 'Kg',
+            price_per_unit: Number(detail.order.total_price) || 0,
+            subtotal: Number(detail.order.total_price) || 0,
+          },
+        ]
+      }
       if (Array.isArray(detail.photos)) loadedPhotos.value = detail.photos
       if (Array.isArray(detail.history)) loadedHistory.value = detail.history
     }

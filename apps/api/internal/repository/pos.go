@@ -227,6 +227,80 @@ func (r *POSRepository) ListPOSOrders(ctx context.Context, status, search string
 	return result, nil
 }
 
+// ListPOSOrdersPaginated lists orders with status, search filter, and pagination, populated with order items.
+func (r *POSRepository) ListPOSOrdersPaginated(ctx context.Context, status, search string, limit, offset int) ([]POSOrderListItem, int64, error) {
+	var statusParam pgtype.Text
+	if status != "" && status != "SEMUA" {
+		statusParam = pgtype.Text{String: status, Valid: true}
+	}
+	var searchParam pgtype.Text
+	if search != "" {
+		searchParam = pgtype.Text{String: search, Valid: true}
+	}
+
+	orders, err := r.queries.ListPOSOrdersPaginated(ctx, db.ListPOSOrdersPaginatedParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+		Status: statusParam,
+		Search: searchParam,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := r.queries.CountPOSOrders(ctx, db.CountPOSOrdersParams{
+		Status: statusParam,
+		Search: searchParam,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	result := make([]POSOrderListItem, len(orders))
+	for i, o := range orders {
+		items, err := r.queries.ListOrderItemsByOrderId(ctx, o.ID)
+		if err != nil {
+			items = []db.OrderItem{}
+		}
+		result[i] = POSOrderListItem{
+			ListPOSOrdersRow: db.ListPOSOrdersRow{
+				ID:                    o.ID,
+				OrderNumber:           o.OrderNumber,
+				CustomerID:            o.CustomerID,
+				ServiceID:             o.ServiceID,
+				Status:                o.Status,
+				TotalWeight:           o.TotalWeight,
+				TotalPrice:            o.TotalPrice,
+				PickupRequired:        o.PickupRequired,
+				Notes:                 o.Notes,
+				OutletID:              o.OutletID,
+				RackNumber:            o.RackNumber,
+				PerfumeID:             o.PerfumeID,
+				PerfumeName:           o.PerfumeName,
+				DiscountID:            o.DiscountID,
+				DiscountAmount:        o.DiscountAmount,
+				PaidAmount:            o.PaidAmount,
+				PaymentStatus:         o.PaymentStatus,
+				PaymentMethodID:       o.PaymentMethodID,
+				PaymentMethodName:     o.PaymentMethodName,
+				PaidAt:                o.PaidAt,
+				EstimatedCompletionAt: o.EstimatedCompletionAt,
+				CompletedAt:           o.CompletedAt,
+				CanceledReason:        o.CanceledReason,
+				CanceledAt:            o.CanceledAt,
+				CreatedAt:             o.CreatedAt,
+				UpdatedAt:             o.UpdatedAt,
+				CustomerName:          o.CustomerName,
+				CustomerPhone:         o.CustomerPhone,
+				PrimaryServiceName:    o.PrimaryServiceName,
+			},
+			Items: items,
+		}
+	}
+
+	return result, count, nil
+}
+
 // GetPOSOrderDetail retrieves detailed order with items, photos, and history.
 func (r *POSRepository) GetPOSOrderDetail(ctx context.Context, idStr string) (POSOrderDetail, error) {
 	orderUUID, err := uuid.Parse(idStr)

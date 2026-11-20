@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
@@ -41,10 +42,25 @@ func (h *POSHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// List handles GET /pos/orders.
+// List handles GET /pos/orders (supporting optional ?page=1&limit=10&status=...&search=...).
 func (h *POSHandler) List(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 	search := r.URL.Query().Get("search")
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	if pageStr != "" || limitStr != "" {
+		page, _ := strconv.Atoi(pageStr)
+		limit, _ := strconv.Atoi(limitStr)
+		paginated, err := h.svc.ListOrdersPaginated(r.Context(), status, search, page, limit)
+		if err != nil {
+			slog.Error("pos: list orders paginated failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "gagal memuat daftar antrian order")
+			return
+		}
+		writeJSON(w, http.StatusOK, paginated)
+		return
+	}
 
 	orders, err := h.svc.ListOrders(r.Context(), status, search)
 	if err != nil {

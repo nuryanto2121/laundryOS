@@ -80,6 +80,45 @@ WHERE (sqlc.narg('status')::VARCHAR IS NULL OR o.status = sqlc.narg('status'))
   )
 ORDER BY o.created_at DESC;
 
+-- name: ListPOSOrdersPaginated :many
+SELECT 
+    o.id, o.order_number, o.customer_id, o.service_id, o.status,
+    o.total_weight, o.total_price, o.pickup_required, o.notes,
+    o.outlet_id, o.rack_number, o.perfume_id, o.perfume_name,
+    o.discount_id, o.discount_amount, o.paid_amount, o.payment_status,
+    o.payment_method_id, o.payment_method_name, o.paid_at,
+    o.estimated_completion_at, o.completed_at, o.canceled_reason, o.canceled_at,
+    o.created_at, o.updated_at,
+    c.full_name AS customer_name,
+    c.phone AS customer_phone,
+    COALESCE(s.service_name, '') AS primary_service_name
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+LEFT JOIN services s ON o.service_id = s.id
+WHERE (sqlc.narg('status')::VARCHAR IS NULL OR o.status = sqlc.narg('status'))
+  AND (
+    sqlc.narg('search')::VARCHAR IS NULL 
+    OR o.order_number ILIKE '%' || sqlc.narg('search') || '%'
+    OR c.full_name ILIKE '%' || sqlc.narg('search') || '%'
+    OR c.phone ILIKE '%' || sqlc.narg('search') || '%'
+    OR o.rack_number ILIKE '%' || sqlc.narg('search') || '%'
+  )
+ORDER BY o.created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountPOSOrders :one
+SELECT COUNT(*)
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE (sqlc.narg('status')::VARCHAR IS NULL OR o.status = sqlc.narg('status'))
+  AND (
+    sqlc.narg('search')::VARCHAR IS NULL 
+    OR o.order_number ILIKE '%' || sqlc.narg('search') || '%'
+    OR c.full_name ILIKE '%' || sqlc.narg('search') || '%'
+    OR c.phone ILIKE '%' || sqlc.narg('search') || '%'
+    OR o.rack_number ILIKE '%' || sqlc.narg('search') || '%'
+  );
+
 -- name: GetPOSOrderDetail :one
 SELECT 
     o.id, o.order_number, o.customer_id, o.service_id, o.status,

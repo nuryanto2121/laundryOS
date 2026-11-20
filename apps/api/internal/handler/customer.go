@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -80,16 +81,25 @@ func (h *CustomerHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, customer)
 }
 
-// List handles GET /customers
-// @Summary List Customers
-// @Description Retrieve a list of active customers
-// @Tags Customers
-// @Produce json
-// @Success 200 {array} model.Customer
-// @Failure 500 {object} model.ErrorResponse
-// @Router /customers [get]
+// List handles GET /customers (supporting optional ?page=1&limit=10&search=...).
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 	search := strings.TrimSpace(r.URL.Query().Get("search"))
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	if pageStr != "" || limitStr != "" {
+		page, _ := strconv.Atoi(pageStr)
+		limit, _ := strconv.Atoi(limitStr)
+		paginated, err := h.svc.ListPaginated(r.Context(), search, page, limit)
+		if err != nil {
+			slog.Error("list customers paginated failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to list customers")
+			return
+		}
+		writeJSON(w, http.StatusOK, paginated)
+		return
+	}
+
 	customers, err := h.svc.List(r.Context())
 	if err != nil {
 		slog.Error("list customers failed", "error", err)

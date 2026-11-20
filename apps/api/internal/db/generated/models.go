@@ -33,6 +33,18 @@ type Discount struct {
 	CreatedAt      pgtype.Timestamp `json:"created_at"`
 }
 
+type Employee struct {
+	ID        pgtype.UUID      `json:"id"`
+	Username  string           `json:"username"`
+	FullName  string           `json:"full_name"`
+	Phone     pgtype.Text      `json:"phone"`
+	Role      string           `json:"role"`
+	Pin       string           `json:"pin"`
+	IsActive  bool             `json:"is_active"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
 type Expense struct {
 	ID          pgtype.UUID      `json:"id"`
 	OutletID    pgtype.UUID      `json:"outlet_id"`
@@ -43,6 +55,14 @@ type Expense struct {
 	CreatedBy   string           `json:"created_by"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
+type ExpenseCategory struct {
+	ID        pgtype.UUID      `json:"id"`
+	Code      string           `json:"code"`
+	Name      string           `json:"name"`
+	IsActive  bool             `json:"is_active"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
 type Order struct {

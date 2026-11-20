@@ -71,6 +71,65 @@ func (r *ExpenseRepository) List(ctx context.Context, start, end time.Time) ([]d
 	})
 }
 
+// ListPaginated retrieves expenses with date range, category filter, and pagination.
+func (r *ExpenseRepository) ListPaginated(ctx context.Context, start, end time.Time, category string, limit, offset int) ([]db.Expense, int64, error) {
+	var catParam pgtype.Text
+	if category != "" && category != "SEMUA" {
+		catParam = pgtype.Text{String: category, Valid: true}
+	}
+
+	rows, err := r.queries.ListExpensesPaginated(ctx, db.ListExpensesPaginatedParams{
+		ExpenseDate:   pgtype.Date{Time: start, Valid: true},
+		ExpenseDate_2: pgtype.Date{Time: end, Valid: true},
+		Category:      catParam,
+		Limit:         int32(limit),
+		Offset:        int32(offset),
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := r.queries.CountExpenses(ctx, db.CountExpensesParams{
+		ExpenseDate:   pgtype.Date{Time: start, Valid: true},
+		ExpenseDate_2: pgtype.Date{Time: end, Valid: true},
+		Category:      catParam,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return rows, count, nil
+}
+
+// Update updates an existing expense record.
+func (r *ExpenseRepository) Update(ctx context.Context, idStr string, req model.UpdateExpenseRequest) (db.Expense, error) {
+	parsed, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.Expense{}, fmt.Errorf("invalid expense id: %w", err)
+	}
+
+	expenseDate := time.Now()
+	if req.ExpenseDate != "" {
+		if t, err := time.Parse("2006-01-02", req.ExpenseDate); err == nil {
+			expenseDate = t
+		}
+	}
+
+	var amountNum pgtype.Numeric
+	amountStr := strconv.FormatFloat(req.Amount, 'f', 2, 64)
+	if err := amountNum.Scan(amountStr); err != nil {
+		return db.Expense{}, fmt.Errorf("invalid amount: %w", err)
+	}
+
+	return r.queries.UpdateExpense(ctx, db.UpdateExpenseParams{
+		ID:          pgtype.UUID{Bytes: parsed, Valid: true},
+		ExpenseDate: pgtype.Date{Time: expenseDate, Valid: true},
+		Category:    req.Category,
+		Amount:      amountNum,
+		Description: req.Description,
+	})
+}
+
 // Get retrieves an expense by UUID string.
 func (r *ExpenseRepository) Get(ctx context.Context, idStr string) (db.Expense, error) {
 	parsed, err := uuid.Parse(idStr)

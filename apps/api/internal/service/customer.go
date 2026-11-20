@@ -78,6 +78,20 @@ func (s *CustomerService) List(ctx context.Context) ([]model.Customer, error) {
 	return s.repo.List(ctx)
 }
 
+// ListPaginated returns a paginated envelope of customers with search and count.
+func (s *CustomerService) ListPaginated(ctx context.Context, search string, page, limit int) (model.PaginatedResponse, error) {
+	offset, meta := model.CalculatePagination(page, limit, 0)
+	customers, total, err := s.repo.ListPaginated(ctx, search, meta.Limit, offset)
+	if err != nil {
+		return model.PaginatedResponse{}, err
+	}
+	_, meta = model.CalculatePagination(page, limit, total)
+	return model.PaginatedResponse{
+		Data: customers,
+		Meta: meta,
+	}, nil
+}
+
 // Update updates a customer's editable profile information while strictly
 // guaranteeing immutability of customer_code, status, created_at, and deleted_at.
 func (s *CustomerService) Update(ctx context.Context, id string, req model.UpdateCustomerRequest) (model.Customer, error) {

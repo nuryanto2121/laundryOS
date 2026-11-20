@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCustomers = `-- name: CountCustomers :one
+SELECT COUNT(*) FROM customers
+WHERE deleted_at IS NULL
+  AND (
+    $1::VARCHAR IS NULL
+    OR customer_code ILIKE '%' || $1 || '%'
+    OR full_name ILIKE '%' || $1 || '%'
+    OR phone ILIKE '%' || $1 || '%'
+  )
+`
+
+func (q *Queries) CountCustomers(ctx context.Context, search pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, countCustomers, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers (
     id, customer_code, full_name, phone, email, address,
@@ -151,6 +169,58 @@ ORDER BY created_at DESC
 
 func (q *Queries) ListCustomers(ctx context.Context) ([]Customer, error) {
 	rows, err := q.db.Query(ctx, listCustomers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Customer
+	for rows.Next() {
+		var i Customer
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomerCode,
+			&i.FullName,
+			&i.Phone,
+			&i.Email,
+			&i.Address,
+			&i.Latitude,
+			&i.Longitude,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCustomersPaginated = `-- name: ListCustomersPaginated :many
+SELECT id, customer_code, full_name, phone, email, address, latitude, longitude, created_at, updated_at, deleted_at, status FROM customers
+WHERE deleted_at IS NULL
+  AND (
+    $3::VARCHAR IS NULL
+    OR customer_code ILIKE '%' || $3 || '%'
+    OR full_name ILIKE '%' || $3 || '%'
+    OR phone ILIKE '%' || $3 || '%'
+  )
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListCustomersPaginatedParams struct {
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+	Search pgtype.Text `json:"search"`
+}
+
+func (q *Queries) ListCustomersPaginated(ctx context.Context, arg ListCustomersPaginatedParams) ([]Customer, error) {
+	rows, err := q.db.Query(ctx, listCustomersPaginated, arg.Limit, arg.Offset, arg.Search)
 	if err != nil {
 		return nil, err
 	}

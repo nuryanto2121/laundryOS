@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -44,7 +45,36 @@ func (h *ExpenseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, expense)
 }
 
-// List handles GET /expenses.
+// Update handles PUT /expenses/{id}.
+func (h *ExpenseHandler) Update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "expense id is required")
+		return
+	}
+
+	var req model.UpdateExpenseRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.Category == "" || req.Amount <= 0 || req.Description == "" {
+		writeError(w, http.StatusBadRequest, "kategori, nominal (>0), dan keterangan wajib diisi")
+		return
+	}
+
+	expense, err := h.svc.Update(r.Context(), id, req)
+	if err != nil {
+		slog.Error("expense: update failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal memperbarui pengeluaran")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, expense)
+}
+
+// List handles GET /expenses (supporting optional ?page=1&limit=10&category=...).
 func (h *ExpenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	startStr := r.URL.Query().Get("start")
 	endStr := r.URL.Query().Get("end")
@@ -57,6 +87,24 @@ func (h *ExpenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	if t, err := time.Parse("2006-01-02", endStr); err == nil {
 		end = t
+	}
+
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+	category := r.URL.Query().Get("category")
+
+	// If page or limit is requested, return paginated envelope
+	if pageStr != "" || limitStr != "" {
+		page, _ := strconv.Atoi(pageStr)
+		limit, _ := strconv.Atoi(limitStr)
+		paginated, err := h.svc.ListPaginated(r.Context(), start, end, category, page, limit)
+		if err != nil {
+			slog.Error("expense: list paginated failed", "error", err)
+			writeError(w, http.StatusInternalServerError, "gagal memuat daftar pengeluaran")
+			return
+		}
+		writeJSON(w, http.StatusOK, paginated)
+		return
 	}
 
 	expenses, err := h.svc.List(r.Context(), start, end)

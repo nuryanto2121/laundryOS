@@ -548,8 +548,19 @@ const toggleOrderExpand = async (ord) => {
     loadingOrderItems.value = true
     try {
       const detail = await api.get(`/pos/orders/${ord.id}`)
-      if (detail && Array.isArray(detail.items)) {
+      if (detail && Array.isArray(detail.items) && detail.items.length > 0) {
         orderItemsCache.value[ord.id] = detail.items
+      } else if (detail && detail.order && detail.order.primary_service_name) {
+        orderItemsCache.value[ord.id] = [
+          {
+            id: 'primary',
+            service_name: detail.order.primary_service_name,
+            quantity: Number(detail.order.total_weight) || 1,
+            unit: 'Kg',
+            price_per_unit: Number(detail.order.total_price) || 0,
+            subtotal: Number(detail.order.total_price) || 0,
+          },
+        ]
       }
     } catch (err) {
       console.error('Failed to load items for order', ord.id, err)

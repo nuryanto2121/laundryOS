@@ -4,7 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/google/uuid"
 	db "github.com/nuryanto2121/laundryos/apps/api/internal/db/generated"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/repository"
 )
 
@@ -27,9 +29,55 @@ func (s *MasterService) ListPerfumes(ctx context.Context) ([]db.Perfume, error) 
 	return s.repo.ListPerfumes(ctx)
 }
 
+// CreatePerfume creates a new perfume.
+func (s *MasterService) CreatePerfume(ctx context.Context, name, description string, isActive bool) (db.Perfume, error) {
+	return s.repo.CreatePerfume(ctx, name, description, isActive)
+}
+
+// UpdatePerfume updates an existing perfume.
+func (s *MasterService) UpdatePerfume(ctx context.Context, idStr string, name, description string, isActive bool) (db.Perfume, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.Perfume{}, err
+	}
+	return s.repo.UpdatePerfume(ctx, id, name, description, isActive)
+}
+
+// DeletePerfume deactivates a perfume.
+func (s *MasterService) DeletePerfume(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	return s.repo.DeletePerfume(ctx, id)
+}
+
 // ListDiscounts returns all active discounts.
 func (s *MasterService) ListDiscounts(ctx context.Context) ([]db.Discount, error) {
 	return s.repo.ListDiscounts(ctx)
+}
+
+// CreateDiscount creates a new discount.
+func (s *MasterService) CreateDiscount(ctx context.Context, name, discountType string, value, minOrder float64, isActive bool) (db.Discount, error) {
+	return s.repo.CreateDiscount(ctx, name, discountType, value, minOrder, isActive)
+}
+
+// UpdateDiscount updates an existing discount.
+func (s *MasterService) UpdateDiscount(ctx context.Context, idStr string, name, discountType string, value, minOrder float64, isActive bool) (db.Discount, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.Discount{}, err
+	}
+	return s.repo.UpdateDiscount(ctx, id, name, discountType, value, minOrder, isActive)
+}
+
+// DeleteDiscount deactivates a discount.
+func (s *MasterService) DeleteDiscount(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	return s.repo.DeleteDiscount(ctx, id)
 }
 
 // ListPaymentMethods returns all active payment methods.
@@ -47,6 +95,62 @@ func (s *MasterService) GetDefaultOutlet(ctx context.Context) (db.Outlet, error)
 	return s.repo.GetDefaultOutlet(ctx)
 }
 
+// ListExpenseCategories returns all active expense categories.
+func (s *MasterService) ListExpenseCategories(ctx context.Context) ([]db.ExpenseCategory, error) {
+	return s.repo.ListExpenseCategories(ctx)
+}
+
+// CreateExpenseCategory creates a new expense category.
+func (s *MasterService) CreateExpenseCategory(ctx context.Context, code, name string, isActive bool) (db.ExpenseCategory, error) {
+	return s.repo.CreateExpenseCategory(ctx, code, name, isActive)
+}
+
+// UpdateExpenseCategory updates an existing expense category.
+func (s *MasterService) UpdateExpenseCategory(ctx context.Context, idStr, name string, isActive bool) (db.ExpenseCategory, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.ExpenseCategory{}, err
+	}
+	return s.repo.UpdateExpenseCategory(ctx, id, name, isActive)
+}
+
+// DeleteExpenseCategory deactivates an expense category.
+func (s *MasterService) DeleteExpenseCategory(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	return s.repo.DeleteExpenseCategory(ctx, id)
+}
+
+// ListEmployees returns all active employees.
+func (s *MasterService) ListEmployees(ctx context.Context) ([]db.Employee, error) {
+	return s.repo.ListEmployees(ctx)
+}
+
+// CreateEmployee creates a new employee.
+func (s *MasterService) CreateEmployee(ctx context.Context, username, fullName, phone, role, pin string, isActive bool) (db.Employee, error) {
+	return s.repo.CreateEmployee(ctx, username, fullName, phone, role, pin, isActive)
+}
+
+// UpdateEmployee updates an employee.
+func (s *MasterService) UpdateEmployee(ctx context.Context, idStr, fullName, phone, role, pin string, isActive bool) (db.Employee, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return db.Employee{}, err
+	}
+	return s.repo.UpdateEmployee(ctx, id, fullName, phone, role, pin, isActive)
+}
+
+// DeleteEmployee deactivates an employee.
+func (s *MasterService) DeleteEmployee(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	return s.repo.DeleteEmployee(ctx, id)
+}
+
 // ServiceMasterItem represents a service option in POS.
 type ServiceMasterItem struct {
 	ID          string  `json:"id"`
@@ -56,6 +160,7 @@ type ServiceMasterItem struct {
 	Unit        string  `json:"unit"`
 	Price       float64 `json:"price"`
 	DurationDay int     `json:"duration_day"`
+	Active      bool    `json:"active"`
 }
 
 // ListServices returns services with category and unit mapping, falling back to FAN Laundry defaults.
@@ -74,6 +179,7 @@ func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, 
 					Unit:        unit,
 					Price:       a.PricePerKg,
 					DurationDay: a.DurationDay,
+					Active:      a.Active,
 				}
 			}
 			return res, nil
@@ -82,6 +188,38 @@ func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, 
 
 	// Default FAN Laundry service catalog
 	return GetDefaultFANServices(), nil
+}
+
+// CreateService creates a new service in catalog.
+func (s *MasterService) CreateService(ctx context.Context, code, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+	if s.serviceRepo != nil {
+		return s.serviceRepo.CreateService(ctx, code, name, duration, price, active)
+	}
+	return model.ServiceItem{}, nil
+}
+
+// UpdateService updates an existing service in catalog.
+func (s *MasterService) UpdateService(ctx context.Context, idStr, name string, duration int, price float64, active bool) (model.ServiceItem, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return model.ServiceItem{}, err
+	}
+	if s.serviceRepo != nil {
+		return s.serviceRepo.UpdateService(ctx, id, name, duration, price, active)
+	}
+	return model.ServiceItem{}, nil
+}
+
+// DeleteService deactivates a service.
+func (s *MasterService) DeleteService(ctx context.Context, idStr string) error {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return err
+	}
+	if s.serviceRepo != nil {
+		return s.serviceRepo.DeleteService(ctx, id)
+	}
+	return nil
 }
 
 func determineCategoryAndUnit(name string) (string, string) {
@@ -101,38 +239,25 @@ func determineCategoryAndUnit(name string) (string, string) {
 	return "KILOAN", "Kg"
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) > 0 && indexOf(s, substr) >= 0)
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
-}
-
 // GetDefaultFANServices returns standard FAN Laundry catalog.
 func GetDefaultFANServices() []ServiceMasterItem {
 	return []ServiceMasterItem{
-		{ID: "srv-01", ServiceCode: "SS-CB", ServiceName: "Cuci Basah (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 8000, DurationDay: 0},
-		{ID: "srv-02", ServiceCode: "SS-CK", ServiceName: "Cuci Kering (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 20000, DurationDay: 0},
-		{ID: "srv-03", ServiceCode: "SS-SBP", ServiceName: "Sabun / Pewangi Sachet", Category: "SATUAN", Unit: "Pcs", Price: 1000, DurationDay: 0},
-		{ID: "srv-04", ServiceCode: "CS-REG", ServiceName: "Cuci Setrika Reguler (3 Hari)", Category: "KILOAN", Unit: "Kg", Price: 7000, DurationDay: 3},
-		{ID: "srv-05", ServiceCode: "CS-EXP", ServiceName: "Cuci Setrika Express (2 Hari)", Category: "KILOAN", Unit: "Kg", Price: 9000, DurationDay: 2},
-		{ID: "srv-06", ServiceCode: "CS-KLT", ServiceName: "Cuci Setrika Kilat (1 Hari / 24 Jam)", Category: "KILOAN", Unit: "Kg", Price: 11000, DurationDay: 1},
-		{ID: "srv-07", ServiceCode: "CS-SKL", ServiceName: "Cuci Setrika Super Kilat (12 Jam)", Category: "KILOAN", Unit: "Kg", Price: 13000, DurationDay: 1},
-		{ID: "srv-08", ServiceCode: "CS-TRB", ServiceName: "Cuci Setrika Turbo (6 Jam)", Category: "KILOAN", Unit: "Kg", Price: 16000, DurationDay: 0},
-		{ID: "srv-09", ServiceCode: "SS-REG", ServiceName: "Setrika Saja Reguler (3 Hari)", Category: "KILOAN", Unit: "Kg", Price: 6000, DurationDay: 3},
-		{ID: "srv-10", ServiceCode: "SS-EXP", ServiceName: "Setrika Saja Express (2 Hari)", Category: "KILOAN", Unit: "Kg", Price: 8000, DurationDay: 2},
-		{ID: "srv-11", ServiceCode: "SS-KLT", ServiceName: "Setrika Saja Kilat (1 Hari / 24 Jam)", Category: "KILOAN", Unit: "Kg", Price: 10000, DurationDay: 1},
-		{ID: "srv-12", ServiceCode: "BC-REG", ServiceName: "Bad Cover Reguler (3 Hari)", Category: "SATUAN", Unit: "Pcs", Price: 30000, DurationDay: 3},
-		{ID: "srv-13", ServiceCode: "BC-EXP", ServiceName: "Bad Cover Express (2 Hari)", Category: "SATUAN", Unit: "Pcs", Price: 35000, DurationDay: 2},
-		{ID: "srv-14", ServiceCode: "KP-MED", ServiceName: "Karpet Permadani Sedang", Category: "METERAN", Unit: "Meter", Price: 20000, DurationDay: 7},
-		{ID: "srv-15", ServiceCode: "KP-THK", ServiceName: "Karpet Permadani Tebal", Category: "METERAN", Unit: "Meter", Price: 30000, DurationDay: 7},
-		{ID: "srv-16", ServiceCode: "BN-SML", ServiceName: "Boneka Sedang", Category: "SATUAN", Unit: "Pcs", Price: 35000, DurationDay: 3},
-		{ID: "srv-17", ServiceCode: "BN-BIG", ServiceName: "Boneka Besar", Category: "SATUAN", Unit: "Pcs", Price: 60000, DurationDay: 3},
+		{ID: "srv-01", ServiceCode: "SS-CB", ServiceName: "Cuci Basah (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 8000, DurationDay: 0, Active: true},
+		{ID: "srv-02", ServiceCode: "SS-CK", ServiceName: "Cuci Kering (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 20000, DurationDay: 0, Active: true},
+		{ID: "srv-03", ServiceCode: "SS-SBP", ServiceName: "Sabun / Pewangi Sachet", Category: "SATUAN", Unit: "Pcs", Price: 1000, DurationDay: 0, Active: true},
+		{ID: "srv-04", ServiceCode: "CS-REG", ServiceName: "Cuci Setrika Reguler (3 Hari)", Category: "KILOAN", Unit: "Kg", Price: 7000, DurationDay: 3, Active: true},
+		{ID: "srv-05", ServiceCode: "CS-EXP", ServiceName: "Cuci Setrika Express (2 Hari)", Category: "KILOAN", Unit: "Kg", Price: 9000, DurationDay: 2, Active: true},
+		{ID: "srv-06", ServiceCode: "CS-KLT", ServiceName: "Cuci Setrika Kilat (1 Hari / 24 Jam)", Category: "KILOAN", Unit: "Kg", Price: 11000, DurationDay: 1, Active: true},
+		{ID: "srv-07", ServiceCode: "CS-SKL", ServiceName: "Cuci Setrika Super Kilat (12 Jam)", Category: "KILOAN", Unit: "Kg", Price: 13000, DurationDay: 1, Active: true},
+		{ID: "srv-08", ServiceCode: "CS-TRB", ServiceName: "Cuci Setrika Turbo (6 Jam)", Category: "KILOAN", Unit: "Kg", Price: 16000, DurationDay: 0, Active: true},
+		{ID: "srv-09", ServiceCode: "SS-REG", ServiceName: "Setrika Saja Reguler (3 Hari)", Category: "KILOAN", Unit: "Kg", Price: 6000, DurationDay: 3, Active: true},
+		{ID: "srv-10", ServiceCode: "SS-EXP", ServiceName: "Setrika Saja Express (2 Hari)", Category: "KILOAN", Unit: "Kg", Price: 8000, DurationDay: 2, Active: true},
+		{ID: "srv-11", ServiceCode: "SS-KLT", ServiceName: "Setrika Saja Kilat (1 Hari / 24 Jam)", Category: "KILOAN", Unit: "Kg", Price: 10000, DurationDay: 1, Active: true},
+		{ID: "srv-12", ServiceCode: "BC-REG", ServiceName: "Bad Cover Reguler (3 Hari)", Category: "SATUAN", Unit: "Pcs", Price: 30000, DurationDay: 3, Active: true},
+		{ID: "srv-13", ServiceCode: "BC-EXP", ServiceName: "Bad Cover Express (2 Hari)", Category: "SATUAN", Unit: "Pcs", Price: 35000, DurationDay: 2, Active: true},
+		{ID: "srv-14", ServiceCode: "KP-MED", ServiceName: "Karpet Permadani Sedang", Category: "METERAN", Unit: "Meter", Price: 20000, DurationDay: 7, Active: true},
+		{ID: "srv-15", ServiceCode: "KP-THK", ServiceName: "Karpet Permadani Tebal", Category: "METERAN", Unit: "Meter", Price: 30000, DurationDay: 7, Active: true},
+		{ID: "srv-16", ServiceCode: "BN-SML", ServiceName: "Boneka Sedang", Category: "SATUAN", Unit: "Pcs", Price: 35000, DurationDay: 3, Active: true},
+		{ID: "srv-17", ServiceCode: "BN-BIG", ServiceName: "Boneka Besar", Category: "SATUAN", Unit: "Pcs", Price: 60000, DurationDay: 3, Active: true},
 	}
 }

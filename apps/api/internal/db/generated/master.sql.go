@@ -7,7 +7,193 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createDiscount = `-- name: CreateDiscount :one
+INSERT INTO discounts (id, name, discount_type, value, min_order_amount, is_active, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW())
+RETURNING id, name, discount_type, value, min_order_amount, is_active, created_at
+`
+
+type CreateDiscountParams struct {
+	ID             pgtype.UUID    `json:"id"`
+	Name           string         `json:"name"`
+	DiscountType   string         `json:"discount_type"`
+	Value          pgtype.Numeric `json:"value"`
+	MinOrderAmount pgtype.Numeric `json:"min_order_amount"`
+	IsActive       bool           `json:"is_active"`
+}
+
+func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) (Discount, error) {
+	row := q.db.QueryRow(ctx, createDiscount,
+		arg.ID,
+		arg.Name,
+		arg.DiscountType,
+		arg.Value,
+		arg.MinOrderAmount,
+		arg.IsActive,
+	)
+	var i Discount
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.DiscountType,
+		&i.Value,
+		&i.MinOrderAmount,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createEmployee = `-- name: CreateEmployee :one
+INSERT INTO employees (id, username, full_name, phone, role, pin, is_active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+RETURNING id, username, full_name, phone, role, pin, is_active, created_at, updated_at
+`
+
+type CreateEmployeeParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Username string      `json:"username"`
+	FullName string      `json:"full_name"`
+	Phone    pgtype.Text `json:"phone"`
+	Role     string      `json:"role"`
+	Pin      string      `json:"pin"`
+	IsActive bool        `json:"is_active"`
+}
+
+func (q *Queries) CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, createEmployee,
+		arg.ID,
+		arg.Username,
+		arg.FullName,
+		arg.Phone,
+		arg.Role,
+		arg.Pin,
+		arg.IsActive,
+	)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FullName,
+		&i.Phone,
+		&i.Role,
+		&i.Pin,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createExpenseCategory = `-- name: CreateExpenseCategory :one
+INSERT INTO expense_categories (id, code, name, is_active, created_at)
+VALUES ($1, $2, $3, $4, NOW())
+RETURNING id, code, name, is_active, created_at
+`
+
+type CreateExpenseCategoryParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Code     string      `json:"code"`
+	Name     string      `json:"name"`
+	IsActive bool        `json:"is_active"`
+}
+
+func (q *Queries) CreateExpenseCategory(ctx context.Context, arg CreateExpenseCategoryParams) (ExpenseCategory, error) {
+	row := q.db.QueryRow(ctx, createExpenseCategory,
+		arg.ID,
+		arg.Code,
+		arg.Name,
+		arg.IsActive,
+	)
+	var i ExpenseCategory
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createPerfume = `-- name: CreatePerfume :one
+INSERT INTO perfumes (id, name, description, is_active, created_at)
+VALUES ($1, $2, $3, $4, NOW())
+RETURNING id, name, description, is_active, created_at
+`
+
+type CreatePerfumeParams struct {
+	ID          pgtype.UUID `json:"id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	IsActive    bool        `json:"is_active"`
+}
+
+func (q *Queries) CreatePerfume(ctx context.Context, arg CreatePerfumeParams) (Perfume, error) {
+	row := q.db.QueryRow(ctx, createPerfume,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.IsActive,
+	)
+	var i Perfume
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const deleteDiscount = `-- name: DeleteDiscount :exec
+UPDATE discounts
+SET is_active = false
+WHERE id = $1
+`
+
+func (q *Queries) DeleteDiscount(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteDiscount, id)
+	return err
+}
+
+const deleteEmployee = `-- name: DeleteEmployee :exec
+UPDATE employees
+SET is_active = false, updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) DeleteEmployee(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteEmployee, id)
+	return err
+}
+
+const deleteExpenseCategory = `-- name: DeleteExpenseCategory :exec
+UPDATE expense_categories
+SET is_active = false
+WHERE id = $1
+`
+
+func (q *Queries) DeleteExpenseCategory(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteExpenseCategory, id)
+	return err
+}
+
+const deletePerfume = `-- name: DeletePerfume :exec
+UPDATE perfumes
+SET is_active = false
+WHERE id = $1
+`
+
+func (q *Queries) DeletePerfume(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deletePerfume, id)
+	return err
+}
 
 const getDefaultOutlet = `-- name: GetDefaultOutlet :one
 SELECT id, name, code, address, phone, is_active, created_at, updated_at FROM outlets
@@ -133,6 +319,204 @@ func (q *Queries) ListActivePerfumes(ctx context.Context) ([]Perfume, error) {
 	return items, nil
 }
 
+const listAllDiscounts = `-- name: ListAllDiscounts :many
+SELECT id, name, discount_type, value, min_order_amount, is_active, created_at FROM discounts
+ORDER BY name ASC
+`
+
+func (q *Queries) ListAllDiscounts(ctx context.Context) ([]Discount, error) {
+	rows, err := q.db.Query(ctx, listAllDiscounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Discount
+	for rows.Next() {
+		var i Discount
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.DiscountType,
+			&i.Value,
+			&i.MinOrderAmount,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllEmployees = `-- name: ListAllEmployees :many
+SELECT id, username, full_name, phone, role, pin, is_active, created_at, updated_at FROM employees
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListAllEmployees(ctx context.Context) ([]Employee, error) {
+	rows, err := q.db.Query(ctx, listAllEmployees)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Employee
+	for rows.Next() {
+		var i Employee
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Phone,
+			&i.Role,
+			&i.Pin,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllExpenseCategories = `-- name: ListAllExpenseCategories :many
+SELECT id, code, name, is_active, created_at FROM expense_categories
+ORDER BY name ASC
+`
+
+func (q *Queries) ListAllExpenseCategories(ctx context.Context) ([]ExpenseCategory, error) {
+	rows, err := q.db.Query(ctx, listAllExpenseCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExpenseCategory
+	for rows.Next() {
+		var i ExpenseCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllPerfumes = `-- name: ListAllPerfumes :many
+SELECT id, name, description, is_active, created_at FROM perfumes
+ORDER BY name ASC
+`
+
+func (q *Queries) ListAllPerfumes(ctx context.Context) ([]Perfume, error) {
+	rows, err := q.db.Query(ctx, listAllPerfumes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Perfume
+	for rows.Next() {
+		var i Perfume
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEmployees = `-- name: ListEmployees :many
+SELECT id, username, full_name, phone, role, pin, is_active, created_at, updated_at FROM employees
+WHERE is_active = true
+ORDER BY role ASC, full_name ASC
+`
+
+func (q *Queries) ListEmployees(ctx context.Context) ([]Employee, error) {
+	rows, err := q.db.Query(ctx, listEmployees)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Employee
+	for rows.Next() {
+		var i Employee
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.FullName,
+			&i.Phone,
+			&i.Role,
+			&i.Pin,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listExpenseCategories = `-- name: ListExpenseCategories :many
+SELECT id, code, name, is_active, created_at FROM expense_categories
+WHERE is_active = true
+ORDER BY name ASC
+`
+
+func (q *Queries) ListExpenseCategories(ctx context.Context) ([]ExpenseCategory, error) {
+	rows, err := q.db.Query(ctx, listExpenseCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExpenseCategory
+	for rows.Next() {
+		var i ExpenseCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOutlets = `-- name: ListOutlets :many
 SELECT id, name, code, address, phone, is_active, created_at, updated_at FROM outlets
 WHERE is_active = true
@@ -166,4 +550,140 @@ func (q *Queries) ListOutlets(ctx context.Context) ([]Outlet, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateDiscount = `-- name: UpdateDiscount :one
+UPDATE discounts
+SET name = $2, discount_type = $3, value = $4, min_order_amount = $5, is_active = $6
+WHERE id = $1
+RETURNING id, name, discount_type, value, min_order_amount, is_active, created_at
+`
+
+type UpdateDiscountParams struct {
+	ID             pgtype.UUID    `json:"id"`
+	Name           string         `json:"name"`
+	DiscountType   string         `json:"discount_type"`
+	Value          pgtype.Numeric `json:"value"`
+	MinOrderAmount pgtype.Numeric `json:"min_order_amount"`
+	IsActive       bool           `json:"is_active"`
+}
+
+func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (Discount, error) {
+	row := q.db.QueryRow(ctx, updateDiscount,
+		arg.ID,
+		arg.Name,
+		arg.DiscountType,
+		arg.Value,
+		arg.MinOrderAmount,
+		arg.IsActive,
+	)
+	var i Discount
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.DiscountType,
+		&i.Value,
+		&i.MinOrderAmount,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateEmployee = `-- name: UpdateEmployee :one
+UPDATE employees
+SET full_name = $2, phone = $3, role = $4, pin = $5, is_active = $6, updated_at = NOW()
+WHERE id = $1
+RETURNING id, username, full_name, phone, role, pin, is_active, created_at, updated_at
+`
+
+type UpdateEmployeeParams struct {
+	ID       pgtype.UUID `json:"id"`
+	FullName string      `json:"full_name"`
+	Phone    pgtype.Text `json:"phone"`
+	Role     string      `json:"role"`
+	Pin      string      `json:"pin"`
+	IsActive bool        `json:"is_active"`
+}
+
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, updateEmployee,
+		arg.ID,
+		arg.FullName,
+		arg.Phone,
+		arg.Role,
+		arg.Pin,
+		arg.IsActive,
+	)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FullName,
+		&i.Phone,
+		&i.Role,
+		&i.Pin,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateExpenseCategory = `-- name: UpdateExpenseCategory :one
+UPDATE expense_categories
+SET name = $2, is_active = $3
+WHERE id = $1
+RETURNING id, code, name, is_active, created_at
+`
+
+type UpdateExpenseCategoryParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	IsActive bool        `json:"is_active"`
+}
+
+func (q *Queries) UpdateExpenseCategory(ctx context.Context, arg UpdateExpenseCategoryParams) (ExpenseCategory, error) {
+	row := q.db.QueryRow(ctx, updateExpenseCategory, arg.ID, arg.Name, arg.IsActive)
+	var i ExpenseCategory
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updatePerfume = `-- name: UpdatePerfume :one
+UPDATE perfumes
+SET name = $2, description = $3, is_active = $4
+WHERE id = $1
+RETURNING id, name, description, is_active, created_at
+`
+
+type UpdatePerfumeParams struct {
+	ID          pgtype.UUID `json:"id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	IsActive    bool        `json:"is_active"`
+}
+
+func (q *Queries) UpdatePerfume(ctx context.Context, arg UpdatePerfumeParams) (Perfume, error) {
+	row := q.db.QueryRow(ctx, updatePerfume,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.IsActive,
+	)
+	var i Perfume
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
 }

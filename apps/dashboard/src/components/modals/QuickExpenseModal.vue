@@ -69,14 +69,9 @@
             required
             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-brand-500 transition-all cursor-pointer"
           >
-            <option value="BAHAN_BAKU">🧴 Bahan Baku (Deterjen, Pewangi, Plastik, Softener)</option>
-            <option value="GAS">🔥 Gas Mesin Pengering (Dryer Elpiji)</option>
-            <option value="LISTRIK_AIR">⚡ Listrik & Air (Token PLN / PDAM)</option>
-            <option value="GAJI">👥 Gaji Pegawai / Staf Operasional</option>
-            <option value="BONUS">🍱 Uang Makan / Bonus Pegawai</option>
-            <option value="MAINTENANCE">🔧 Perawatan & Servis Mesin Laundry</option>
-            <option value="SEWA">🏠 Sewa Tempat / Ruko Laundry</option>
-            <option value="LAIN_LAIN">📦 Biaya Lain-Lain Operasional</option>
+            <option v-for="cat in categoryOptions" :key="cat.value" :value="cat.value">
+              {{ cat.label }}
+            </option>
           </select>
         </div>
 
@@ -163,7 +158,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { Receipt, X } from 'lucide-vue-next'
 import { api } from '../../api/client'
 import { useToast } from '../../composables/useToast'
@@ -177,6 +172,45 @@ const toast = useToast()
 
 const loading = ref(false)
 const errorMessage = ref('')
+const dynamicCategories = ref([])
+
+const defaultCategories = [
+  { value: 'BAHAN_BAKU', label: '🧴 Bahan Baku (Deterjen, Pewangi, Plastik, Softener)' },
+  { value: 'PLASTIK', label: '🛍️ Plastik & Packaging Laundry' },
+  { value: 'GAS', label: '🔥 Gas Mesin Pengering (Dryer Elpiji)' },
+  { value: 'LISTRIK_AIR', label: '⚡ Listrik & Air (Token PLN / PDAM)' },
+  { value: 'GAJI', label: '👥 Gaji Pegawai / Staf Operasional' },
+  { value: 'BONUS', label: '🍱 Uang Makan / Bonus Pegawai' },
+  { value: 'MAINTENANCE', label: '🔧 Perawatan & Servis Mesin Laundry' },
+  { value: 'SEWA', label: '🏠 Sewa Tempat / Ruko Laundry' },
+  { value: 'TRANSPORT', label: '🛵 Operasional Antar-Jemput / Kurir' },
+  { value: 'LAIN_LAIN', label: '📦 Biaya Lain-Lain Operasional' },
+]
+
+const categoryOptions = computed(() => {
+  if (dynamicCategories.value.length > 0) {
+    return dynamicCategories.value.map((c) => ({
+      value: c.category_code,
+      label: c.category_name,
+    }))
+  }
+  return defaultCategories
+})
+
+const loadCategories = async () => {
+  try {
+    const list = await api.get('/master/expense-categories')
+    if (Array.isArray(list) && list.length > 0) {
+      dynamicCategories.value = list.filter((c) => c.is_active !== false)
+    }
+  } catch (err) {
+    console.warn('Failed to load dynamic expense categories:', err)
+  }
+}
+
+onMounted(() => {
+  loadCategories()
+})
 
 const getTodayDateStr = () => {
   const d = new Date()

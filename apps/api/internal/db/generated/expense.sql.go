@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countExpenses = `-- name: CountExpenses :one
+SELECT COUNT(*) FROM expenses
+WHERE expense_date BETWEEN $1 AND $2
+  AND ($3::VARCHAR IS NULL OR category = $3)
+`
+
+type CountExpensesParams struct {
+	ExpenseDate   pgtype.Date `json:"expense_date"`
+	ExpenseDate_2 pgtype.Date `json:"expense_date_2"`
+	Category      pgtype.Text `json:"category"`
+}
+
+func (q *Queries) CountExpenses(ctx context.Context, arg CountExpensesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countExpenses, arg.ExpenseDate, arg.ExpenseDate_2, arg.Category)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createExpense = `-- name: CreateExpense :one
 INSERT INTO expenses (
     id, outlet_id, expense_date, category, amount, description, created_by, created_at, updated_at
@@ -184,4 +203,99 @@ func (q *Queries) ListExpenses(ctx context.Context, arg ListExpensesParams) ([]E
 		return nil, err
 	}
 	return items, nil
+}
+
+const listExpensesPaginated = `-- name: ListExpensesPaginated :many
+SELECT id, outlet_id, expense_date, category, amount, description, created_by, created_at, updated_at FROM expenses
+WHERE expense_date BETWEEN $1 AND $2
+  AND ($5::VARCHAR IS NULL OR category = $5)
+ORDER BY expense_date DESC, created_at DESC
+LIMIT $3 OFFSET $4
+`
+
+type ListExpensesPaginatedParams struct {
+	ExpenseDate   pgtype.Date `json:"expense_date"`
+	ExpenseDate_2 pgtype.Date `json:"expense_date_2"`
+	Limit         int32       `json:"limit"`
+	Offset        int32       `json:"offset"`
+	Category      pgtype.Text `json:"category"`
+}
+
+func (q *Queries) ListExpensesPaginated(ctx context.Context, arg ListExpensesPaginatedParams) ([]Expense, error) {
+	rows, err := q.db.Query(ctx, listExpensesPaginated,
+		arg.ExpenseDate,
+		arg.ExpenseDate_2,
+		arg.Limit,
+		arg.Offset,
+		arg.Category,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Expense
+	for rows.Next() {
+		var i Expense
+		if err := rows.Scan(
+			&i.ID,
+			&i.OutletID,
+			&i.ExpenseDate,
+			&i.Category,
+			&i.Amount,
+			&i.Description,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateExpense = `-- name: UpdateExpense :one
+UPDATE expenses
+SET
+    expense_date = $2,
+    category     = $3,
+    amount       = $4,
+    description  = $5,
+    updated_at   = NOW()
+WHERE id = $1
+RETURNING id, outlet_id, expense_date, category, amount, description, created_by, created_at, updated_at
+`
+
+type UpdateExpenseParams struct {
+	ID          pgtype.UUID    `json:"id"`
+	ExpenseDate pgtype.Date    `json:"expense_date"`
+	Category    string         `json:"category"`
+	Amount      pgtype.Numeric `json:"amount"`
+	Description string         `json:"description"`
+}
+
+func (q *Queries) UpdateExpense(ctx context.Context, arg UpdateExpenseParams) (Expense, error) {
+	row := q.db.QueryRow(ctx, updateExpense,
+		arg.ID,
+		arg.ExpenseDate,
+		arg.Category,
+		arg.Amount,
+		arg.Description,
+	)
+	var i Expense
+	err := row.Scan(
+		&i.ID,
+		&i.OutletID,
+		&i.ExpenseDate,
+		&i.Category,
+		&i.Amount,
+		&i.Description,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
