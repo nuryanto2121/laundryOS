@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 flex flex-col text-slate-800">
+  <div class="min-h-screen bg-slate-50 flex flex-col text-slate-800 overflow-x-hidden">
     <!-- Top Header -->
     <AppHeader :active-outlet-name="activeOutlet" @open-outlet-modal="showOutletModal = true" />
 

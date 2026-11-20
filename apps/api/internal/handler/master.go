@@ -60,3 +60,14 @@ func (h *MasterHandler) ListOutlets(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, outlets)
 }
+
+// ListServices handles GET /master/services.
+func (h *MasterHandler) ListServices(w http.ResponseWriter, r *http.Request) {
+	services, err := h.svc.ListServices(r.Context())
+	if err != nil {
+		slog.Error("master: list services failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal memuat data layanan")
+		return
+	}
+	writeJSON(w, http.StatusOK, services)
+}

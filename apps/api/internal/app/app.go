@@ -46,9 +46,10 @@ func Run() error {
 	// Initialize Notification module
 	notifSvc := service.NewNotificationService(cfg.GatewayURL, cfg.StaffPhone)
 
-	// Initialize Master Data module
+	// Initialize Services & Master Data module
+	serviceRepo := repository.NewServiceRepository(dbPool)
 	masterRepo := repository.NewMasterRepository(dbPool)
-	masterSvc := service.NewMasterService(masterRepo)
+	masterSvc := service.NewMasterService(masterRepo, serviceRepo)
 	masterHandler := handler.NewMasterHandler(masterSvc)
 
 	// Initialize Expense module
@@ -67,7 +68,6 @@ func Run() error {
 	posHandler := handler.NewPOSHandler(posSvc)
 
 	// Initialize Bot module
-	serviceRepo := repository.NewServiceRepository(dbPool)
 	botSvc := service.NewBotService(service.BotServiceConfig{
 		CustomerService: customerSvc,
 		OrderService:    orderSvc,

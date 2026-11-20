@@ -99,6 +99,7 @@ func NewRouter(p RouterParams) http.Handler {
 			m.Get("/discounts", p.MasterHandler.ListDiscounts)
 			m.Get("/payment-methods", p.MasterHandler.ListPaymentMethods)
 			m.Get("/outlets", p.MasterHandler.ListOutlets)
+			m.Get("/services", p.MasterHandler.ListServices)
 		})
 	}
 

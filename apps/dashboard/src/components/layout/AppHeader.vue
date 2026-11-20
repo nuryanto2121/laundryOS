@@ -26,15 +26,15 @@
       </div>
 
       <!-- Right: Outlet Switcher & Status Profile -->
-      <div class="flex items-center gap-2 sm:gap-4">
+      <div class="flex items-center gap-1.5 sm:gap-4 shrink-0">
         <!-- Outlet Switcher Trigger -->
         <button
-          class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-all text-xs font-semibold text-slate-700"
+          class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-all text-xs font-semibold text-slate-700 max-w-[110px] sm:max-w-none"
           @click="$emit('open-outlet-modal')"
         >
-          <Store class="w-3.5 h-3.5 text-brand-600" />
-          <span class="truncate max-w-[120px] sm:max-w-none">{{ activeOutletName }}</span>
-          <ChevronDown class="w-3 h-3 text-slate-400" />
+          <Store class="w-3.5 h-3.5 text-brand-600 shrink-0" />
+          <span class="truncate">{{ activeOutletName }}</span>
+          <ChevronDown class="w-3 h-3 text-slate-400 shrink-0" />
         </button>
 
         <!-- Live Sync Pill -->
