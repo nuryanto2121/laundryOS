@@ -14,13 +14,13 @@ Sprint 05 - Web Dashboard & POS (Point of Sale)
 
 ## Current Milestone
 
-Sprint 05 / Milestone 4 Completed (Manajemen Pengeluaran Kas Kecil / Petty Cash) -> Proceeding to Milestone 5 (Laporan Keuangan, Operasional & CRM)
+Sprint 05 / Milestone 5 Completed (Laporan Keuangan, Operasional Transaksi & CRM Pelanggan) -> Ready for Milestone 6 (Master Settings & RBAC)
 
 ---
 
 ## Status
 
-In Progress (Sprint 05 Milestone 4 complete, ready for Milestone 5)
+In Progress (Sprint 05 Milestone 5 complete, ready for Milestone 6)
 
 ---
 
@@ -56,14 +56,14 @@ In Progress (Sprint 05 Milestone 4 complete, ready for Milestone 5)
   - ✅ Milestone 2 - Frontend Setup, Fresh Modern Layout & Halaman Home (Beranda)
   - ✅ Milestone 3 - Walk-in POS Kasir, 5-Tab Antrian, Cetak 3 Nota Thermal & Siklus Hidup Pesanan
   - ✅ Milestone 4 - Manajemen Pengeluaran Kas Kecil (Petty Cash ledger, quick entry presets, category breakdown, date range filters, and delete action)
-  - ⏳ Milestone 5 - Laporan Keuangan, Operasional & CRM (Pending)
+  - ✅ Milestone 5 - Laporan Keuangan, Operasional Transaksi & CRM Pelanggan (Default filter Hari Ini, 4 Top KPI Cards, 3 kategori laporan transaksi & keuangan & CRM, monitoring cucian di rak + WA, piutang + tagih WA, Top 10 CRM + modal LTV, dan CSV Export)
   - ⏳ Milestone 6 - Master Settings & Role-Based Access Control (Pending)
 
 ---
 
 ## Current Goal
 
-Implement Milestone 5 of Sprint 05: Laporan Keuangan, Operasional & CRM (Grafik garis tren omset & kas harian, laporan laba/rugi riil, laporan piutang macet & WhatsApp reminder, rekap volume Kg/Pcs/Tabung/Meter, dan CRM leaderboard Top 10 pelanggan loyal).
+Proceed to Milestone 6 of Sprint 05: Master Settings & Role-Based Access Control (Pengaturan master kapasitas per tabung & toleransi berat self service, pengaturan profil outlet FAN Laundry Kalibaru, nomor WhatsApp staf/hotline, dan hak akses kasir/owner).
 
 ---
 
@@ -73,6 +73,7 @@ Implement Milestone 5 of Sprint 05: Laporan Keuangan, Operasional & CRM (Grafik 
 - [x] Sprint 05 Milestone 2 completed: Tailwind CSS & Lucide icons setup, responsive layout (mobile bottom bar + desktop header), live KPI cards, quick actions, live queue preview, and search modal.
 - [x] Sprint 05 Milestone 3 completed: Walk-in POS modal with decimal quantity, multi-item service picker, perfume & discount selector, 5-tab queue list, 1-click status progression (`PROSES`, `SIAP AMBIL`, `SELESAI`), 3-format thermal receipt printing (58mm/80mm), settle payment modal, photo documentation, custom modal catalog with Self Service 8 Kg + 0.5 Kg tolerance capacity calculator, and interactive Home KPI cards.
 - [x] Sprint 05 Milestone 4 completed: Manajemen Pengeluaran Kas Kecil (Petty Cash ledger table, quick entry presets, category composition progress bars, date range filters, and delete confirmation modal).
+- [x] Sprint 05 Milestone 5 completed: Laporan Keuangan, Operasional & CRM (Default filter Hari Ini, 4 Top KPI Cards: Omset, Pendapatan Kas, Pengeluaran, Laba Bersih; 3 Kategori Laporan: Transaksi, Keuangan, CRM Pelanggan; monitoring cucian di rak + WhatsApp reminder; rekap piutang tagihan + WhatsApp tagih; Top 10 leaderboard pelanggan loyal + Customer CRM modal seumur hidup; Export CSV).
 - [x] Clean production build (`npm run build`) passing.
 - [x] Clean linting (`npm run lint`) passing with 0 errors.
 - [x] All 112 Go backend unit tests passing.
