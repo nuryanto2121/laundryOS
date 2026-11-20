@@ -708,8 +708,9 @@
               <span>Aturan Kapasitas Tabung Mesin Cuci:</span>
             </div>
             <p class="text-[11px] text-blue-800">
-              Kapasitas normal 1 tabung adalah <strong>8.0 Kg</strong> dengan batas toleransi
-              <strong>+0.5 Kg</strong> (Maksimal aman <strong>8.5 Kg</strong>).
+              Kapasitas normal 1 tabung adalah <strong>{{ tubeCapacity }} Kg</strong> dengan batas
+              toleransi <strong>+{{ tubeTolerance }} Kg</strong> (Maksimal aman
+              <strong>{{ maxSafeWeight }} Kg</strong>).
             </p>
           </div>
 
@@ -767,9 +768,9 @@
           </div>
 
           <!-- CAPACITY TOLERANCE STATUS CHECK -->
-          <!-- Case A: Within normal + tolerance (<= 8.5 Kg) -->
+          <!-- Case A: Within normal + tolerance (<= maxSafeWeight Kg) -->
           <div
-            v-if="selfServiceWeight <= 8.5"
+            v-if="selfServiceWeight <= maxSafeWeight"
             class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5"
           >
             <CheckCircle2 class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -777,18 +778,18 @@
               <span class="font-extrabold text-emerald-900 block">Kapasitas Aman (1 Tabung)</span>
               <p class="text-[11px] text-emerald-700">
                 Berat cucian {{ selfServiceWeight }} Kg cukup dicuci dalam
-                <strong>1 Tabung</strong> (Maks 8.5 Kg termasuk toleransi).
+                <strong>1 Tabung</strong> (Maks {{ maxSafeWeight }} Kg termasuk toleransi).
               </p>
             </div>
           </div>
 
-          <!-- Case B: Exceeds 8.5 Kg (> 8.5 Kg, e.g. 9 Kg+) -->
+          <!-- Case B: Exceeds maxSafeWeight Kg (> maxSafeWeight Kg) -->
           <div v-else class="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-300 space-y-2.5">
             <div class="flex items-start gap-2">
               <AlertTriangle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div class="text-xs">
                 <span class="font-black text-amber-950 block">
-                  Melebihi Toleransi 1 Tabung ({{ selfServiceWeight }} Kg > 8.5 Kg)
+                  Melebihi Toleransi 1 Tabung ({{ selfServiceWeight }} Kg > {{ maxSafeWeight }} Kg)
                 </span>
                 <p class="text-[11px] text-amber-800">
                   Terdapat kelebihan muatan sekitar <strong>{{ excessWeightKg }} Kg</strong>.
@@ -977,6 +978,7 @@ import {
 } from 'lucide-vue-next'
 import { api, formatRupiah } from '../../api/client'
 import { useToast } from '../../composables/useToast'
+import { useAppSettings } from '../../composables/useAppSettings'
 
 defineProps({
   modelValue: Boolean,
@@ -984,6 +986,11 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue', 'order-created'])
 const toast = useToast()
+const { settings } = useAppSettings()
+
+const tubeCapacity = computed(() => Number(settings.machine?.tubeCapacityKg) || 8.0)
+const tubeTolerance = computed(() => Number(settings.machine?.toleranceKg) || 0.5)
+const maxSafeWeight = computed(() => Number((tubeCapacity.value + tubeTolerance.value).toFixed(2)))
 
 const creating = ref(false)
 const isNewCustomer = ref(false)
@@ -1044,15 +1051,15 @@ const isSelfService = computed(() => {
 })
 
 const excessWeightKg = computed(() => {
-  if (selfServiceWeight.value <= 8.5) return '0.0'
-  return (selfServiceWeight.value - 8.0).toFixed(1)
+  if (selfServiceWeight.value <= maxSafeWeight.value) return '0.0'
+  return (selfServiceWeight.value - tubeCapacity.value).toFixed(1)
 })
 
 const calculatedTubeCount = computed(() => {
-  if (selfServiceWeight.value <= 8.5) {
+  if (selfServiceWeight.value <= maxSafeWeight.value) {
     return 1
   }
-  // If > 8.5 Kg
+  // If > maxSafeWeight
   if (selfServiceAction.value === 'TWO_TUBES') {
     return 2
   }
@@ -1225,7 +1232,7 @@ const addCurrentServiceToCart = () => {
     const itemSubtotal = tubeQty * price
 
     let notes = `Ditimbang ${selfServiceWeight.value} Kg`
-    if (selfServiceWeight.value > 8.5) {
+    if (selfServiceWeight.value > maxSafeWeight.value) {
       if (selfServiceAction.value === 'TWO_TUBES') {
         notes = `Ditimbang ${selfServiceWeight.value} Kg (Diproses 2 Tabung)`
       } else {

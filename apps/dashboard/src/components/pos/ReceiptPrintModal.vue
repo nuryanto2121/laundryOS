@@ -18,7 +18,14 @@
           </div>
           <div>
             <h3 class="font-bold text-base text-slate-900">Cetak Nota Thermal</h3>
-            <p class="text-xs text-slate-500">Pilih jenis nota untuk dicetak</p>
+            <div class="flex items-center gap-1.5">
+              <p class="text-xs text-slate-500">Pilih jenis nota untuk dicetak</p>
+              <span
+                class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 border border-slate-200"
+              >
+                Format: {{ settings.printer?.paperWidth || '58mm' }}
+              </span>
+            </div>
           </div>
         </div>
         <button class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600" @click="close">
@@ -49,14 +56,23 @@
       >
         <div
           id="thermal-receipt"
-          class="max-w-[320px] mx-auto bg-white p-4 shadow-xs print:shadow-none print:p-0"
+          class="mx-auto bg-white p-4 shadow-xs print:shadow-none print:p-0 transition-all"
+          :class="settings.printer?.paperWidth === '80mm' ? 'max-w-[420px]' : 'max-w-[320px]'"
         >
           <!-- Header Nota -->
           <div class="text-center space-y-1 pb-3 border-b border-dashed border-slate-400">
-            <h2 class="font-extrabold text-base tracking-wider uppercase">FAN LAUNDRY</h2>
-            <p class="text-[11px] leading-tight">Jl. Kalibaru Barat I Rt 007 Rw 008</p>
-            <p class="text-[11px] leading-tight">Kalibaru, Cilincing — Jakarta Utara</p>
-            <p class="text-[11px] font-semibold">WA: 0852-8597-7834</p>
+            <h2 class="font-extrabold text-base tracking-wider uppercase">
+              {{ settings.printer?.storeName || 'FAN LAUNDRY' }}
+            </h2>
+            <p v-if="settings.printer?.addressLine1" class="text-[11px] leading-tight">
+              {{ settings.printer.addressLine1 }}
+            </p>
+            <p v-if="settings.printer?.addressLine2" class="text-[11px] leading-tight">
+              {{ settings.printer.addressLine2 }}
+            </p>
+            <p v-if="settings.printer?.phone" class="text-[11px] font-semibold">
+              WA: {{ settings.printer.phone }}
+            </p>
           </div>
 
           <!-- Type Badge -->
@@ -154,9 +170,12 @@
           <!-- Footer Information -->
           <div class="text-center space-y-1.5 pt-3 text-[10px] text-slate-500">
             <template v-if="activeTab === 'KONSUMEN'">
-              <p class="font-semibold text-slate-700">Terima kasih atas kepercayaan Anda!</p>
-              <p>1. Pengambilan wajib disertai nota / WA.</p>
-              <p>2. Barang tidak diambil >30 hari di luar tanggung jawab kami.</p>
+              <div class="whitespace-pre-line leading-relaxed text-slate-700">
+                {{
+                  settings.printer?.footerNote ||
+                  'Terima kasih atas kepercayaan Anda!\nCucian tidak diambil > 30 hari di luar tanggung jawab kasir.'
+                }}
+              </div>
               <p class="font-bold pt-1">*** SIMPAN NOTA INI DENGAN BAIK ***</p>
             </template>
             <template v-else-if="activeTab === 'PERTINGGAL'">
@@ -203,6 +222,9 @@
 import { ref, computed } from 'vue'
 import { Printer, X } from 'lucide-vue-next'
 import { formatRupiah, formatDateTime } from '../../api/client'
+import { useAppSettings } from '../../composables/useAppSettings'
+
+const { settings } = useAppSettings()
 
 defineProps({
   modelValue: Boolean,

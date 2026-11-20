@@ -131,10 +131,18 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-              Rp {{ formatRupiah(financialReport.total_omset) }}
+            <h3
+              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-1.5"
+            >
+              <template v-if="isFinancialsHidden">
+                <span class="text-slate-400">Rp ••••••</span>
+                <Lock class="w-4 h-4 text-slate-400" />
+              </template>
+              <template v-else> Rp {{ formatRupiah(financialReport.total_omset) }} </template>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Nilai total pesanan dibuat</p>
+            <p class="text-[11px] text-slate-400 mt-1">
+              {{ isFinancialsHidden ? 'Mode Kasir aktif' : 'Nilai total pesanan dibuat' }}
+            </p>
           </div>
         </div>
 
@@ -153,10 +161,18 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-emerald-600 tracking-tight">
-              Rp {{ formatRupiah(financialReport.total_pendapatan) }}
+            <h3
+              class="text-lg sm:text-2xl font-black text-emerald-600 tracking-tight flex items-center gap-1.5"
+            >
+              <template v-if="isFinancialsHidden">
+                <span class="text-slate-400">Rp ••••••</span>
+                <Lock class="w-4 h-4 text-slate-400" />
+              </template>
+              <template v-else> Rp {{ formatRupiah(financialReport.total_pendapatan) }} </template>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Uang riil diterima kasir</p>
+            <p class="text-[11px] text-slate-400 mt-1">
+              {{ isFinancialsHidden ? 'Mode Kasir aktif' : 'Uang riil diterima kasir' }}
+            </p>
           </div>
         </div>
 
@@ -175,10 +191,20 @@
             </div>
           </div>
           <div class="mt-3">
-            <h3 class="text-lg sm:text-2xl font-black text-rose-600 tracking-tight">
-              - Rp {{ formatRupiah(financialReport.total_pengeluaran) }}
+            <h3
+              class="text-lg sm:text-2xl font-black text-rose-600 tracking-tight flex items-center gap-1.5"
+            >
+              <template v-if="isFinancialsHidden">
+                <span class="text-slate-400">- Rp ••••••</span>
+                <Lock class="w-4 h-4 text-slate-400" />
+              </template>
+              <template v-else>
+                - Rp {{ formatRupiah(financialReport.total_pengeluaran) }}
+              </template>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Kas kecil operasional</p>
+            <p class="text-[11px] text-slate-400 mt-1">
+              {{ isFinancialsHidden ? 'Mode Kasir aktif' : 'Kas kecil operasional' }}
+            </p>
           </div>
         </div>
 
@@ -198,12 +224,18 @@
           </div>
           <div class="mt-3">
             <h3
-              class="text-lg sm:text-2xl font-black tracking-tight"
+              class="text-lg sm:text-2xl font-black tracking-tight flex items-center gap-1.5"
               :class="financialReport.laba_bersih >= 0 ? 'text-indigo-600' : 'text-rose-600'"
             >
-              Rp {{ formatRupiah(financialReport.laba_bersih) }}
+              <template v-if="isFinancialsHidden">
+                <span class="text-slate-400">Rp ••••••</span>
+                <Lock class="w-4 h-4 text-slate-400" />
+              </template>
+              <template v-else> Rp {{ formatRupiah(financialReport.laba_bersih) }} </template>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-1">Pendapatan Kas - Biaya</p>
+            <p class="text-[11px] text-slate-400 mt-1">
+              {{ isFinancialsHidden ? 'Mode Kasir aktif' : 'Pendapatan Kas - Biaya' }}
+            </p>
           </div>
         </div>
       </div>
@@ -823,358 +855,137 @@
       <!-- TAB 2: LAPORAN KEUANGAN & KAS DENGAN 5 SUB-TAB                 -->
       <!-- ============================================================== -->
       <div v-else-if="activeTab === 'FINANCIAL'" class="space-y-4">
-        <!-- Sub-Navigasi Keuangan -->
+        <!-- Locked Owner Gate for Cashier -->
         <div
-          class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none bg-slate-100/80 p-1.5 rounded-2xl"
+          v-if="isFinancialsHidden"
+          class="bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-md mx-auto my-8 space-y-4 shadow-xs"
         >
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
-            :class="
-              finSubTab === 'OMSET'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            "
-            @click="finSubTab = 'OMSET'"
-          >
-            Laporan Omset (Bruto)
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
-            :class="
-              finSubTab === 'PENDAPATAN'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            "
-            @click="finSubTab = 'PENDAPATAN'"
-          >
-            Laporan Pendapatan Kas
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
-            :class="
-              finSubTab === 'PENGELUARAN'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            "
-            @click="finSubTab = 'PENGELUARAN'"
-          >
-            Laporan Pengeluaran ({{ filteredExpenses.length }})
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
-            :class="
-              finSubTab === 'PIUTANG'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            "
-            @click="finSubTab = 'PIUTANG'"
-          >
-            Piutang ({{ unpaidOrders.length }})
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
-            :class="
-              finSubTab === 'LABA_RUGI'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            "
-            @click="finSubTab = 'LABA_RUGI'"
-          >
-            Laporan Laba / Rugi
-          </button>
-        </div>
-
-        <!-- 2.a. Laporan Omset -->
-        <div
-          v-if="finSubTab === 'OMSET'"
-          class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <h3
-                class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
-              >
-                <TrendingUp class="w-4 h-4 text-blue-600" />
-                <span>Rincian Omset Penjualan Kotor</span>
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Daftar transaksi aktif yang membentuk omset periode terpilih
-              </p>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-slate-400 block">Total Omset</span>
-              <span class="text-lg font-black text-blue-600"
-                >Rp {{ formatRupiah(financialReport.total_omset) }}</span
-              >
-            </div>
-          </div>
-
-          <div v-if="omsetOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
-            Belum ada transaksi omset pada rentang tanggal ini.
-          </div>
-
-          <div v-else class="space-y-4">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr
-                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                  >
-                    <th class="py-3 px-4">No. Order</th>
-                    <th class="py-3 px-4">Pelanggan</th>
-                    <th class="py-3 px-4">Tanggal Masuk</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4 text-right">Nilai Omset (Rp)</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr
-                    v-for="order in paginatedOmsetOrders"
-                    :key="order.id"
-                    class="hover:bg-slate-50 transition-colors"
-                  >
-                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                      #{{ order.order_number }}
-                    </td>
-                    <td class="py-3.5 px-4 font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Walk-in' }}
-                    </td>
-                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                      {{ formatDate(order.created_at) }}
-                    </td>
-                    <td class="py-3.5 px-4">
-                      <span
-                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
-                        :class="getOrderStatusBadgeClass(order.status)"
-                      >
-                        {{ order.status }}
-                      </span>
-                    </td>
-                    <td
-                      class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
-                    >
-                      Rp {{ formatRupiah(order.total_price) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Pagination -->
-            <PaginationBar
-              v-model:current-page="pageOmset"
-              v-model:items-per-page="pageSizeOmset"
-              :total-items="omsetOrders.length"
-            />
-          </div>
-        </div>
-
-        <!-- 2.b. Laporan Pendapatan -->
-        <div
-          v-else-if="finSubTab === 'PENDAPATAN'"
-          class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <h3
-                class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
-              >
-                <Wallet class="w-4 h-4 text-emerald-600" />
-                <span>Penerimaan Kas Riil Masuk</span>
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Uang kas & transfer yang sudah diterima kasir
-              </p>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-slate-400 block">Total Pendapatan</span>
-              <span class="text-lg font-black text-emerald-600"
-                >Rp {{ formatRupiah(financialReport.total_pendapatan) }}</span
-              >
-            </div>
-          </div>
-
-          <div v-if="paidOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
-            Belum ada penerimaan pembayaran pada periode ini.
-          </div>
-
-          <div v-else class="space-y-4">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr
-                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                  >
-                    <th class="py-3 px-4">No. Order</th>
-                    <th class="py-3 px-4">Pelanggan</th>
-                    <th class="py-3 px-4">Metode Bayar</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4 text-right">Uang Diterima (Rp)</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr
-                    v-for="order in paginatedPaidOrders"
-                    :key="order.id"
-                    class="hover:bg-slate-50 transition-colors"
-                  >
-                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                      #{{ order.order_number }}
-                    </td>
-                    <td class="py-3.5 px-4 font-bold text-slate-800">
-                      {{ order.customer?.full_name || 'Walk-in' }}
-                    </td>
-                    <td class="py-3.5 px-4 font-bold text-slate-700 whitespace-nowrap">
-                      {{ order.payment_method || 'CASH / TUNAI' }}
-                    </td>
-                    <td class="py-3.5 px-4">
-                      <span
-                        class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800"
-                      >
-                        {{ order.payment_status }}
-                      </span>
-                    </td>
-                    <td
-                      class="py-3.5 px-4 text-right font-black text-emerald-600 text-sm whitespace-nowrap"
-                    >
-                      Rp {{ formatRupiah(order.paid_amount || order.total_price) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Pagination -->
-            <PaginationBar
-              v-model:current-page="pagePaid"
-              v-model:items-per-page="pageSizePaid"
-              :total-items="paidOrders.length"
-            />
-          </div>
-        </div>
-
-        <!-- 2.c. Laporan Pengeluaran (Buku Kas Kecil) -->
-        <div v-else-if="finSubTab === 'PENGELUARAN'" class="space-y-4">
-          <!-- Komposisi Pengeluaran per Kategori -->
-          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4">
-            <div class="flex items-center justify-between">
-              <h3
-                class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
-              >
-                <PieChart class="w-4 h-4 text-amber-600" />
-                <span>Komposisi Pengeluaran per Kategori Biaya</span>
-              </h3>
-              <span class="text-[11px] text-slate-400"
-                >{{ categoryBreakdown.length }} Kategori Aktif</span
-              >
-            </div>
-
-            <div
-              v-if="categoryBreakdown.length === 0"
-              class="py-6 text-center text-slate-400 text-xs"
-            >
-              Belum ada catatan pengeluaran operasional pada periode ini.
-            </div>
-
-            <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div
-                v-for="cat in categoryBreakdown"
-                :key="cat.category"
-                class="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col justify-between"
-              >
-                <div>
-                  <div class="flex items-center gap-1.5">
-                    <span>{{ getCategoryIcon(cat.category) }}</span>
-                    <span class="font-bold text-xs text-slate-800 truncate">
-                      {{ getCategoryLabel(cat.category) }}
-                    </span>
-                  </div>
-                  <span class="text-[10px] text-slate-400 block mt-0.5"
-                    >{{ cat.count }} transaksi</span
-                  >
-                </div>
-                <div class="mt-2">
-                  <span class="text-xs sm:text-sm font-black text-slate-900 block">
-                    Rp {{ formatRupiah(cat.total_amount) }}
-                  </span>
-                  <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-                    <div
-                      class="bg-amber-500 h-full rounded-full"
-                      :style="{ width: `${cat.percent}%` }"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tabel Buku Kas Kecil -->
           <div
-            class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden space-y-4 p-5"
+            class="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto"
           >
-            <div
-              class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+            <Lock class="w-7 h-7" />
+          </div>
+          <h3 class="text-lg font-black text-slate-900">Laporan Keuangan Dibatasi</h3>
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Sesuai kebijakan privasi Owner FAN Laundry, rincian pembukuan kas, omset, dan laba rugi
+            disembunyikan dalam <strong>Mode Kasir</strong>.
+          </p>
+          <div class="space-y-2 pt-2">
+            <input
+              v-model="unlockPin"
+              type="password"
+              maxlength="8"
+              placeholder="Masukkan PIN Owner (Default: 1234)..."
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-center tracking-widest text-sm font-bold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+              @keyup.enter="handleUnlockOwner"
+            />
+            <p v-if="unlockError" class="text-xs font-semibold text-rose-600">{{ unlockError }}</p>
+            <button
+              type="button"
+              class="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              @click="handleUnlockOwner"
             >
+              <Lock class="w-4 h-4" />
+              <span>Buka Laporan Keuangan</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Unlocked Financial View -->
+        <div v-else class="space-y-4">
+          <!-- Sub-Navigasi Keuangan -->
+          <div
+            class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none bg-slate-100/80 p-1.5 rounded-2xl"
+          >
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
+              :class="
+                finSubTab === 'OMSET'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              "
+              @click="finSubTab = 'OMSET'"
+            >
+              Laporan Omset (Bruto)
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
+              :class="
+                finSubTab === 'PENDAPATAN'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              "
+              @click="finSubTab = 'PENDAPATAN'"
+            >
+              Laporan Pendapatan Kas
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
+              :class="
+                finSubTab === 'PENGELUARAN'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              "
+              @click="finSubTab = 'PENGELUARAN'"
+            >
+              Laporan Pengeluaran ({{ filteredExpenses.length }})
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
+              :class="
+                finSubTab === 'PIUTANG'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              "
+              @click="finSubTab = 'PIUTANG'"
+            >
+              Piutang ({{ unpaidOrders.length }})
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
+              :class="
+                finSubTab === 'LABA_RUGI'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              "
+              @click="finSubTab = 'LABA_RUGI'"
+            >
+              Laporan Laba / Rugi
+            </button>
+          </div>
+
+          <!-- 2.a. Laporan Omset -->
+          <div
+            v-if="finSubTab === 'OMSET'"
+            class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
+          >
+            <div class="flex items-center justify-between">
               <div>
                 <h3
                   class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
                 >
-                  <Receipt class="w-4 h-4 text-amber-600" />
-                  <span>Buku Kas Kecil Operasional Outlet</span>
+                  <TrendingUp class="w-4 h-4 text-blue-600" />
+                  <span>Rincian Omset Penjualan Kotor</span>
                 </h3>
                 <p class="text-xs text-slate-400 mt-0.5">
-                  Rincian belanja bahan baku, operasional mesin & kasbon
+                  Daftar transaksi aktif yang membentuk omset periode terpilih
                 </p>
               </div>
-
-              <!-- Filters -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <select
-                  v-model="selectedCategoryFilter"
-                  class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-500 cursor-pointer"
-                  @change="pageExpenses = 1"
+              <div class="text-right">
+                <span class="text-xs text-slate-400 block">Total Omset</span>
+                <span class="text-lg font-black text-blue-600"
+                  >Rp {{ formatRupiah(financialReport.total_omset) }}</span
                 >
-                  <option value="ALL">Semua Kategori</option>
-                  <option value="BAHAN_BAKU">🧴 Bahan Baku</option>
-                  <option value="GAS">🔥 Gas Dryer</option>
-                  <option value="LISTRIK_AIR">⚡ Listrik & Air</option>
-                  <option value="GAJI">👥 Gaji Pegawai</option>
-                  <option value="BONUS">🍱 Uang Makan</option>
-                  <option value="MAINTENANCE">🔧 Servis Mesin</option>
-                  <option value="SEWA">🏠 Sewa Tempat</option>
-                  <option value="LAIN_LAIN">📦 Lain-Lain</option>
-                </select>
-
-                <div class="relative min-w-[160px]">
-                  <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    v-model="expenseSearchQuery"
-                    type="text"
-                    placeholder="Cari keterangan..."
-                    class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white"
-                    @input="pageExpenses = 1"
-                  />
-                  <button
-                    v-if="expenseSearchQuery"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    @click="clearExpenseSearch"
-                  >
-                    <X class="w-3.5 h-3.5" />
-                  </button>
-                </div>
               </div>
             </div>
 
-            <div
-              v-if="filteredExpenses.length === 0"
-              class="py-8 text-center text-slate-400 text-xs"
-            >
-              Tidak ada catatan pengeluaran yang cocok dengan filter.
+            <div v-if="omsetOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
+              Belum ada transaksi omset pada rentang tanggal ini.
             </div>
 
             <div v-else class="space-y-4">
@@ -1184,51 +995,40 @@
                     <tr
                       class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
                     >
-                      <th class="py-3 px-4">Tanggal</th>
-                      <th class="py-3 px-4">Kategori</th>
-                      <th class="py-3 px-4">Keterangan Keperluan</th>
-                      <th class="py-3 px-4">Dicatat Oleh</th>
-                      <th class="py-3 px-4 text-right">Nominal (Rp)</th>
-                      <th class="py-3 px-4 text-center">Aksi</th>
+                      <th class="py-3 px-4">No. Order</th>
+                      <th class="py-3 px-4">Pelanggan</th>
+                      <th class="py-3 px-4">Tanggal Masuk</th>
+                      <th class="py-3 px-4">Status</th>
+                      <th class="py-3 px-4 text-right">Nilai Omset (Rp)</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100">
                     <tr
-                      v-for="item in paginatedExpenses"
-                      :key="item.id"
+                      v-for="order in paginatedOmsetOrders"
+                      :key="order.id"
                       class="hover:bg-slate-50 transition-colors"
                     >
-                      <td class="py-3.5 px-4 font-semibold text-slate-900 whitespace-nowrap">
-                        {{ formatDate(item.expense_date) }}
+                      <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                        #{{ order.order_number }}
                       </td>
-                      <td class="py-3.5 px-4 whitespace-nowrap">
-                        <span
-                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                          :class="getCategoryBadgeClass(item.category)"
-                        >
-                          <span>{{ getCategoryIcon(item.category) }}</span>
-                          <span>{{ getCategoryLabel(item.category) }}</span>
-                        </span>
+                      <td class="py-3.5 px-4 font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Walk-in' }}
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                        {{ formatDate(order.created_at) }}
                       </td>
                       <td class="py-3.5 px-4">
-                        <p class="font-bold text-slate-800">{{ item.description }}</p>
-                      </td>
-                      <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                        {{ item.created_by || 'Kasir' }}
-                      </td>
-                      <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                        <span class="font-black text-sm text-rose-600">
-                          - Rp {{ formatRupiah(item.amount) }}
+                        <span
+                          class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
+                          :class="getOrderStatusBadgeClass(order.status)"
+                        >
+                          {{ order.status }}
                         </span>
                       </td>
-                      <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                        <button
-                          class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                          title="Hapus Pengeluaran"
-                          @click="promptDeleteExpense(item)"
-                        >
-                          <Trash2 class="w-4 h-4" />
-                        </button>
+                      <td
+                        class="py-3.5 px-4 text-right font-black text-slate-900 text-sm whitespace-nowrap"
+                      >
+                        Rp {{ formatRupiah(order.total_price) }}
                       </td>
                     </tr>
                   </tbody>
@@ -1237,161 +1037,434 @@
 
               <!-- Pagination -->
               <PaginationBar
-                v-model:current-page="pageExpenses"
-                v-model:items-per-page="pageSizeExpenses"
-                :total-items="filteredExpenses.length"
+                v-model:current-page="pageOmset"
+                v-model:items-per-page="pageSizeOmset"
+                :total-items="omsetOrders.length"
               />
             </div>
           </div>
-        </div>
 
-        <!-- 2.d. Laporan Piutang Tagihan -->
-        <div
-          v-else-if="finSubTab === 'PIUTANG'"
-          class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
-        >
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3
-                class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
+          <!-- 2.b. Laporan Pendapatan -->
+          <div
+            v-else-if="finSubTab === 'PENDAPATAN'"
+            class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3
+                  class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
+                >
+                  <Wallet class="w-4 h-4 text-emerald-600" />
+                  <span>Penerimaan Kas Riil Masuk</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Uang kas & transfer yang sudah diterima kasir
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-400 block">Total Pendapatan</span>
+                <span class="text-lg font-black text-emerald-600"
+                  >Rp {{ formatRupiah(financialReport.total_pendapatan) }}</span
+                >
+              </div>
+            </div>
+
+            <div v-if="paidOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
+              Belum ada penerimaan pembayaran pada periode ini.
+            </div>
+
+            <div v-else class="space-y-4">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr
+                      class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                    >
+                      <th class="py-3 px-4">No. Order</th>
+                      <th class="py-3 px-4">Pelanggan</th>
+                      <th class="py-3 px-4">Metode Bayar</th>
+                      <th class="py-3 px-4">Status</th>
+                      <th class="py-3 px-4 text-right">Uang Diterima (Rp)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr
+                      v-for="order in paginatedPaidOrders"
+                      :key="order.id"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                        #{{ order.order_number }}
+                      </td>
+                      <td class="py-3.5 px-4 font-bold text-slate-800">
+                        {{ order.customer?.full_name || 'Walk-in' }}
+                      </td>
+                      <td class="py-3.5 px-4 font-bold text-slate-700 whitespace-nowrap">
+                        {{ order.payment_method || 'CASH / TUNAI' }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        <span
+                          class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800"
+                        >
+                          {{ order.payment_status }}
+                        </span>
+                      </td>
+                      <td
+                        class="py-3.5 px-4 text-right font-black text-emerald-600 text-sm whitespace-nowrap"
+                      >
+                        Rp {{ formatRupiah(order.paid_amount || order.total_price) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <PaginationBar
+                v-model:current-page="pagePaid"
+                v-model:items-per-page="pageSizePaid"
+                :total-items="paidOrders.length"
+              />
+            </div>
+          </div>
+
+          <!-- 2.c. Laporan Pengeluaran (Buku Kas Kecil) -->
+          <div v-else-if="finSubTab === 'PENGELUARAN'" class="space-y-4">
+            <!-- Komposisi Pengeluaran per Kategori -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <h3
+                  class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
+                >
+                  <PieChart class="w-4 h-4 text-amber-600" />
+                  <span>Komposisi Pengeluaran per Kategori Biaya</span>
+                </h3>
+                <span class="text-[11px] text-slate-400"
+                  >{{ categoryBreakdown.length }} Kategori Aktif</span
+                >
+              </div>
+
+              <div
+                v-if="categoryBreakdown.length === 0"
+                class="py-6 text-center text-slate-400 text-xs"
               >
-                <ShieldAlert class="w-4 h-4 text-rose-600" />
-                <span>Laporan Piutang Belum Lunas</span>
+                Belum ada catatan pengeluaran operasional pada periode ini.
+              </div>
+
+              <div v-else class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div
+                  v-for="cat in categoryBreakdown"
+                  :key="cat.category"
+                  class="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span>{{ getCategoryIcon(cat.category) }}</span>
+                      <span class="font-bold text-xs text-slate-800 truncate">
+                        {{ getCategoryLabel(cat.category) }}
+                      </span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 block mt-0.5"
+                      >{{ cat.count }} transaksi</span
+                    >
+                  </div>
+                  <div class="mt-2">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 block">
+                      Rp {{ formatRupiah(cat.total_amount) }}
+                    </span>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
+                      <div
+                        class="bg-amber-500 h-full rounded-full"
+                        :style="{ width: `${cat.percent}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabel Buku Kas Kecil -->
+            <div
+              class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden space-y-4 p-5"
+            >
+              <div
+                class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+              >
+                <div>
+                  <h3
+                    class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
+                  >
+                    <Receipt class="w-4 h-4 text-amber-600" />
+                    <span>Buku Kas Kecil Operasional Outlet</span>
+                  </h3>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    Rincian belanja bahan baku, operasional mesin & kasbon
+                  </p>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex items-center gap-2 flex-wrap">
+                  <select
+                    v-model="selectedCategoryFilter"
+                    class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-500 cursor-pointer"
+                    @change="pageExpenses = 1"
+                  >
+                    <option value="ALL">Semua Kategori</option>
+                    <option value="BAHAN_BAKU">🧴 Bahan Baku</option>
+                    <option value="GAS">🔥 Gas Dryer</option>
+                    <option value="LISTRIK_AIR">⚡ Listrik & Air</option>
+                    <option value="GAJI">👥 Gaji Pegawai</option>
+                    <option value="BONUS">🍱 Uang Makan</option>
+                    <option value="MAINTENANCE">🔧 Servis Mesin</option>
+                    <option value="SEWA">🏠 Sewa Tempat</option>
+                    <option value="LAIN_LAIN">📦 Lain-Lain</option>
+                  </select>
+
+                  <div class="relative min-w-[160px]">
+                    <Search
+                      class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+                    />
+                    <input
+                      v-model="expenseSearchQuery"
+                      type="text"
+                      placeholder="Cari keterangan..."
+                      class="w-full pl-9 pr-7 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white"
+                      @input="pageExpenses = 1"
+                    />
+                    <button
+                      v-if="expenseSearchQuery"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      @click="clearExpenseSearch"
+                    >
+                      <X class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="filteredExpenses.length === 0"
+                class="py-8 text-center text-slate-400 text-xs"
+              >
+                Tidak ada catatan pengeluaran yang cocok dengan filter.
+              </div>
+
+              <div v-else class="space-y-4">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr
+                        class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                      >
+                        <th class="py-3 px-4">Tanggal</th>
+                        <th class="py-3 px-4">Kategori</th>
+                        <th class="py-3 px-4">Keterangan Keperluan</th>
+                        <th class="py-3 px-4">Dicatat Oleh</th>
+                        <th class="py-3 px-4 text-right">Nominal (Rp)</th>
+                        <th class="py-3 px-4 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      <tr
+                        v-for="item in paginatedExpenses"
+                        :key="item.id"
+                        class="hover:bg-slate-50 transition-colors"
+                      >
+                        <td class="py-3.5 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                          {{ formatDate(item.expense_date) }}
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                            :class="getCategoryBadgeClass(item.category)"
+                          >
+                            <span>{{ getCategoryIcon(item.category) }}</span>
+                            <span>{{ getCategoryLabel(item.category) }}</span>
+                          </span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                          <p class="font-bold text-slate-800">{{ item.description }}</p>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                          {{ item.created_by || 'Kasir' }}
+                        </td>
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                          <span class="font-black text-sm text-rose-600">
+                            - Rp {{ formatRupiah(item.amount) }}
+                          </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                          <button
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                            title="Hapus Pengeluaran"
+                            @click="promptDeleteExpense(item)"
+                          >
+                            <Trash2 class="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Pagination -->
+                <PaginationBar
+                  v-model:current-page="pageExpenses"
+                  v-model:items-per-page="pageSizeExpenses"
+                  :total-items="filteredExpenses.length"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 2.d. Laporan Piutang Tagihan -->
+          <div
+            v-else-if="finSubTab === 'PIUTANG'"
+            class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-4"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3
+                  class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2"
+                >
+                  <ShieldAlert class="w-4 h-4 text-rose-600" />
+                  <span>Laporan Piutang Belum Lunas</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Daftar transaksi pelanggan yang masih memiliki sisa pembayaran
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-rose-600">
+                  Total Piutang: Rp {{ formatRupiah(totalPiutangNominal) }}
+                </span>
+              </div>
+            </div>
+
+            <div v-if="unpaidOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
+              Luar biasa! Tidak ada piutang yang tertunggak. Semua order lunas.
+            </div>
+
+            <div v-else class="space-y-4">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr
+                      class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
+                    >
+                      <th class="py-3 px-4">No. Order</th>
+                      <th class="py-3 px-4">Nama Pelanggan</th>
+                      <th class="py-3 px-4">Tanggal Order</th>
+                      <th class="py-3 px-4 text-right">Total Tagihan</th>
+                      <th class="py-3 px-4 text-right">Sudah Dibayar</th>
+                      <th class="py-3 px-4 text-right">Sisa Piutang</th>
+                      <th class="py-3 px-4 text-center">Tagih WA</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr
+                      v-for="item in paginatedUnpaidOrders"
+                      :key="item.id"
+                      class="hover:bg-slate-50 transition-colors"
+                    >
+                      <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
+                        #{{ item.order_number }}
+                      </td>
+                      <td class="py-3.5 px-4 whitespace-nowrap">
+                        <p class="font-bold text-slate-800">{{ item.customer_name }}</p>
+                        <p class="text-[11px] text-slate-400">{{ item.customer_phone }}</p>
+                      </td>
+                      <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
+                        {{ formatDate(item.created_at) }}
+                      </td>
+                      <td
+                        class="py-3.5 px-4 text-right font-semibold text-slate-700 whitespace-nowrap"
+                      >
+                        Rp {{ formatRupiah(item.total_price) }}
+                      </td>
+                      <td
+                        class="py-3.5 px-4 text-right font-semibold text-emerald-600 whitespace-nowrap"
+                      >
+                        Rp {{ formatRupiah(item.paid_amount) }}
+                      </td>
+                      <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
+                        Rp {{ formatRupiah(item.sisa_tagihan) }}
+                      </td>
+                      <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                        <a
+                          :href="getUnpaidWhatsappUrl(item)"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-all cursor-pointer"
+                          title="Kirim Tagihan WhatsApp"
+                        >
+                          <MessageCircle class="w-3.5 h-3.5" />
+                          <span>Tagih WA</span>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <PaginationBar
+                v-model:current-page="pageUnpaid"
+                v-model:items-per-page="pageSizeUnpaid"
+                :total-items="unpaidOrders.length"
+              />
+            </div>
+          </div>
+
+          <!-- 2.e. Laporan Laba/Rugi -->
+          <div
+            v-else-if="finSubTab === 'LABA_RUGI'"
+            class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-6"
+          >
+            <div class="border-b border-slate-100 pb-4">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <DollarSign class="w-5 h-5 text-indigo-600" />
+                <span>Laporan Laba / Rugi Kas Operasional</span>
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Daftar transaksi pelanggan yang masih memiliki sisa pembayaran
+              <p class="text-xs text-slate-400 mt-1">
+                Periode {{ formatDate(startDate) }} s/d {{ formatDate(endDate) }} (FAN Laundry
+                Kalibaru)
               </p>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-rose-600">
-                Total Piutang: Rp {{ formatRupiah(totalPiutangNominal) }}
-              </span>
-            </div>
-          </div>
 
-          <div v-if="unpaidOrders.length === 0" class="py-8 text-center text-slate-400 text-xs">
-            Luar biasa! Tidak ada piutang yang tertunggak. Semua order lunas.
-          </div>
-
-          <div v-else class="space-y-4">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr
-                    class="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-extrabold text-[11px]"
-                  >
-                    <th class="py-3 px-4">No. Order</th>
-                    <th class="py-3 px-4">Nama Pelanggan</th>
-                    <th class="py-3 px-4">Tanggal Order</th>
-                    <th class="py-3 px-4 text-right">Total Tagihan</th>
-                    <th class="py-3 px-4 text-right">Sudah Dibayar</th>
-                    <th class="py-3 px-4 text-right">Sisa Piutang</th>
-                    <th class="py-3 px-4 text-center">Tagih WA</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr
-                    v-for="item in paginatedUnpaidOrders"
-                    :key="item.id"
-                    class="hover:bg-slate-50 transition-colors"
-                  >
-                    <td class="py-3.5 px-4 font-black text-slate-900 whitespace-nowrap">
-                      #{{ item.order_number }}
-                    </td>
-                    <td class="py-3.5 px-4 whitespace-nowrap">
-                      <p class="font-bold text-slate-800">{{ item.customer_name }}</p>
-                      <p class="text-[11px] text-slate-400">{{ item.customer_phone }}</p>
-                    </td>
-                    <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
-                      {{ formatDate(item.created_at) }}
-                    </td>
-                    <td
-                      class="py-3.5 px-4 text-right font-semibold text-slate-700 whitespace-nowrap"
-                    >
-                      Rp {{ formatRupiah(item.total_price) }}
-                    </td>
-                    <td
-                      class="py-3.5 px-4 text-right font-semibold text-emerald-600 whitespace-nowrap"
-                    >
-                      Rp {{ formatRupiah(item.paid_amount) }}
-                    </td>
-                    <td class="py-3.5 px-4 text-right font-black text-rose-600 whitespace-nowrap">
-                      Rp {{ formatRupiah(item.sisa_tagihan) }}
-                    </td>
-                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                      <a
-                        :href="getUnpaidWhatsappUrl(item)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-all cursor-pointer"
-                        title="Kirim Tagihan WhatsApp"
-                      >
-                        <MessageCircle class="w-3.5 h-3.5" />
-                        <span>Tagih WA</span>
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Pagination -->
-            <PaginationBar
-              v-model:current-page="pageUnpaid"
-              v-model:items-per-page="pageSizeUnpaid"
-              :total-items="unpaidOrders.length"
-            />
-          </div>
-        </div>
-
-        <!-- 2.e. Laporan Laba/Rugi -->
-        <div
-          v-else-if="finSubTab === 'LABA_RUGI'"
-          class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-6"
-        >
-          <div class="border-b border-slate-100 pb-4">
-            <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
-              <DollarSign class="w-5 h-5 text-indigo-600" />
-              <span>Laporan Laba / Rugi Kas Operasional</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-1">
-              Periode {{ formatDate(startDate) }} s/d {{ formatDate(endDate) }} (FAN Laundry
-              Kalibaru)
-            </p>
-          </div>
-
-          <!-- Income Statement Grid -->
-          <div
-            class="max-w-xl mx-auto space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100 text-sm"
-          >
-            <!-- Inflow -->
-            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
-              <span class="font-bold text-slate-700">1. Total Pendapatan Kas Diterima (+)</span>
-              <span class="font-black text-emerald-600"
-                >Rp {{ formatRupiah(financialReport.total_pendapatan) }}</span
-              >
-            </div>
-            <!-- Outflow -->
-            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
-              <span class="font-bold text-slate-700">2. Total Pengeluaran Kas Kecil (-)</span>
-              <span class="font-black text-rose-600"
-                >- Rp {{ formatRupiah(financialReport.total_pengeluaran) }}</span
-              >
-            </div>
-            <!-- Net Profit -->
-            <div class="flex items-center justify-between pt-2">
-              <span class="text-base font-black text-slate-900">Laba Bersih Operasional (=)</span>
-              <span
-                class="text-xl font-black"
-                :class="financialReport.laba_bersih >= 0 ? 'text-indigo-600' : 'text-rose-600'"
-              >
-                Rp {{ formatRupiah(financialReport.laba_bersih) }}
-              </span>
-            </div>
-            <!-- Profit Margin -->
-            <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
-              <span>Margin Keuntungan Kas</span>
-              <span class="font-bold text-slate-700"> {{ profitMarginPercent }}% </span>
+            <!-- Income Statement Grid -->
+            <div
+              class="max-w-xl mx-auto space-y-3 bg-slate-50/60 p-5 rounded-2xl border border-slate-100 text-sm"
+            >
+              <!-- Inflow -->
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                <span class="font-bold text-slate-700">1. Total Pendapatan Kas Diterima (+)</span>
+                <span class="font-black text-emerald-600"
+                  >Rp {{ formatRupiah(financialReport.total_pendapatan) }}</span
+                >
+              </div>
+              <!-- Outflow -->
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
+                <span class="font-bold text-slate-700">2. Total Pengeluaran Kas Kecil (-)</span>
+                <span class="font-black text-rose-600"
+                  >- Rp {{ formatRupiah(financialReport.total_pengeluaran) }}</span
+                >
+              </div>
+              <!-- Net Profit -->
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-base font-black text-slate-900">Laba Bersih Operasional (=)</span>
+                <span
+                  class="text-xl font-black"
+                  :class="financialReport.laba_bersih >= 0 ? 'text-indigo-600' : 'text-rose-600'"
+                >
+                  Rp {{ formatRupiah(financialReport.laba_bersih) }}
+                </span>
+              </div>
+              <!-- Profit Margin -->
+              <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                <span>Margin Keuntungan Kas</span>
+                <span class="font-bold text-slate-700"> {{ profitMarginPercent }}% </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1945,15 +2018,37 @@ import {
   Clock,
   AlertTriangle,
   UserPlus,
+  Lock,
 } from 'lucide-vue-next'
 import { api, formatRupiah, formatDate, formatDateTime } from '../api/client'
 import { useToast } from '../composables/useToast'
+import { useAppSettings } from '../composables/useAppSettings'
 
 const route = useRoute()
 const toast = useToast()
+const { settings, switchRole } = useAppSettings()
 
 const activeTab = ref('TRANSACTIONS')
 const loading = ref(false)
+
+const isFinancialsHidden = computed(
+  () => settings.role === 'CASHIER' && settings.hideFinancialsFromCashier
+)
+
+const unlockPin = ref('')
+const unlockError = ref('')
+
+const handleUnlockOwner = () => {
+  const res = switchRole('OWNER', unlockPin.value)
+  if (res.success) {
+    toast.success('Akses Owner berhasil dibuka! Laporan keuangan kini dapat diakses.')
+    unlockPin.value = ''
+    unlockError.value = ''
+  } else {
+    unlockError.value = res.message || 'PIN tidak valid'
+    toast.error('Autentikasi gagal: ' + (res.message || 'PIN tidak valid'))
+  }
+}
 
 // Sub-Tab Navigation States
 const txSubTab = ref('ALL') // 'ALL', 'SERVICES', 'PICKED_UP', 'READY_UNCOLLECTED', 'CANCELLED'

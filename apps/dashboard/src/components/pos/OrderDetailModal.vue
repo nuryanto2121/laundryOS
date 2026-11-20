@@ -201,7 +201,10 @@
             <span>Rincian Layanan & Produk ({{ displayItems.length }})</span>
             <span>Subtotal</span>
           </div>
-          <div v-if="loadingDetails && displayItems.length === 0" class="py-6 text-center text-xs text-slate-400">
+          <div
+            v-if="loadingDetails && displayItems.length === 0"
+            class="py-6 text-center text-xs text-slate-400"
+          >
             Memuat rincian pesanan...
           </div>
           <div v-else class="divide-y divide-slate-100 text-xs">
@@ -213,7 +216,8 @@
               <div>
                 <p class="font-bold text-slate-900">{{ item.service_name }}</p>
                 <p class="text-[11px] text-slate-500">
-                  {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp {{ formatRupiah(item.price_per_unit) }}
+                  {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp
+                  {{ formatRupiah(item.price_per_unit) }}
                   <span v-if="item.notes" class="text-amber-700 ml-1">({{ item.notes }})</span>
                 </p>
               </div>
@@ -262,7 +266,11 @@
             <div v-if="displayHistory.length === 0" class="text-slate-400 text-xs text-center py-2">
               Tidak ada catatan riwayat perubahan.
             </div>
-            <div v-for="log in displayHistory" :key="log.id" class="flex items-start gap-2.5 text-xs">
+            <div
+              v-for="log in displayHistory"
+              :key="log.id"
+              class="flex items-start gap-2.5 text-xs"
+            >
               <div class="w-2 h-2 rounded-full bg-brand-500 mt-1.5 shrink-0"></div>
               <div class="flex-1">
                 <div class="flex items-center justify-between">
@@ -302,7 +310,7 @@
     <PhotoDocModal
       v-model="showPhotoModal"
       :order="order"
-      :photos="photos"
+      :photos="displayPhotos"
       @photo-added="refreshDetails"
     />
 

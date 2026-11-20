@@ -38,8 +38,12 @@
         <!-- KPI 1: Omset Hari Ini -->
         <div
           class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-xs flex flex-col justify-between hover:border-brand-400 hover:shadow-md transition-all group cursor-pointer active:scale-[0.99]"
-          title="Klik untuk melihat rincian omset & metode bayar"
-          @click="showOmsetModal = true"
+          :title="
+            isFinancialsHidden
+              ? 'Omset disembunyikan untuk Kasir'
+              : 'Klik untuk melihat rincian omset & metode bayar'
+          "
+          @click="handleOmsetClick"
         >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"
@@ -53,19 +57,27 @@
           </div>
           <div class="mt-3">
             <h3
-              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors"
+              class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors flex items-center gap-1.5"
             >
-              Rp {{ formatRupiah(metrics.omset_hari_ini) }}
+              <template v-if="isFinancialsHidden">
+                <span class="text-slate-400">Rp ••••••</span>
+                <Lock class="w-4 h-4 text-slate-400" />
+              </template>
+              <template v-else> Rp {{ formatRupiah(metrics.omset_hari_ini) }} </template>
             </h3>
             <div class="flex items-center justify-between mt-1">
               <p class="text-[11px] text-slate-400 flex items-center gap-1">
                 <TrendingUp class="w-3.5 h-3.5 text-emerald-500" />
-                <span>Penjualan bruto</span>
+                <span>{{ isFinancialsHidden ? 'Akses dibatasi' : 'Penjualan bruto' }}</span>
               </p>
               <span
+                v-if="!isFinancialsHidden"
                 class="text-[10px] font-bold text-brand-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform"
               >
                 Rincian <ChevronRight class="w-3 h-3" />
+              </span>
+              <span v-else class="text-[10px] font-bold text-purple-600 flex items-center gap-0.5">
+                Mode Kasir
               </span>
             </div>
           </div>
@@ -395,20 +407,39 @@ import {
   ChevronRight,
   Loader2,
   CheckCircle2,
+  Lock,
 } from 'lucide-vue-next'
 import AppLayout from '../components/layout/AppLayout.vue'
 import QuickExpenseModal from '../components/modals/QuickExpenseModal.vue'
 import SearchOrderModal from '../components/modals/SearchOrderModal.vue'
 import OmsetBreakdownModal from '../components/modals/OmsetBreakdownModal.vue'
 import { api, formatRupiah } from '../api/client'
+import { useAppSettings } from '../composables/useAppSettings'
+import { useToast } from '../composables/useToast'
 
 const router = useRouter()
+const { settings } = useAppSettings()
+const { info } = useToast()
 
 const loading = ref(false)
 const loadingOrders = ref(false)
 const showExpenseModal = ref(false)
 const showSearchModal = ref(false)
 const showOmsetModal = ref(false)
+
+const isFinancialsHidden = computed(
+  () => settings.role === 'CASHIER' && settings.hideFinancialsFromCashier
+)
+
+const handleOmsetClick = () => {
+  if (isFinancialsHidden.value) {
+    info(
+      'Data omset disembunyikan dalam Mode Kasir. Masuk ke peran Owner di profil kanan atas untuk melihat rincian.'
+    )
+    return
+  }
+  showOmsetModal.value = true
+}
 
 const metrics = ref({
   omset_hari_ini: 0,

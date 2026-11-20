@@ -75,7 +75,11 @@
           <span>Aktivitas Periode</span>
           <span
             class="px-1.5 py-0.2 rounded-full text-[10px]"
-            :class="modalTab === 'PERIOD' ? 'bg-purple-200 text-purple-900' : 'bg-slate-100 text-slate-600'"
+            :class="
+              modalTab === 'PERIOD'
+                ? 'bg-purple-200 text-purple-900'
+                : 'bg-slate-100 text-slate-600'
+            "
           >
             {{ customerPeriodOrders.length }}
           </span>
@@ -179,16 +183,24 @@
       <!-- 2. TAB: AKTIVITAS PERIODE TERPILIH -->
       <div v-else class="space-y-4">
         <!-- Date indicator banner -->
-        <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
-          <span class="text-purple-900 font-bold">Periode: {{ formatDate(startDate) }} &mdash; {{ formatDate(endDate) }}</span>
-          <span class="text-purple-700 font-semibold">{{ customerPeriodOrders.length }} transaksi ditemukan</span>
+        <div
+          class="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs"
+        >
+          <span class="text-purple-900 font-bold"
+            >Periode: {{ formatDate(startDate) }} &mdash; {{ formatDate(endDate) }}</span
+          >
+          <span class="text-purple-700 font-semibold"
+            >{{ customerPeriodOrders.length }} transaksi ditemukan</span
+          >
         </div>
 
         <!-- Mini Period KPI Summary -->
         <div class="grid grid-cols-3 gap-2.5 text-center">
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Belanja</span>
-            <span class="text-sm font-black text-emerald-600">Rp {{ formatRupiah(periodSpend) }}</span>
+            <span class="text-sm font-black text-emerald-600"
+              >Rp {{ formatRupiah(periodSpend) }}</span
+            >
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Berat</span>
@@ -196,7 +208,9 @@
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Layanan</span>
-            <span class="text-sm font-black text-purple-600">{{ periodServices.length }} Jenis</span>
+            <span class="text-sm font-black text-purple-600"
+              >{{ periodServices.length }} Jenis</span
+            >
           </div>
         </div>
 
@@ -213,7 +227,10 @@
         </div>
 
         <!-- Orders list in this period (Clickable to view items) -->
-        <div v-if="customerPeriodOrders.length === 0" class="py-6 text-center text-slate-400 text-xs">
+        <div
+          v-if="customerPeriodOrders.length === 0"
+          class="py-6 text-center text-slate-400 text-xs"
+        >
           Pelanggan tidak memiliki transaksi pada rentang tanggal ini.
         </div>
         <div v-else class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
@@ -232,7 +249,11 @@
                   <span class="font-black text-slate-900">#{{ ord.order_number }}</span>
                   <span
                     class="px-1.5 py-0.2 rounded text-[10px] font-black uppercase tracking-wider"
-                    :class="ord.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                    :class="
+                      ord.payment_status === 'PAID'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-rose-100 text-rose-800'
+                    "
                   >
                     {{ ord.payment_status }}
                   </span>
@@ -247,13 +268,19 @@
                 <p class="text-xs font-bold text-slate-700">
                   {{ getOrderServiceTitle(ord) }}
                 </p>
-                <span class="text-[11px] text-slate-400 block">{{ formatDateTime(ord.created_at) }}</span>
+                <span class="text-[11px] text-slate-400 block">{{
+                  formatDateTime(ord.created_at)
+                }}</span>
               </div>
 
               <div class="text-right flex items-center gap-3">
                 <div>
-                  <span class="font-black text-slate-900 block">Rp {{ formatRupiah(ord.total_price) }}</span>
-                  <span class="text-[11px] text-slate-400">{{ ord.total_weight ? `${ord.total_weight} Kg` : '' }}</span>
+                  <span class="font-black text-slate-900 block"
+                    >Rp {{ formatRupiah(ord.total_price) }}</span
+                  >
+                  <span class="text-[11px] text-slate-400">{{
+                    ord.total_weight ? `${ord.total_weight} Kg` : ''
+                  }}</span>
                 </div>
                 <div class="text-slate-400">
                   <ChevronDown
@@ -269,13 +296,18 @@
               v-if="expandedOrderId === ord.id"
               class="p-3 bg-white border-t border-slate-100 text-xs space-y-2 animate-in fade-in duration-150"
             >
-              <div class="flex items-center justify-between text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100 pb-1">
+              <div
+                class="flex items-center justify-between text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100 pb-1"
+              >
                 <span>Rincian Layanan & Produk</span>
                 <span>Subtotal</span>
               </div>
 
               <!-- Loading items -->
-              <div v-if="loadingOrderItems && !getOrderItems(ord).length" class="py-2 text-center text-slate-400 text-xs">
+              <div
+                v-if="loadingOrderItems && !getOrderItems(ord).length"
+                class="py-2 text-center text-slate-400 text-xs"
+              >
                 Memuat rincian item...
               </div>
 
@@ -289,7 +321,8 @@
                   <div>
                     <span class="font-bold text-slate-800">{{ item.service_name }}</span>
                     <span class="text-slate-400 text-[11px] block">
-                      {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp {{ formatRupiah(item.price_per_unit) }}
+                      {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp
+                      {{ formatRupiah(item.price_per_unit) }}
                       <span v-if="item.notes" class="text-amber-600 ml-1">({{ item.notes }})</span>
                     </span>
                   </div>
@@ -300,9 +333,15 @@
               </div>
 
               <!-- Extra order info: Rack & Perfume -->
-              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span>📍 Rak: <strong>{{ ord.rack_number || '-' }}</strong></span>
-                <span>✨ Parfum: <strong>{{ ord.perfume_name || '-' }}</strong></span>
+              <div
+                class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500"
+              >
+                <span
+                  >📍 Rak: <strong>{{ ord.rack_number || '-' }}</strong></span
+                >
+                <span
+                  >✨ Parfum: <strong>{{ ord.perfume_name || '-' }}</strong></span
+                >
               </div>
             </div>
           </div>
