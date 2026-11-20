@@ -338,9 +338,11 @@ import CreateOrderModal from '../components/pos/CreateOrderModal.vue'
 import OrderDetailModal from '../components/pos/OrderDetailModal.vue'
 import ReceiptPrintModal from '../components/pos/ReceiptPrintModal.vue'
 import { api, formatRupiah, formatDateTime } from '../api/client'
+import { useToast } from '../composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 
 const loading = ref(false)
 const orders = ref([])
@@ -535,7 +537,7 @@ const quickProgress = async (order) => {
   else if (order.status === 'SIAP AMBIL') {
     if (order.payment_status !== 'PAID') {
       openOrderDetail(order)
-      alert(
+      toast.warning(
         'Pesanan belum lunas! Silakan selesaikan pembayaran terlebih dahulu sebelum diserahkan.'
       )
       return
@@ -552,9 +554,10 @@ const quickProgress = async (order) => {
       changed_by: 'Kasir Utama',
       notes: `Progresi cepat kasir via dashboard`,
     })
+    toast.success(`Status pesanan berhasil diubah menjadi ${targetStatus}!`)
     await loadOrders()
   } catch (err) {
-    alert(err.message || 'Gagal mengubah status antrian.')
+    toast.error(err.message || 'Gagal mengubah status antrian.')
   } finally {
     actionInProgressId.value = null
   }

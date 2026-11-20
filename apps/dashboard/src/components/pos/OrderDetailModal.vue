@@ -71,8 +71,8 @@
           <button
             v-else-if="order.status === 'PROSES'"
             :disabled="actionLoading"
-            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-            @click="progressStatus('READY')"
+            class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            @click="progressStatus('SIAP AMBIL')"
           >
             <CheckCircle class="w-4 h-4" />
             <span>ORDERAN SIAP DIAMBIL</span>
@@ -80,9 +80,9 @@
 
           <!-- Siap Ambil -> Selesai -->
           <button
-            v-else-if="order.status === 'READY' || order.status === 'SIAP AMBIL'"
+            v-else-if="order.status === 'SIAP AMBIL' || order.status === 'READY'"
             :disabled="actionLoading"
-            class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             @click="completeOrder"
           >
             <CheckCheck class="w-4 h-4" />
@@ -299,6 +299,115 @@
       :photos="photos"
       @photo-added="refreshDetails"
     />
+
+    <!-- Modal Ubah Nomor Rak -->
+    <div
+      v-if="showRackModal"
+      class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
+      >
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h4 class="font-bold text-sm text-slate-900">Ubah Nomor Rak Simpan</h4>
+          <button
+            class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+            @click="showRackModal = false"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor / Label Rak:</label>
+          <input
+            v-model="rackInput"
+            type="text"
+            placeholder="Contoh: A-01, B-03, GANTUNG"
+            class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white"
+            @keyup.enter="saveRack"
+          />
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button
+              v-for="preset in ['A-01', 'A-02', 'B-01', 'B-02', 'GANTUNG']"
+              :key="preset"
+              type="button"
+              class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-brand-50 hover:text-brand-600 text-[11px] font-bold text-slate-600 transition-all cursor-pointer"
+              @click="rackInput = preset"
+            >
+              {{ preset }}
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer"
+            @click="showRackModal = false"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            class="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            @click="saveRack"
+          >
+            Simpan Rak
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Pembatalan Pesanan -->
+    <div
+      v-if="showCancelModal"
+      class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
+      >
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h4 class="font-bold text-sm text-rose-600 flex items-center gap-1.5">
+            <Ban class="w-4 h-4" />
+            <span>Batalkan Pesanan</span>
+          </h4>
+          <button
+            class="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+            @click="showCancelModal = false"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+        <p class="text-xs text-slate-500">
+          Pesanan yang dibatalkan tidak dapat diproses kembali. Silakan cantumkan alasan pembatalan:
+        </p>
+        <div>
+          <textarea
+            v-model="cancelReasonInput"
+            rows="3"
+            placeholder="Contoh: Permintaan pelanggan via WA / Salah input layanan..."
+            class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-rose-400 focus:bg-white resize-none"
+          ></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-all cursor-pointer"
+            @click="showCancelModal = false"
+          >
+            Kembali
+          </button>
+          <button
+            type="button"
+            :disabled="cancelLoading || !cancelReasonInput.trim()"
+            class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            @click="confirmCancelOrder"
+          >
+            <span v-if="cancelLoading">Memproses...</span>
+            <span v-else>Ya, Batalkan</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -322,6 +431,7 @@ import ReceiptPrintModal from './ReceiptPrintModal.vue'
 import PaymentModal from './PaymentModal.vue'
 import PhotoDocModal from './PhotoDocModal.vue'
 import { api, formatRupiah, formatDateTime } from '../../api/client'
+import { useToast } from '../../composables/useToast'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -344,12 +454,20 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'order-updated'])
+const toast = useToast()
 
 const actionLoading = ref(false)
 const resendingWA = ref(false)
 const showReceiptModal = ref(false)
 const showPaymentModal = ref(false)
 const showPhotoModal = ref(false)
+
+const showRackModal = ref(false)
+const rackInput = ref('')
+
+const showCancelModal = ref(false)
+const cancelReasonInput = ref('')
+const cancelLoading = ref(false)
 
 const formatDisplayOrder = (num) => {
   if (!num) return ''
@@ -364,9 +482,9 @@ const getStatusClass = (status) => {
       return 'bg-amber-50 text-amber-700 border border-amber-200'
     case 'READY':
     case 'SIAP AMBIL':
-      return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+      return 'bg-purple-50 text-purple-700 border border-purple-200'
     case 'SELESAI':
-      return 'bg-slate-100 text-slate-700 border border-slate-200'
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
     case 'BATAL':
       return 'bg-rose-50 text-rose-700 border border-rose-200'
     default:
@@ -379,13 +497,6 @@ const close = () => {
 }
 
 const progressStatus = async (newStatus) => {
-  if (newStatus === 'READY' && !props.order.rack_number) {
-    const rack = prompt('Masukkan nomor rak simpan (misal: A-01, B-03):', 'A-01')
-    if (rack) {
-      await api.patch(`/pos/orders/${props.order.id}/rack`, { rack_number: rack })
-    }
-  }
-
   actionLoading.value = true
   try {
     await api.patch(`/pos/orders/${props.order.id}/status`, {
@@ -393,9 +504,10 @@ const progressStatus = async (newStatus) => {
       changed_by: 'Kasir Utama',
       notes: `Status diperbarui menjadi ${newStatus}`,
     })
+    toast.success(`Status berhasil diperbarui menjadi ${newStatus}!`)
     emit('order-updated')
   } catch (err) {
-    alert(err.message || 'Gagal mengubah status order.')
+    toast.error(err.message || 'Gagal mengubah status order.')
   } finally {
     actionLoading.value = false
   }
@@ -403,24 +515,31 @@ const progressStatus = async (newStatus) => {
 
 const completeOrder = async () => {
   if (props.order.payment_status !== 'PAID') {
-    if (confirm('Pesanan ini belum lunas! Apakah ingin melakukan pelunasan pembayaran sekarang?')) {
-      showPaymentModal.value = true
-      return
-    }
+    toast.warning('Pesanan ini belum lunas! Silakan selesaikan pembayaran terlebih dahulu.')
+    showPaymentModal.value = true
+    return
   }
   await progressStatus('SELESAI')
 }
 
-const editRack = async () => {
-  const current = props.order.rack_number || ''
-  const newRack = prompt('Ubah nomor rak simpan:', current)
-  if (newRack !== null) {
-    try {
-      await api.patch(`/pos/orders/${props.order.id}/rack`, { rack_number: newRack })
-      emit('order-updated')
-    } catch (err) {
-      alert(err.message || 'Gagal mengubah nomor rak.')
-    }
+const editRack = () => {
+  rackInput.value = props.order.rack_number || ''
+  showRackModal.value = true
+}
+
+const saveRack = async () => {
+  if (!rackInput.value.trim()) {
+    toast.warning('Nomor rak tidak boleh kosong!')
+    return
+  }
+
+  try {
+    await api.patch(`/pos/orders/${props.order.id}/rack`, { rack_number: rackInput.value.trim() })
+    toast.success(`Nomor rak berhasil diubah menjadi ${rackInput.value.trim()}!`)
+    showRackModal.value = false
+    emit('order-updated')
+  } catch (err) {
+    toast.error(err.message || 'Gagal mengubah nomor rak.')
   }
 }
 
@@ -428,33 +547,43 @@ const resendWAInvoice = async () => {
   resendingWA.value = true
   try {
     await api.post(`/pos/orders/${props.order.id}/resend-invoice`)
-    alert('Invoice WhatsApp berhasil dikirim ulang ke pelanggan! ✅')
+    toast.success('Invoice WhatsApp berhasil dikirim ulang ke pelanggan! ✅')
   } catch (err) {
-    alert(err.message || 'Gagal mengirim ulang WhatsApp.')
+    toast.error(err.message || 'Gagal mengirim ulang WhatsApp.')
   } finally {
     resendingWA.value = false
   }
 }
 
-const promptCancelOrder = async () => {
-  const reason = prompt('Masukkan alasan pembatalan pesanan ini:')
-  if (!reason) return
+const promptCancelOrder = () => {
+  cancelReasonInput.value = ''
+  showCancelModal.value = true
+}
 
-  actionLoading.value = true
+const confirmCancelOrder = async () => {
+  if (!cancelReasonInput.value.trim()) {
+    toast.warning('Silakan cantumkan alasan pembatalan!')
+    return
+  }
+
+  cancelLoading.value = true
   try {
     await api.patch(`/pos/orders/${props.order.id}/cancel`, {
-      reason: reason,
+      reason: cancelReasonInput.value.trim(),
       changed_by: 'Kasir Utama',
     })
+    toast.success('Pesanan berhasil dibatalkan.')
+    showCancelModal.value = false
     emit('order-updated')
   } catch (err) {
-    alert(err.message || 'Gagal membatalkan pesanan.')
+    toast.error(err.message || 'Gagal membatalkan pesanan.')
   } finally {
-    actionLoading.value = false
+    cancelLoading.value = false
   }
 }
 
 const handlePaymentSuccess = () => {
+  toast.success('Pembayaran berhasil dicatat!')
   emit('order-updated')
 }
 

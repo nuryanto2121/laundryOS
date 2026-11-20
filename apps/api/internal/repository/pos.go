@@ -309,7 +309,7 @@ func (r *POSRepository) UpdateStatus(ctx context.Context, idStr string, req mode
 
 	updated, err := r.queries.UpdatePOSOrderStatus(ctx, db.UpdatePOSOrderStatusParams{
 		ID:     pgtype.UUID{Bytes: orderUUID, Valid: true},
-		Status: pgtype.Text{String: req.Status, Valid: true},
+		Status: req.Status,
 	})
 	if err != nil {
 		return db.Order{}, err

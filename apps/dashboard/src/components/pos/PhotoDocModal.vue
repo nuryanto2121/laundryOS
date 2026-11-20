@@ -160,6 +160,7 @@
 import { ref, watch } from 'vue'
 import { Camera, X } from 'lucide-vue-next'
 import { api } from '../../api/client'
+import { useToast } from '../../composables/useToast'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -174,6 +175,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'photo-added'])
+const toast = useToast()
 
 const previewUrl = ref('')
 const photoType = ref('MASUK')
@@ -226,10 +228,11 @@ const submitPhoto = async () => {
       notes: photoNotes.value,
     })
     existingPhotos.value.push(res)
+    toast.success('Foto dokumentasi berhasil disimpan!')
     emit('photo-added')
     clearPreview()
   } catch (err) {
-    alert(err.message || 'Gagal menyimpan foto.')
+    toast.error(err.message || 'Gagal menyimpan foto.')
   } finally {
     uploading.value = false
   }

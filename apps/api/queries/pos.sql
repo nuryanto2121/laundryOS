@@ -31,10 +31,10 @@ RETURNING *;
 -- name: UpdatePOSOrderStatus :one
 UPDATE orders
 SET
-    status       = $2,
-    completed_at = CASE WHEN $2 = 'SELESAI' THEN NOW() ELSE completed_at END,
+    status       = sqlc.arg(status)::VARCHAR,
+    completed_at = CASE WHEN sqlc.arg(status)::VARCHAR = 'SELESAI' THEN NOW() ELSE completed_at END,
     updated_at   = NOW()
-WHERE id = $1
+WHERE id = sqlc.arg(id)
 RETURNING *;
 
 -- name: CancelPOSOrder :one

@@ -552,12 +552,14 @@ import {
   X,
 } from 'lucide-vue-next'
 import { api, formatRupiah } from '../../api/client'
+import { useToast } from '../../composables/useToast'
 
 defineProps({
   modelValue: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue', 'order-created'])
+const toast = useToast()
 
 const creating = ref(false)
 const isNewCustomer = ref(false)
@@ -727,7 +729,7 @@ const submitOrder = async () => {
 
   if (isNewCustomer.value) {
     if (!newCustomer.full_name || !newCustomer.phone) {
-      alert('Nama pelanggan dan nomor WhatsApp wajib diisi!')
+      toast.warning('Nama pelanggan dan nomor WhatsApp wajib diisi!')
       return
     }
     custName = newCustomer.full_name
@@ -739,12 +741,12 @@ const submitOrder = async () => {
     custPhone = selectedCustomer.value.phone
     custAddress = selectedCustomer.value.address
   } else {
-    alert('Silakan pilih atau tambahkan pelanggan terlebih dahulu!')
+    toast.warning('Silakan pilih atau tambahkan pelanggan terlebih dahulu!')
     return
   }
 
   if (cartItems.value.length === 0) {
-    alert('Keranjang cucian masih kosong! Silakan pilih layanan.')
+    toast.warning('Keranjang cucian masih kosong! Silakan pilih layanan.')
     return
   }
 
@@ -779,10 +781,11 @@ const submitOrder = async () => {
     }
 
     const res = await api.post('/pos/orders', payload)
+    toast.success('Transaksi kasir walk-in berhasil dibuat!')
     emit('order-created', res)
     close()
   } catch (err) {
-    alert(err.message || 'Gagal membuat order.')
+    toast.error(err.message || 'Gagal membuat order.')
   } finally {
     creating.value = false
   }

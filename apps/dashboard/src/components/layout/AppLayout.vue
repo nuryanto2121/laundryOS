@@ -42,6 +42,9 @@
     <!-- Mobile Bottom Navigation (Sticky bottom on phone/tablet) -->
     <BottomNavigation :queue-count="queueCount" />
 
+    <!-- Global Floating Toast Notification Container -->
+    <ToastContainer />
+
     <!-- Outlet Switcher Modal -->
     <div
       v-if="showOutletModal"
@@ -99,6 +102,7 @@ import { useRoute } from 'vue-router'
 import { Home, ShoppingBag, BarChart3, Settings, Store, X, CheckCircle2 } from 'lucide-vue-next'
 import AppHeader from './AppHeader.vue'
 import BottomNavigation from './BottomNavigation.vue'
+import ToastContainer from '../ui/ToastContainer.vue'
 
 const route = useRoute()
 const activeOutlet = ref('FAN Laundry Kalibaru')

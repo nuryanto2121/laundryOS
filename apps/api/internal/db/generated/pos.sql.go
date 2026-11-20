@@ -488,20 +488,20 @@ func (q *Queries) UpdatePOSOrderRack(ctx context.Context, arg UpdatePOSOrderRack
 const updatePOSOrderStatus = `-- name: UpdatePOSOrderStatus :one
 UPDATE orders
 SET
-    status       = $2,
-    completed_at = CASE WHEN $2 = 'SELESAI' THEN NOW() ELSE completed_at END,
+    status       = $1::VARCHAR,
+    completed_at = CASE WHEN $1::VARCHAR = 'SELESAI' THEN NOW() ELSE completed_at END,
     updated_at   = NOW()
-WHERE id = $1
+WHERE id = $2
 RETURNING id, order_number, customer_id, service_id, status, total_weight, total_price, pickup_required, notes, created_at, updated_at, outlet_id, rack_number, perfume_id, perfume_name, discount_id, discount_amount, paid_amount, payment_status, payment_method_id, payment_method_name, paid_at, estimated_completion_at, completed_at, canceled_reason, canceled_at
 `
 
 type UpdatePOSOrderStatusParams struct {
+	Status string      `json:"status"`
 	ID     pgtype.UUID `json:"id"`
-	Status pgtype.Text `json:"status"`
 }
 
 func (q *Queries) UpdatePOSOrderStatus(ctx context.Context, arg UpdatePOSOrderStatusParams) (Order, error) {
-	row := q.db.QueryRow(ctx, updatePOSOrderStatus, arg.ID, arg.Status)
+	row := q.db.QueryRow(ctx, updatePOSOrderStatus, arg.Status, arg.ID)
 	var i Order
 	err := row.Scan(
 		&i.ID,
