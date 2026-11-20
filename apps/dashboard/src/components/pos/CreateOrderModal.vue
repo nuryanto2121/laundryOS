@@ -79,10 +79,7 @@
             <button
               v-if="customerSearchQuery"
               class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-              @click="
-                customerSearchQuery = ''
-                customerResults = []
-              "
+              @click="clearCustomerSearch"
             >
               <X class="w-3.5 h-3.5" />
             </button>
@@ -683,7 +680,13 @@
                 Self Service
               </span>
             </div>
-            <p class="text-xs text-brand-600 font-extrabold">
+            <p v-if="isSelfService" class="text-xs text-brand-600 font-extrabold">
+              Rp {{ formatRupiah(currentService?.price) }} / Tabung
+              <span class="text-[10px] text-slate-500 font-normal">
+                (Kapasitas 8 Kg + toleransi 0.5 Kg)
+              </span>
+            </p>
+            <p v-else class="text-xs text-brand-600 font-extrabold">
               Rp {{ formatRupiah(currentService?.price) }} / {{ currentService?.unit }}
             </p>
           </div>
@@ -1027,11 +1030,16 @@ const paidAmount = ref(0)
 
 const isSelfService = computed(() => {
   if (!currentService.value) return false
+  const name = (currentService.value.service_name || '').toLowerCase()
+  const code = (currentService.value.service_code || '').toLowerCase()
   return (
     currentService.value.category === 'TABUNG' ||
     currentService.value.unit === 'Tabung' ||
-    (currentService.value.service_name &&
-      currentService.value.service_name.toLowerCase().includes('self service'))
+    name.includes('self service') ||
+    name.includes('cuci basah') ||
+    name.includes('cuci kering') ||
+    code === 'svc018' ||
+    code === 'svc019'
   )
 })
 
@@ -1172,6 +1180,11 @@ const selectCustomer = (c) => {
   customerSearchQuery.value = ''
 }
 
+const clearCustomerSearch = () => {
+  customerSearchQuery.value = ''
+  customerResults.value = []
+}
+
 const quickAddNewCustomer = () => {
   isNewCustomer.value = true
   newCustomer.full_name = customerSearchQuery.value
@@ -1181,11 +1194,18 @@ const quickAddNewCustomer = () => {
 
 const openQuantityModal = (srv) => {
   currentService.value = srv
-  if (
+  const name = (srv.service_name || '').toLowerCase()
+  const code = (srv.service_code || '').toLowerCase()
+  const isSS =
     srv.category === 'TABUNG' ||
     srv.unit === 'Tabung' ||
-    (srv.service_name && srv.service_name.toLowerCase().includes('self service'))
-  ) {
+    name.includes('self service') ||
+    name.includes('cuci basah') ||
+    name.includes('cuci kering') ||
+    code === 'svc018' ||
+    code === 'svc019'
+
+  if (isSS) {
     selfServiceWeight.value = 8.0
     selfServiceAction.value = 'TWO_TUBES'
   } else if (srv.category === 'KILOAN') {
