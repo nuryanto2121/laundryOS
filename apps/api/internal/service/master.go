@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	db "github.com/nuryanto2121/laundryos/apps/api/internal/db/generated"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/repository"
@@ -84,17 +85,17 @@ func (s *MasterService) ListServices(ctx context.Context) ([]ServiceMasterItem, 
 }
 
 func determineCategoryAndUnit(name string) (string, string) {
-	lower := name
-	if contains(lower, "self service") || contains(lower, "cuci basah") || contains(lower, "cuci kering") {
+	lower := strings.ToLower(name)
+	if strings.Contains(lower, "self service") || strings.Contains(lower, "cuci basah") || strings.Contains(lower, "cuci kering") {
 		return "TABUNG", "Tabung"
 	}
-	if contains(lower, "sabun") || contains(lower, "pewangi") {
+	if strings.Contains(lower, "sabun") || strings.Contains(lower, "pewangi") {
 		return "SATUAN", "Pcs"
 	}
-	if contains(lower, "karpet") || contains(lower, "permadani") {
+	if strings.Contains(lower, "karpet") || strings.Contains(lower, "permadani") {
 		return "METERAN", "Meter"
 	}
-	if contains(lower, "bed cover") || contains(lower, "boneka") || contains(lower, "selimut") {
+	if strings.Contains(lower, "bed cover") || strings.Contains(lower, "bad cover") || strings.Contains(lower, "boneka") || strings.Contains(lower, "selimut") {
 		return "SATUAN", "Pcs"
 	}
 	return "KILOAN", "Kg"
@@ -116,7 +117,7 @@ func indexOf(s, substr string) int {
 // GetDefaultFANServices returns standard FAN Laundry catalog.
 func GetDefaultFANServices() []ServiceMasterItem {
 	return []ServiceMasterItem{
-		{ID: "srv-01", ServiceCode: "SS-CB", ServiceName: "Cuci Basah (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 10000, DurationDay: 0},
+		{ID: "srv-01", ServiceCode: "SS-CB", ServiceName: "Cuci Basah (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 8000, DurationDay: 0},
 		{ID: "srv-02", ServiceCode: "SS-CK", ServiceName: "Cuci Kering (Self Service)", Category: "TABUNG", Unit: "Tabung", Price: 20000, DurationDay: 0},
 		{ID: "srv-03", ServiceCode: "SS-SBP", ServiceName: "Sabun / Pewangi Sachet", Category: "SATUAN", Unit: "Pcs", Price: 1000, DurationDay: 0},
 		{ID: "srv-04", ServiceCode: "CS-REG", ServiceName: "Cuci Setrika Reguler (3 Hari)", Category: "KILOAN", Unit: "Kg", Price: 7000, DurationDay: 3},

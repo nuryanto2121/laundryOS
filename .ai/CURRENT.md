@@ -71,7 +71,7 @@ Implement Milestone 4 of Sprint 05: Manajemen Pengeluaran Kas Kecil (Petty Cash 
 
 - [x] Sprint 05 Milestone 1 completed: database schema, multi-item POS, expenses, and reporting APIs.
 - [x] Sprint 05 Milestone 2 completed: Tailwind CSS & Lucide icons setup, responsive layout (mobile bottom bar + desktop header), live KPI cards, quick actions, live queue preview, and search modal.
-- [x] Sprint 05 Milestone 3 completed: Walk-in POS modal with decimal quantity, multi-item service picker, perfume & discount selector, 5-tab queue list, 1-click status progression (`PROSES`, `SIAP AMBIL`, `SELESAI`), 3-format thermal receipt printing (58mm/80mm), settle payment modal, and photo documentation.
+- [x] Sprint 05 Milestone 3 completed: Walk-in POS modal with decimal quantity, multi-item service picker, perfume & discount selector, 5-tab queue list, 1-click status progression (`PROSES`, `SIAP AMBIL`, `SELESAI`), 3-format thermal receipt printing (58mm/80mm), settle payment modal, photo documentation, and custom modal catalog with Self Service 8 Kg + 0.5 Kg tolerance capacity calculator.
 - [x] Clean production build (`npm run build`) passing.
 - [x] Clean linting (`npm run lint`) passing with 0 errors.
 - [x] All 112 Go backend unit tests passing.

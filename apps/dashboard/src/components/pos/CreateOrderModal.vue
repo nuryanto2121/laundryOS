@@ -20,7 +20,7 @@
           </div>
         </div>
         <button
-          class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+          class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
           @click="close"
         >
           <X class="w-5 h-5" />
@@ -40,7 +40,7 @@
             </div>
             <button
               type="button"
-              class="text-xs font-bold text-brand-600 hover:underline"
+              class="text-xs font-bold text-brand-600 hover:underline cursor-pointer"
               @click="isNewCustomer = !isNewCustomer"
             >
               {{ isNewCustomer ? 'Pilih Pelanggan Terdaftar' : '+ Pelanggan Baru' }}
@@ -59,7 +59,7 @@
               </p>
             </div>
             <button
-              class="text-xs font-bold text-rose-600 hover:underline"
+              class="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
               @click="selectedCustomer = null"
             >
               Ganti
@@ -68,33 +68,59 @@
 
           <!-- Existing Customer Autocomplete Input -->
           <div v-else-if="!isNewCustomer" class="relative">
-            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
             <input
               v-model="customerSearchQuery"
               type="text"
-              placeholder="Ketik nama atau nomor WhatsApp pelanggan..."
-              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
+              placeholder="Ketik nama atau nomor WhatsApp pelanggan (cth: Maya, 0852...)"
+              class="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
               @input="onCustomerSearch"
             />
+            <button
+              v-if="customerSearchQuery"
+              class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+              @click="
+                customerSearchQuery = ''
+                customerResults = []
+              "
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+
             <!-- Search Results Dropdown -->
             <div
-              v-if="customerResults.length > 0"
-              class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-20 max-h-40 overflow-y-auto divide-y divide-slate-100"
+              v-if="customerSearchQuery && customerResults.length > 0"
+              class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-xl z-20 max-h-48 overflow-y-auto divide-y divide-slate-100 animate-in fade-in slide-in-from-top-1"
             >
               <div
                 v-for="c in customerResults"
                 :key="c.id"
-                class="p-2.5 hover:bg-brand-50 cursor-pointer text-xs flex justify-between items-center"
+                class="p-2.5 hover:bg-brand-50/70 cursor-pointer text-xs flex justify-between items-center transition-colors"
                 @click="selectCustomer(c)"
               >
                 <div>
                   <span class="font-bold text-slate-900">{{ c.full_name }}</span>
-                  <span class="text-slate-400 ml-1.5 font-normal">({{ c.phone }})</span>
+                  <span class="text-brand-600 font-semibold ml-1.5">({{ c.phone }})</span>
                 </div>
-                <span class="text-[10px] text-slate-400 truncate max-w-[150px]">{{
-                  c.address
+                <span class="text-[10px] text-slate-500 truncate max-w-[150px]">{{
+                  c.address || 'Kalibaru'
                 }}</span>
               </div>
+            </div>
+
+            <!-- Empty Search State -->
+            <div
+              v-else-if="customerSearchQuery && customerResults.length === 0 && !searchingCustomer"
+              class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-xl z-20 p-3 text-center text-xs text-slate-500"
+            >
+              Pelanggan tidak ditemukan untuk "{{ customerSearchQuery }}".
+              <button
+                type="button"
+                class="block mx-auto mt-1.5 text-xs font-bold text-brand-600 hover:underline cursor-pointer"
+                @click="quickAddNewCustomer"
+              >
+                + Tambah Sebagai Pelanggan Baru
+              </button>
             </div>
           </div>
 
@@ -145,7 +171,7 @@
                 2. Pilih Layanan Laundry
               </h4>
             </div>
-            <span class="text-[11px] text-slate-500"
+            <span class="text-[11px] text-slate-500 font-semibold"
               >{{ cartItems.length }} Layanan di keranjang</span
             >
           </div>
@@ -153,51 +179,54 @@
           <!-- Quick Popular Service Chips (1-Tap for Kasir) -->
           <div>
             <span class="text-[11px] font-semibold text-slate-500 block mb-1.5"
-              >Layanan Terpopuler (1-Klik):</span
+              >Layanan Terpopuler (1-Klik Cepat):</span
             >
             <div class="flex flex-wrap gap-1.5">
               <button
                 v-for="fav in favoriteServices"
                 :key="fav.id"
                 type="button"
-                class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                 @click="openQuantityModal(fav)"
               >
                 <Plus class="w-3.5 h-3.5 text-brand-600" />
                 <span>{{ fav.service_name }}</span>
                 <span class="text-[10px] text-slate-400 font-normal">
-                  Rp {{ formatRupiah(fav.price) }}
+                  Rp {{ formatRupiah(fav.price) }} / {{ fav.unit }}
                 </span>
               </button>
             </div>
           </div>
 
-          <!-- Dropdown Service Selector -->
+          <!-- Trigger Buka Modal Katalog Layanan -->
           <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">
-              Pilih Layanan Laundry (Dropdown):
-            </label>
-            <div class="relative flex items-center">
-              <select
-                v-model="selectedServiceDropdownId"
-                class="w-full pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white transition-all cursor-pointer appearance-none"
-                @change="handleServiceDropdownChange"
-              >
-                <option value="">
-                  + Cari atau Pilih Layanan Laundry ({{ services.length }} Layanan Tersedia)...
-                </option>
-                <optgroup
-                  v-for="group in groupedServices"
-                  :key="group.category"
-                  :label="group.title"
+            <button
+              type="button"
+              class="w-full py-3.5 px-4 rounded-xl border-2 border-dashed border-brand-300 hover:border-brand-500 bg-brand-50/50 hover:bg-brand-50 text-brand-800 font-bold text-xs flex items-center justify-between transition-all group cursor-pointer shadow-2xs"
+              @click="showServicePickerModal = true"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform"
                 >
-                  <option v-for="s in group.items" :key="s.id" :value="s.id">
-                    {{ s.service_name }} — Rp {{ formatRupiah(s.price) }} / {{ s.unit }}
-                  </option>
-                </optgroup>
-              </select>
-              <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none" />
-            </div>
+                  <Plus class="w-5 h-5" />
+                </div>
+                <div class="text-left">
+                  <span
+                    class="block font-black text-xs sm:text-sm text-slate-900 group-hover:text-brand-600"
+                  >
+                    + Buka Katalog Layanan Laundry (Semua Kategori)
+                  </span>
+                  <span class="text-[11px] text-slate-500 font-normal">
+                    Pilih Self Service (Cuci Basah/Kering), Kiloan Reguler/Kilat, Satuan, & Karpet
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 text-brand-600 font-bold text-xs">
+                <span>Pilih</span>
+                <ChevronRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </button>
           </div>
 
           <!-- Active Cart Table -->
@@ -208,7 +237,7 @@
             <div
               class="bg-slate-100 px-3.5 py-2 flex justify-between text-xs font-bold text-slate-700"
             >
-              <span>Keranjang Cucian</span>
+              <span>Keranjang Cucian ({{ cartItems.length }} item)</span>
               <span>Subtotal</span>
             </div>
             <div class="divide-y divide-slate-100 bg-white text-xs">
@@ -217,20 +246,30 @@
                 :key="idx"
                 class="px-3.5 py-2.5 flex items-center justify-between"
               >
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2.5">
                   <button
-                    class="p-1 text-slate-300 hover:text-rose-600 transition-colors"
+                    class="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer"
                     title="Hapus"
                     @click="removeItem(idx)"
                   >
                     <Trash2 class="w-4 h-4" />
                   </button>
                   <div>
-                    <span class="font-bold text-slate-900">{{ item.service_name }}</span>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-slate-900">{{ item.service_name }}</span>
+                      <span
+                        v-if="item.category === 'TABUNG'"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-700"
+                      >
+                        Self Service
+                      </span>
+                    </div>
                     <p class="text-[11px] text-slate-500">
                       {{ item.quantity }} {{ item.unit }} x Rp
                       {{ formatRupiah(item.price_per_unit) }}
-                      <span v-if="item.notes" class="text-amber-700 ml-1">({{ item.notes }})</span>
+                      <span v-if="item.notes" class="text-amber-700 font-semibold ml-1">
+                        • {{ item.notes }}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -349,7 +388,7 @@
             >
               <button
                 type="button"
-                class="px-2.5 py-1 rounded-lg font-bold transition-all"
+                class="px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer"
                 :class="
                   paymentOption === 'SEKARANG'
                     ? 'bg-brand-600 text-white'
@@ -361,7 +400,7 @@
               </button>
               <button
                 type="button"
-                class="px-2.5 py-1 rounded-lg font-bold transition-all"
+                class="px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer"
                 :class="
                   paymentOption === 'NANTI'
                     ? 'bg-slate-900 text-white'
@@ -422,87 +461,6 @@
         </div>
       </div>
 
-      <!-- Quantity Decimal Modal Sub-Dialog -->
-      <div
-        v-if="showQtyModal"
-        class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs"
-      >
-        <div
-          class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4"
-        >
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div>
-              <h4 class="font-bold text-sm text-slate-900">{{ currentService?.service_name }}</h4>
-              <p class="text-xs text-brand-600 font-extrabold">
-                Rp {{ formatRupiah(currentService?.price) }} / {{ currentService?.unit }}
-              </p>
-            </div>
-            <button class="p-1 text-slate-400 hover:text-slate-600" @click="showQtyModal = false">
-              <X class="w-4 h-4" />
-            </button>
-          </div>
-
-          <!-- Quantity Decimal Input -->
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1"
-              >Kuantitas / Timbangan ({{ currentService?.unit }})</label
-            >
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="w-10 h-10 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200"
-                @click="qtyInput = Math.max(0.1, Number((qtyInput - 0.5).toFixed(2)))"
-              >
-                -
-              </button>
-              <input
-                v-model.number="qtyInput"
-                type="number"
-                step="0.05"
-                min="0.1"
-                class="flex-1 py-2 text-center text-lg font-black rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
-              />
-              <button
-                type="button"
-                class="w-10 h-10 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200"
-                @click="qtyInput = Number((qtyInput + 0.5).toFixed(2))"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Presets -->
-          <div class="flex gap-1.5 justify-center">
-            <button
-              v-for="p in [1, 2, 3, 5, 8]"
-              :key="p"
-              type="button"
-              class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-brand-50 text-xs font-bold text-slate-700"
-              @click="qtyInput = p"
-            >
-              {{ p }} {{ currentService?.unit }}
-            </button>
-          </div>
-
-          <!-- Subtotal Calculation -->
-          <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between items-center text-xs">
-            <span class="text-slate-500">Subtotal:</span>
-            <span class="font-extrabold text-sm text-slate-900"
-              >Rp {{ formatRupiah(qtyInput * (currentService?.price || 0)) }}</span
-            >
-          </div>
-
-          <button
-            type="button"
-            class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition-all"
-            @click="addCurrentServiceToCart"
-          >
-            Tambahkan ke Keranjang
-          </button>
-        </div>
-      </div>
-
       <!-- Footer Bar (Total & Submit) -->
       <div
         class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0"
@@ -520,7 +478,7 @@
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
-            class="w-1/3 sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50"
+            class="w-1/3 sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
             @click="close"
           >
             Batal
@@ -528,13 +486,470 @@
           <button
             type="button"
             :disabled="creating || cartItems.length === 0"
-            class="w-2/3 sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-brand-500/20 flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all"
+            class="w-2/3 sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-brand-500/20 flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer"
             @click="submitOrder"
           >
             <span v-if="creating">Menyimpan...</span>
             <span v-else>BUAT ORDERAN KASIR</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- SUB-MODAL 1: Service Picker Modal (Grouped by Category) -->
+    <div
+      v-if="showServicePickerModal"
+      class="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl border border-slate-100 flex flex-col max-h-[88vh]"
+      >
+        <!-- Service Picker Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+          <div>
+            <h3 class="font-black text-base text-slate-900">Katalog Layanan FAN Laundry</h3>
+            <p class="text-xs text-slate-500">
+              Pilih layanan laundry untuk dimasukkan ke keranjang
+            </p>
+          </div>
+          <button
+            class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+            @click="showServicePickerModal = false"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Filter & Search Inside Service Modal -->
+        <div class="pt-3 pb-2 space-y-2 shrink-0">
+          <div class="relative">
+            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+            <input
+              v-model="serviceModalSearch"
+              type="text"
+              placeholder="Cari layanan (cth: Cuci Basah, Setrika, Bed Cover, Karpet)..."
+              class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
+            />
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              :class="
+                activeServiceTab === 'ALL'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              @click="activeServiceTab = 'ALL'"
+            >
+              Semua ({{ services.length }})
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              :class="
+                activeServiceTab === 'TABUNG'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              @click="activeServiceTab = 'TABUNG'"
+            >
+              ⚡ Self Service ({{ services.filter((s) => s.category === 'TABUNG').length }})
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              :class="
+                activeServiceTab === 'KILOAN'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              @click="activeServiceTab = 'KILOAN'"
+            >
+              🧺 Cuci Kiloan
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              :class="
+                activeServiceTab === 'SATUAN'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              @click="activeServiceTab = 'SATUAN'"
+            >
+              🧥 Satuan & Bed Cover
+            </button>
+            <button
+              type="button"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              :class="
+                activeServiceTab === 'METERAN'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              @click="activeServiceTab = 'METERAN'"
+            >
+              🧼 Karpet
+            </button>
+          </div>
+        </div>
+
+        <!-- Service List (Grouped Sections, Scrollable) -->
+        <div class="flex-1 overflow-y-auto py-2 space-y-4 pr-1">
+          <div v-for="grp in filteredServiceGroups" :key="grp.category" class="space-y-2">
+            <div class="flex items-center gap-2 border-b border-slate-100 pb-1">
+              <span class="text-xs font-black text-slate-800">{{ grp.title }}</span>
+              <span class="text-[10px] text-slate-400 font-semibold"
+                >({{ grp.items.length }} layanan)</span
+              >
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div
+                v-for="s in grp.items"
+                :key="s.id"
+                class="p-3 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/30 transition-all flex items-center justify-between cursor-pointer group"
+                @click="selectServiceFromModal(s)"
+              >
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-xs text-slate-900 group-hover:text-brand-700">
+                      {{ s.service_name }}
+                    </span>
+                    <span
+                      v-if="s.category === 'TABUNG'"
+                      class="px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-100 text-blue-700"
+                    >
+                      Kapasitas 8 Kg
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs font-black text-brand-600">
+                      Rp {{ formatRupiah(s.price) }}
+                    </span>
+                    <span class="text-[10px] text-slate-400">/ {{ s.unit }}</span>
+                    <span v-if="s.duration_day > 0" class="text-[10px] text-slate-400">
+                      • {{ s.duration_day }} Hari
+                    </span>
+                    <span v-else class="text-[10px] text-emerald-600 font-semibold">
+                      • Siap ~3 Jam
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="px-2.5 py-1.5 rounded-lg bg-brand-50 group-hover:bg-brand-600 group-hover:text-white text-brand-700 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>Pilih</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="filteredServiceGroups.length === 0"
+            class="py-12 text-center text-xs text-slate-400"
+          >
+            Layanan tidak ditemukan untuk kata kunci tersebut.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-MODAL 2: Quantity & Timbangan Calculator Sub-Dialog -->
+    <div
+      v-if="showQtyModal"
+      class="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h4 class="font-black text-base text-slate-900">
+                {{ currentService?.service_name }}
+              </h4>
+              <span
+                v-if="isSelfService"
+                class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-700 uppercase"
+              >
+                Self Service
+              </span>
+            </div>
+            <p class="text-xs text-brand-600 font-extrabold">
+              Rp {{ formatRupiah(currentService?.price) }} / {{ currentService?.unit }}
+            </p>
+          </div>
+          <button
+            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+            @click="showQtyModal = false"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- SPECIFIC FORM: SELF SERVICE (Cuci Basah / Cuci Kering) -->
+        <div v-if="isSelfService" class="space-y-3.5">
+          <div
+            class="p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 space-y-1"
+          >
+            <div class="font-extrabold flex items-center gap-1.5 text-blue-950">
+              <Scale class="w-4 h-4 text-blue-600" />
+              <span>Aturan Kapasitas Tabung Mesin Cuci:</span>
+            </div>
+            <p class="text-[11px] text-blue-800">
+              Kapasitas normal 1 tabung adalah <strong>8.0 Kg</strong> dengan batas toleransi
+              <strong>+0.5 Kg</strong> (Maksimal aman <strong>8.5 Kg</strong>).
+            </p>
+          </div>
+
+          <!-- Weight Input (Kg) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Berat Timbangan Cucian (Kg):
+            </label>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="w-11 h-11 rounded-xl bg-slate-100 font-black text-slate-700 hover:bg-slate-200 text-base cursor-pointer"
+                @click="
+                  selfServiceWeight = Math.max(0.5, Number((selfServiceWeight - 0.5).toFixed(2)))
+                "
+              >
+                -
+              </button>
+              <div class="relative flex-1">
+                <input
+                  v-model.number="selfServiceWeight"
+                  type="number"
+                  step="0.1"
+                  min="0.5"
+                  class="w-full py-2.5 text-center text-xl font-black rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
+                />
+                <span class="absolute right-3.5 top-3 text-xs font-bold text-slate-400">Kg</span>
+              </div>
+              <button
+                type="button"
+                class="w-11 h-11 rounded-xl bg-slate-100 font-black text-slate-700 hover:bg-slate-200 text-base cursor-pointer"
+                @click="selfServiceWeight = Number((selfServiceWeight + 0.5).toFixed(2))"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Presets for Self Service -->
+          <div class="flex flex-wrap gap-1.5 justify-center">
+            <button
+              v-for="w in [6.0, 7.5, 8.0, 8.5, 9.0, 10.0, 12.0]"
+              :key="w"
+              type="button"
+              class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              :class="
+                selfServiceWeight === w
+                  ? 'bg-brand-600 text-white shadow-2xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              "
+              @click="selfServiceWeight = w"
+            >
+              {{ w }} Kg
+            </button>
+          </div>
+
+          <!-- CAPACITY TOLERANCE STATUS CHECK -->
+          <!-- Case A: Within normal + tolerance (<= 8.5 Kg) -->
+          <div
+            v-if="selfServiceWeight <= 8.5"
+            class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5"
+          >
+            <CheckCircle2 class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div class="text-xs">
+              <span class="font-extrabold text-emerald-900 block">Kapasitas Aman (1 Tabung)</span>
+              <p class="text-[11px] text-emerald-700">
+                Berat cucian {{ selfServiceWeight }} Kg cukup dicuci dalam
+                <strong>1 Tabung</strong> (Maks 8.5 Kg termasuk toleransi).
+              </p>
+            </div>
+          </div>
+
+          <!-- Case B: Exceeds 8.5 Kg (> 8.5 Kg, e.g. 9 Kg+) -->
+          <div v-else class="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-300 space-y-2.5">
+            <div class="flex items-start gap-2">
+              <AlertTriangle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div class="text-xs">
+                <span class="font-black text-amber-950 block">
+                  Melebihi Toleransi 1 Tabung ({{ selfServiceWeight }} Kg > 8.5 Kg)
+                </span>
+                <p class="text-[11px] text-amber-800">
+                  Terdapat kelebihan muatan sekitar <strong>{{ excessWeightKg }} Kg</strong>.
+                  Silakan konfirmasi opsi dengan pelanggan:
+                </p>
+              </div>
+            </div>
+
+            <!-- 2 Options for Kasir / Customer -->
+            <div class="grid grid-cols-1 gap-2 pt-1">
+              <button
+                type="button"
+                class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between"
+                :class="
+                  selfServiceAction === 'TWO_TUBES'
+                    ? 'border-brand-500 bg-brand-50/80 ring-2 ring-brand-500/30'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                "
+                @click="selfServiceAction = 'TWO_TUBES'"
+              >
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-xs text-slate-900">Opsi 1: Jadikan 2 Tabung</span>
+                    <span
+                      class="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800"
+                    >
+                      Rekomendasi
+                    </span>
+                  </div>
+                  <p class="text-[10px] text-slate-500">
+                    Cucian dibagi 2 mesin, pakaian bersih & bilas maksimal (Total: 2 Tabung).
+                  </p>
+                </div>
+                <div class="text-right pl-2 shrink-0">
+                  <span class="text-xs font-black text-brand-700">
+                    Rp {{ formatRupiah(currentService.price * 2) }}
+                  </span>
+                  <span class="block text-[9px] text-slate-400">2 Tabung</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between"
+                :class="
+                  selfServiceAction === 'SPLIT_EXCESS'
+                    ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-500/30'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                "
+                @click="selfServiceAction = 'SPLIT_EXCESS'"
+              >
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-xs text-slate-900"
+                      >Opsi 2: Tetap 1 Tabung & Sisihkan</span
+                    >
+                  </div>
+                  <p class="text-[10px] text-slate-500">
+                    8.0 Kg dicuci sekarang, kelebihan
+                    <strong>~{{ excessWeightKg }} Kg disisihkan</strong>/dibawa pulang.
+                  </p>
+                </div>
+                <div class="text-right pl-2 shrink-0">
+                  <span class="text-xs font-black text-amber-700">
+                    Rp {{ formatRupiah(currentService.price * 1) }}
+                  </span>
+                  <span class="block text-[9px] text-slate-400">1 Tabung</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Self Service Subtotal Box -->
+          <div class="p-3 rounded-xl bg-slate-100 flex justify-between items-center text-xs">
+            <div>
+              <span class="text-slate-500 block">Total Tabung Dihitung:</span>
+              <span class="font-bold text-slate-800 text-xs">
+                {{ calculatedTubeCount }} Tabung
+                <span class="text-slate-400 font-normal"
+                  >({{ selfServiceWeight }} Kg ditimbang)</span
+                >
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-500 block">Subtotal:</span>
+              <span class="font-black text-base text-brand-700">
+                Rp {{ formatRupiah(calculatedTubeCount * (currentService?.price || 0)) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STANDARD FORM: KILOAN / SATUAN / METERAN -->
+        <div v-else class="space-y-3.5">
+          <!-- Quantity Decimal Input -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">
+              Jumlah / Timbangan ({{ currentService?.unit }}):
+            </label>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="w-10 h-10 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                @click="
+                  qtyInput = Math.max(
+                    0.1,
+                    Number(
+                      (qtyInput - (currentService?.category === 'KILOAN' ? 0.5 : 1)).toFixed(2)
+                    )
+                  )
+                "
+              >
+                -
+              </button>
+              <input
+                v-model.number="qtyInput"
+                type="number"
+                :step="currentService?.category === 'KILOAN' ? '0.1' : '1'"
+                min="0.1"
+                class="flex-1 py-2 text-center text-lg font-black rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
+              />
+              <button
+                type="button"
+                class="w-10 h-10 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                @click="
+                  qtyInput = Number(
+                    (qtyInput + (currentService?.category === 'KILOAN' ? 0.5 : 1)).toFixed(2)
+                  )
+                "
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="flex gap-1.5 justify-center flex-wrap">
+            <button
+              v-for="p in presetOptions"
+              :key="p"
+              type="button"
+              class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-brand-50 text-xs font-bold text-slate-700 cursor-pointer"
+              @click="qtyInput = p"
+            >
+              {{ p }} {{ currentService?.unit }}
+            </button>
+          </div>
+
+          <!-- Subtotal Calculation -->
+          <div class="p-2.5 rounded-xl bg-slate-50 flex justify-between items-center text-xs">
+            <span class="text-slate-500">Subtotal:</span>
+            <span class="font-extrabold text-sm text-slate-900">
+              Rp {{ formatRupiah(qtyInput * (currentService?.price || 0)) }}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+          @click="addCurrentServiceToCart"
+        >
+          Tambahkan ke Keranjang
+        </button>
       </div>
     </div>
   </div>
@@ -552,7 +967,10 @@ import {
   CreditCard,
   Search,
   X,
-  ChevronDown,
+  ChevronRight,
+  Scale,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-vue-next'
 import { api, formatRupiah } from '../../api/client'
 import { useToast } from '../../composables/useToast'
@@ -569,6 +987,7 @@ const isNewCustomer = ref(false)
 const customerSearchQuery = ref('')
 const customerResults = ref([])
 const selectedCustomer = ref(null)
+const searchingCustomer = ref(false)
 
 const newCustomer = reactive({
   full_name: '',
@@ -578,11 +997,20 @@ const newCustomer = reactive({
 
 const services = ref([])
 const cartItems = ref([])
-const selectedServiceDropdownId = ref('')
 
+// Service Picker Modal State
+const showServicePickerModal = ref(false)
+const serviceModalSearch = ref('')
+const activeServiceTab = ref('ALL')
+
+// Quantity Sub-Modal State
 const showQtyModal = ref(false)
 const currentService = ref(null)
 const qtyInput = ref(1.0)
+
+// Self Service specific calculation state
+const selfServiceWeight = ref(8.0)
+const selfServiceAction = ref('TWO_TUBES') // 'TWO_TUBES' or 'SPLIT_EXCESS'
 
 const orderConfig = reactive({
   perfume_name: 'Akasia',
@@ -597,8 +1025,45 @@ const paymentOption = ref('SEKARANG')
 const paymentMethod = ref('TUNAI')
 const paidAmount = ref(0)
 
+const isSelfService = computed(() => {
+  if (!currentService.value) return false
+  return (
+    currentService.value.category === 'TABUNG' ||
+    currentService.value.unit === 'Tabung' ||
+    (currentService.value.service_name &&
+      currentService.value.service_name.toLowerCase().includes('self service'))
+  )
+})
+
+const excessWeightKg = computed(() => {
+  if (selfServiceWeight.value <= 8.5) return '0.0'
+  return (selfServiceWeight.value - 8.0).toFixed(1)
+})
+
+const calculatedTubeCount = computed(() => {
+  if (selfServiceWeight.value <= 8.5) {
+    return 1
+  }
+  // If > 8.5 Kg
+  if (selfServiceAction.value === 'TWO_TUBES') {
+    return 2
+  }
+  return 1 // 'SPLIT_EXCESS' -> 1 tabung
+})
+
+const presetOptions = computed(() => {
+  if (!currentService.value) return [1, 2, 3, 5]
+  if (currentService.value.category === 'KILOAN') {
+    return [3, 4, 5, 7, 10]
+  }
+  if (currentService.value.category === 'METERAN') {
+    return [2, 3, 4, 6]
+  }
+  return [1, 2, 3, 4]
+})
+
 const favoriteServices = computed(() => {
-  const favCodes = ['SVC001', 'SVC005', 'SVC019', 'SVC006']
+  const favCodes = ['SVC018', 'SVC001', 'SVC005', 'SVC019', 'SVC006']
   const matched = services.value.filter((s) => favCodes.includes(s.service_code))
   if (matched.length > 0) return matched
   return services.value.slice(0, 4)
@@ -606,8 +1071,8 @@ const favoriteServices = computed(() => {
 
 const groupedServices = computed(() => {
   const groups = [
-    { category: 'KILOAN', title: '🧺 Cuci Kiloan & Setrika', items: [] },
     { category: 'TABUNG', title: '⚡ Self Service (Koin / Tabung)', items: [] },
+    { category: 'KILOAN', title: '🧺 Cuci Kiloan & Setrika', items: [] },
     { category: 'SATUAN', title: '🧥 Satuan & Bed Cover', items: [] },
     { category: 'METERAN', title: '🧼 Karpet & Lainnya', items: [] },
   ]
@@ -616,7 +1081,7 @@ const groupedServices = computed(() => {
     let cat = s.category || 'KILOAN'
     let grp = groups.find((g) => g.category === cat)
     if (!grp) {
-      grp = groups[0]
+      grp = groups[1]
     }
     grp.items.push(s)
   })
@@ -624,13 +1089,28 @@ const groupedServices = computed(() => {
   return groups.filter((g) => g.items.length > 0)
 })
 
-const handleServiceDropdownChange = () => {
-  if (!selectedServiceDropdownId.value) return
-  const srv = services.value.find((s) => s.id === selectedServiceDropdownId.value)
-  if (srv) {
-    openQuantityModal(srv)
-  }
-  selectedServiceDropdownId.value = ''
+const filteredServiceGroups = computed(() => {
+  const search = serviceModalSearch.value.trim().toLowerCase()
+  return groupedServices.value
+    .filter((grp) => {
+      if (activeServiceTab.value === 'ALL') return true
+      return grp.category === activeServiceTab.value
+    })
+    .map((grp) => {
+      if (!search) return grp
+      const items = grp.items.filter(
+        (s) =>
+          s.service_name.toLowerCase().includes(search) ||
+          (s.service_code && s.service_code.toLowerCase().includes(search))
+      )
+      return { ...grp, items }
+    })
+    .filter((grp) => grp.items.length > 0)
+})
+
+const selectServiceFromModal = (srv) => {
+  showServicePickerModal.value = false
+  openQuantityModal(srv)
 }
 
 const subtotalCart = computed(() => {
@@ -657,18 +1137,32 @@ const grandTotal = computed(() => {
 const close = () => {
   emit('update:modelValue', false)
   cartItems.value = []
+  customerResults.value = []
+  customerSearchQuery.value = ''
+  selectedCustomer.value = null
+  isNewCustomer.value = false
 }
 
 const onCustomerSearch = async () => {
-  if (!customerSearchQuery.value || customerSearchQuery.value.length < 2) {
+  const q = (customerSearchQuery.value || '').trim().toLowerCase()
+  if (q.length < 1) {
     customerResults.value = []
     return
   }
+  searchingCustomer.value = true
   try {
-    const data = await api.get('/customers', { search: customerSearchQuery.value })
-    customerResults.value = data || []
+    const data = await api.get('/customers', { search: q })
+    // Double filter client-side for immediate precision
+    customerResults.value = (data || []).filter(
+      (c) =>
+        (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.address && c.address.toLowerCase().includes(q))
+    )
   } catch {
     customerResults.value = []
+  } finally {
+    searchingCustomer.value = false
   }
 }
 
@@ -678,26 +1172,72 @@ const selectCustomer = (c) => {
   customerSearchQuery.value = ''
 }
 
+const quickAddNewCustomer = () => {
+  isNewCustomer.value = true
+  newCustomer.full_name = customerSearchQuery.value
+  customerSearchQuery.value = ''
+  customerResults.value = []
+}
+
 const openQuantityModal = (srv) => {
   currentService.value = srv
-  qtyInput.value = srv.category === 'KILOAN' ? 4.0 : 1.0
+  if (
+    srv.category === 'TABUNG' ||
+    srv.unit === 'Tabung' ||
+    (srv.service_name && srv.service_name.toLowerCase().includes('self service'))
+  ) {
+    selfServiceWeight.value = 8.0
+    selfServiceAction.value = 'TWO_TUBES'
+  } else if (srv.category === 'KILOAN') {
+    qtyInput.value = 4.0
+  } else {
+    qtyInput.value = 1.0
+  }
   showQtyModal.value = true
 }
 
 const addCurrentServiceToCart = () => {
-  if (!currentService.value || qtyInput.value <= 0) return
+  if (!currentService.value) return
 
-  const itemSubtotal = qtyInput.value * currentService.value.price
-  cartItems.value.push({
-    service_id: currentService.value.id,
-    service_name: currentService.value.service_name,
-    category: currentService.value.category,
-    quantity: qtyInput.value,
-    unit: currentService.value.unit,
-    price_per_unit: currentService.value.price,
-    subtotal: itemSubtotal,
-    notes: '',
-  })
+  if (isSelfService.value) {
+    const tubeQty = calculatedTubeCount.value
+    const price = currentService.value.price
+    const itemSubtotal = tubeQty * price
+
+    let notes = `Ditimbang ${selfServiceWeight.value} Kg`
+    if (selfServiceWeight.value > 8.5) {
+      if (selfServiceAction.value === 'TWO_TUBES') {
+        notes = `Ditimbang ${selfServiceWeight.value} Kg (Diproses 2 Tabung)`
+      } else {
+        notes = `Ditimbang ${selfServiceWeight.value} Kg (1 Tabung, Sisihkan ~${excessWeightKg.value} Kg)`
+      }
+    }
+
+    cartItems.value.push({
+      service_id: currentService.value.id,
+      service_name: currentService.value.service_name,
+      category: currentService.value.category,
+      quantity: tubeQty,
+      weighed_weight: selfServiceWeight.value,
+      unit: currentService.value.unit,
+      price_per_unit: price,
+      subtotal: itemSubtotal,
+      notes: notes,
+    })
+  } else {
+    if (qtyInput.value <= 0) return
+    const itemSubtotal = qtyInput.value * currentService.value.price
+    cartItems.value.push({
+      service_id: currentService.value.id,
+      service_name: currentService.value.service_name,
+      category: currentService.value.category,
+      quantity: qtyInput.value,
+      unit: currentService.value.unit,
+      price_per_unit: currentService.value.price,
+      subtotal: itemSubtotal,
+      notes: '',
+    })
+  }
 
   // Auto calculate SLA if not manually set
   recalculateSLA()
@@ -778,9 +1318,11 @@ const submitOrder = async () => {
 
   creating.value = true
   try {
-    const totalWeight = cartItems.value
-      .filter((it) => it.unit === 'Kg')
-      .reduce((acc, it) => acc + it.quantity, 0)
+    const totalWeight = cartItems.value.reduce((acc, it) => {
+      if (it.unit === 'Kg') return acc + it.quantity
+      if (it.weighed_weight) return acc + it.weighed_weight
+      return acc
+    }, 0)
 
     let estDate = null
     if (orderConfig.estimated_completion_at) {

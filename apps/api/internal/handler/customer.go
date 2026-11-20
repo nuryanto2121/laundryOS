@@ -89,11 +89,26 @@ func (h *CustomerHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} model.ErrorResponse
 // @Router /customers [get]
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
+	search := strings.TrimSpace(r.URL.Query().Get("search"))
 	customers, err := h.svc.List(r.Context())
 	if err != nil {
 		slog.Error("list customers failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to list customers")
 		return
+	}
+
+	if search != "" {
+		searchLower := strings.ToLower(search)
+		filtered := make([]model.Customer, 0)
+		for _, c := range customers {
+			if strings.Contains(strings.ToLower(c.FullName), searchLower) ||
+				strings.Contains(c.Phone, search) ||
+				strings.Contains(strings.ToLower(c.CustomerCode), searchLower) ||
+				strings.Contains(strings.ToLower(c.Address), searchLower) {
+				filtered = append(filtered, c)
+			}
+		}
+		customers = filtered
 	}
 
 	writeJSON(w, http.StatusOK, customers)
