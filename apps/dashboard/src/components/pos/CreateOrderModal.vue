@@ -150,52 +150,54 @@
             >
           </div>
 
-          <!-- Category Filter Pills -->
-          <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
-            <button
-              v-for="cat in serviceCategories"
-              :key="cat.id"
-              type="button"
-              class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all"
-              :class="
-                activeCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              @click="activeCategory = cat.id"
+          <!-- Quick Popular Service Chips (1-Tap for Kasir) -->
+          <div>
+            <span class="text-[11px] font-semibold text-slate-500 block mb-1.5"
+              >Layanan Terpopuler (1-Klik):</span
             >
-              {{ cat.label }}
-            </button>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="fav in favoriteServices"
+                :key="fav.id"
+                type="button"
+                class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                @click="openQuantityModal(fav)"
+              >
+                <Plus class="w-3.5 h-3.5 text-brand-600" />
+                <span>{{ fav.service_name }}</span>
+                <span class="text-[10px] text-slate-400 font-normal">
+                  Rp {{ formatRupiah(fav.price) }}
+                </span>
+              </button>
+            </div>
           </div>
 
-          <!-- Service Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            <button
-              v-for="srv in filteredServices"
-              :key="srv.id"
-              type="button"
-              class="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-400 hover:bg-brand-50/40 text-left transition-all group flex flex-col justify-between"
-              @click="openQuantityModal(srv)"
-            >
-              <div>
-                <span
-                  class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600"
-                >
-                  {{ srv.unit }}
-                </span>
-                <p
-                  class="font-bold text-xs text-slate-900 mt-1 line-clamp-2 leading-tight group-hover:text-brand-600"
-                >
-                  {{ srv.service_name }}
-                </p>
-              </div>
-              <div
-                class="mt-2 pt-1 border-t border-slate-100 flex justify-between items-center text-xs"
+          <!-- Dropdown Service Selector -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+              Pilih Layanan Laundry (Dropdown):
+            </label>
+            <div class="relative flex items-center">
+              <select
+                v-model="selectedServiceDropdownId"
+                class="w-full pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-500 focus:bg-white transition-all cursor-pointer appearance-none"
+                @change="handleServiceDropdownChange"
               >
-                <span class="font-extrabold text-brand-700">Rp {{ formatRupiah(srv.price) }}</span>
-                <Plus class="w-3.5 h-3.5 text-slate-400 group-hover:text-brand-600" />
-              </div>
-            </button>
+                <option value="">
+                  + Cari atau Pilih Layanan Laundry ({{ services.length }} Layanan Tersedia)...
+                </option>
+                <optgroup
+                  v-for="group in groupedServices"
+                  :key="group.category"
+                  :label="group.title"
+                >
+                  <option v-for="s in group.items" :key="s.id" :value="s.id">
+                    {{ s.service_name }} — Rp {{ formatRupiah(s.price) }} / {{ s.unit }}
+                  </option>
+                </optgroup>
+              </select>
+              <ChevronDown class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none" />
+            </div>
           </div>
 
           <!-- Active Cart Table -->
@@ -550,6 +552,7 @@ import {
   CreditCard,
   Search,
   X,
+  ChevronDown,
 } from 'lucide-vue-next'
 import { api, formatRupiah } from '../../api/client'
 import { useToast } from '../../composables/useToast'
@@ -574,8 +577,8 @@ const newCustomer = reactive({
 })
 
 const services = ref([])
-const activeCategory = ref('ALL')
 const cartItems = ref([])
+const selectedServiceDropdownId = ref('')
 
 const showQtyModal = ref(false)
 const currentService = ref(null)
@@ -594,18 +597,41 @@ const paymentOption = ref('SEKARANG')
 const paymentMethod = ref('TUNAI')
 const paidAmount = ref(0)
 
-const serviceCategories = [
-  { id: 'ALL', label: 'Semua' },
-  { id: 'TABUNG', label: 'Self Service' },
-  { id: 'KILOAN', label: 'Cuci Setrika / Kiloan' },
-  { id: 'SATUAN', label: 'Satuan & Bed Cover' },
-  { id: 'METERAN', label: 'Karpet Permadani' },
-]
-
-const filteredServices = computed(() => {
-  if (activeCategory.value === 'ALL') return services.value
-  return services.value.filter((s) => s.category === activeCategory.value)
+const favoriteServices = computed(() => {
+  const favCodes = ['SVC001', 'SVC005', 'SVC019', 'SVC006']
+  const matched = services.value.filter((s) => favCodes.includes(s.service_code))
+  if (matched.length > 0) return matched
+  return services.value.slice(0, 4)
 })
+
+const groupedServices = computed(() => {
+  const groups = [
+    { category: 'KILOAN', title: '🧺 Cuci Kiloan & Setrika', items: [] },
+    { category: 'TABUNG', title: '⚡ Self Service (Koin / Tabung)', items: [] },
+    { category: 'SATUAN', title: '🧥 Satuan & Bed Cover', items: [] },
+    { category: 'METERAN', title: '🧼 Karpet & Lainnya', items: [] },
+  ]
+
+  services.value.forEach((s) => {
+    let cat = s.category || 'KILOAN'
+    let grp = groups.find((g) => g.category === cat)
+    if (!grp) {
+      grp = groups[0]
+    }
+    grp.items.push(s)
+  })
+
+  return groups.filter((g) => g.items.length > 0)
+})
+
+const handleServiceDropdownChange = () => {
+  if (!selectedServiceDropdownId.value) return
+  const srv = services.value.find((s) => s.id === selectedServiceDropdownId.value)
+  if (srv) {
+    openQuantityModal(srv)
+  }
+  selectedServiceDropdownId.value = ''
+}
 
 const subtotalCart = computed(() => {
   return cartItems.value.reduce((acc, it) => acc + (it.subtotal || 0), 0)
