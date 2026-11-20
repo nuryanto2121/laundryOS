@@ -131,7 +131,7 @@ func (s *POSService) CreateOrder(ctx context.Context, req model.CreatePOSOrderRe
 }
 
 // ListOrders returns filtered orders for the POS order list table.
-func (s *POSService) ListOrders(ctx context.Context, status, search string) ([]db.ListPOSOrdersRow, error) {
+func (s *POSService) ListOrders(ctx context.Context, status, search string) ([]repository.POSOrderListItem, error) {
 	return s.posRepo.ListPOSOrders(ctx, status, search)
 }
 

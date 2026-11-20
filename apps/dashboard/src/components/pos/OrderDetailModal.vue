@@ -198,24 +198,27 @@
           <div
             class="bg-slate-100/70 px-4 py-2.5 flex justify-between items-center text-xs font-bold text-slate-700"
           >
-            <span>Rincian Layanan & Produk ({{ items.length }})</span>
+            <span>Rincian Layanan & Produk ({{ displayItems.length }})</span>
             <span>Subtotal</span>
           </div>
-          <div class="divide-y divide-slate-100 text-xs">
+          <div v-if="loadingDetails && displayItems.length === 0" class="py-6 text-center text-xs text-slate-400">
+            Memuat rincian pesanan...
+          </div>
+          <div v-else class="divide-y divide-slate-100 text-xs">
             <div
-              v-for="item in items"
-              :key="item.id"
+              v-for="item in displayItems"
+              :key="item.id || item.service_name"
               class="px-4 py-2.5 flex justify-between items-center hover:bg-slate-50/50"
             >
               <div>
                 <p class="font-bold text-slate-900">{{ item.service_name }}</p>
                 <p class="text-[11px] text-slate-500">
-                  {{ item.quantity }} {{ item.unit }} x Rp {{ formatRupiah(item.price_per_unit) }}
+                  {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp {{ formatRupiah(item.price_per_unit) }}
                   <span v-if="item.notes" class="text-amber-700 ml-1">({{ item.notes }})</span>
                 </p>
               </div>
               <span class="font-extrabold text-slate-900"
-                >Rp {{ formatRupiah(item.subtotal) }}</span
+                >Rp {{ formatRupiah(item.subtotal || item.quantity * item.price_per_unit) }}</span
               >
             </div>
           </div>
@@ -256,7 +259,10 @@
             Riwayat Status & Petugas
           </h4>
           <div class="p-3 rounded-xl bg-white border border-slate-200 space-y-3">
-            <div v-for="log in history" :key="log.id" class="flex items-start gap-2.5 text-xs">
+            <div v-if="displayHistory.length === 0" class="text-slate-400 text-xs text-center py-2">
+              Tidak ada catatan riwayat perubahan.
+            </div>
+            <div v-for="log in displayHistory" :key="log.id" class="flex items-start gap-2.5 text-xs">
               <div class="w-2 h-2 rounded-full bg-brand-500 mt-1.5 shrink-0"></div>
               <div class="flex-1">
                 <div class="flex items-center justify-between">
@@ -287,7 +293,7 @@
     </div>
 
     <!-- Sub-Modals -->
-    <ReceiptPrintModal v-model="showReceiptModal" :order="order" :items="items" />
+    <ReceiptPrintModal v-model="showReceiptModal" :order="order" :items="displayItems" />
     <PaymentModal
       v-model="showPaymentModal"
       :order="order"
@@ -412,7 +418,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   User,
   ExternalLink,
@@ -468,6 +474,76 @@ const rackInput = ref('')
 const showCancelModal = ref(false)
 const cancelReasonInput = ref('')
 const cancelLoading = ref(false)
+
+const loadedItems = ref([])
+const loadedPhotos = ref([])
+const loadedHistory = ref([])
+const loadingDetails = ref(false)
+
+const displayItems = computed(() => {
+  if (Array.isArray(props.items) && props.items.length > 0) return props.items
+  if (Array.isArray(props.order?.items) && props.order.items.length > 0) return props.order.items
+  if (loadedItems.value.length > 0) return loadedItems.value
+  if (props.order?.primary_service_name) {
+    return [
+      {
+        id: 'primary-service',
+        service_name: props.order.primary_service_name,
+        quantity: Number(props.order.total_weight) || 1,
+        unit: 'Kg',
+        price_per_unit: Number(props.order.total_price) || 0,
+        subtotal: Number(props.order.total_price) || 0,
+      },
+    ]
+  }
+  return []
+})
+
+const displayPhotos = computed(() => {
+  if (Array.isArray(props.photos) && props.photos.length > 0) return props.photos
+  return loadedPhotos.value
+})
+
+const displayHistory = computed(() => {
+  if (Array.isArray(props.history) && props.history.length > 0) return props.history
+  return loadedHistory.value
+})
+
+const fetchFullDetails = async () => {
+  if (!props.order?.id) return
+  loadingDetails.value = true
+  try {
+    const detail = await api.get(`/pos/orders/${props.order.id}`)
+    if (detail) {
+      if (Array.isArray(detail.items)) loadedItems.value = detail.items
+      if (Array.isArray(detail.photos)) loadedPhotos.value = detail.photos
+      if (Array.isArray(detail.history)) loadedHistory.value = detail.history
+    }
+  } catch (err) {
+    console.error('Failed to load order details:', err)
+  } finally {
+    loadingDetails.value = false
+  }
+}
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) {
+      fetchFullDetails()
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.order?.id,
+  (newId) => {
+    if (newId && props.modelValue) {
+      fetchFullDetails()
+    }
+  }
+)
 
 const formatDisplayOrder = (num) => {
   if (!num) return ''
@@ -588,6 +664,7 @@ const handlePaymentSuccess = () => {
 }
 
 const refreshDetails = () => {
+  fetchFullDetails()
   emit('order-updated')
 }
 </script>

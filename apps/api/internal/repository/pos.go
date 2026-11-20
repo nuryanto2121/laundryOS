@@ -187,8 +187,14 @@ func (r *POSRepository) CreatePOSOrder(
 	return order, createdItems, nil
 }
 
-// ListPOSOrders lists orders with status and search query filter.
-func (r *POSRepository) ListPOSOrders(ctx context.Context, status, search string) ([]db.ListPOSOrdersRow, error) {
+// POSOrderListItem holds an order list row along with all its item services.
+type POSOrderListItem struct {
+	db.ListPOSOrdersRow
+	Items []db.OrderItem `json:"items"`
+}
+
+// ListPOSOrders lists orders with status and search query filter, populated with order items.
+func (r *POSRepository) ListPOSOrders(ctx context.Context, status, search string) ([]POSOrderListItem, error) {
 	var statusParam pgtype.Text
 	if status != "" && status != "SEMUA" {
 		statusParam = pgtype.Text{String: status, Valid: true}
@@ -198,10 +204,27 @@ func (r *POSRepository) ListPOSOrders(ctx context.Context, status, search string
 		searchParam = pgtype.Text{String: search, Valid: true}
 	}
 
-	return r.queries.ListPOSOrders(ctx, db.ListPOSOrdersParams{
+	orders, err := r.queries.ListPOSOrders(ctx, db.ListPOSOrdersParams{
 		Status: statusParam,
 		Search: searchParam,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]POSOrderListItem, len(orders))
+	for i, o := range orders {
+		items, err := r.queries.ListOrderItemsByOrderId(ctx, o.ID)
+		if err != nil {
+			items = []db.OrderItem{}
+		}
+		result[i] = POSOrderListItem{
+			ListPOSOrdersRow: o,
+			Items:            items,
+		}
+	}
+
+	return result, nil
 }
 
 // GetPOSOrderDetail retrieves detailed order with items, photos, and history.

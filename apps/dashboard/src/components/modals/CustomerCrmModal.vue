@@ -75,11 +75,7 @@
           <span>Aktivitas Periode</span>
           <span
             class="px-1.5 py-0.2 rounded-full text-[10px]"
-            :class="
-              modalTab === 'PERIOD'
-                ? 'bg-purple-200 text-purple-900'
-                : 'bg-slate-100 text-slate-600'
-            "
+            :class="modalTab === 'PERIOD' ? 'bg-purple-200 text-purple-900' : 'bg-slate-100 text-slate-600'"
           >
             {{ customerPeriodOrders.length }}
           </span>
@@ -183,24 +179,16 @@
       <!-- 2. TAB: AKTIVITAS PERIODE TERPILIH -->
       <div v-else class="space-y-4">
         <!-- Date indicator banner -->
-        <div
-          class="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs"
-        >
-          <span class="text-purple-900 font-bold"
-            >Periode: {{ formatDate(startDate) }} &mdash; {{ formatDate(endDate) }}</span
-          >
-          <span class="text-purple-700 font-semibold"
-            >{{ customerPeriodOrders.length }} transaksi ditemukan</span
-          >
+        <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
+          <span class="text-purple-900 font-bold">Periode: {{ formatDate(startDate) }} &mdash; {{ formatDate(endDate) }}</span>
+          <span class="text-purple-700 font-semibold">{{ customerPeriodOrders.length }} transaksi ditemukan</span>
         </div>
 
         <!-- Mini Period KPI Summary -->
         <div class="grid grid-cols-3 gap-2.5 text-center">
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Belanja</span>
-            <span class="text-sm font-black text-emerald-600"
-              >Rp {{ formatRupiah(periodSpend) }}</span
-            >
+            <span class="text-sm font-black text-emerald-600">Rp {{ formatRupiah(periodSpend) }}</span>
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Berat</span>
@@ -208,9 +196,7 @@
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span class="text-[10px] text-slate-400 font-bold uppercase block">Layanan</span>
-            <span class="text-sm font-black text-purple-600"
-              >{{ periodServices.length }} Jenis</span
-            >
+            <span class="text-sm font-black text-purple-600">{{ periodServices.length }} Jenis</span>
           </div>
         </div>
 
@@ -226,44 +212,98 @@
           </span>
         </div>
 
-        <!-- Orders list in this period -->
-        <div
-          v-if="customerPeriodOrders.length === 0"
-          class="py-6 text-center text-slate-400 text-xs"
-        >
+        <!-- Orders list in this period (Clickable to view items) -->
+        <div v-if="customerPeriodOrders.length === 0" class="py-6 text-center text-slate-400 text-xs">
           Pelanggan tidak memiliki transaksi pada rentang tanggal ini.
         </div>
-        <div v-else class="space-y-2 max-h-52 overflow-y-auto pr-1">
+        <div v-else class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
           <div
             v-for="ord in customerPeriodOrders"
             :key="ord.id"
-            class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs"
+            class="rounded-xl border border-slate-200/80 bg-white transition-all overflow-hidden"
           >
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-black text-slate-900">#{{ ord.order_number }}</span>
-                <span
-                  class="px-1.5 py-0.2 rounded text-[10px] font-black uppercase"
-                  :class="
-                    ord.payment_status === 'PAID'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-rose-100 text-rose-800'
-                  "
-                >
-                  {{ ord.payment_status }}
-                </span>
+            <!-- Order summary row (Clickable) -->
+            <div
+              class="p-3 bg-slate-50/70 hover:bg-slate-100/70 flex items-center justify-between text-xs cursor-pointer select-none transition-colors"
+              @click="toggleOrderExpand(ord)"
+            >
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-slate-900">#{{ ord.order_number }}</span>
+                  <span
+                    class="px-1.5 py-0.2 rounded text-[10px] font-black uppercase tracking-wider"
+                    :class="ord.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                  >
+                    {{ ord.payment_status }}
+                  </span>
+                  <span
+                    class="px-1.5 py-0.2 rounded text-[10px] font-black uppercase tracking-wider"
+                    :class="getOrderStatusBadgeClass(ord.status)"
+                  >
+                    {{ ord.status }}
+                  </span>
+                </div>
+                <!-- Service name label -->
+                <p class="text-xs font-bold text-slate-700">
+                  {{ getOrderServiceTitle(ord) }}
+                </p>
+                <span class="text-[11px] text-slate-400 block">{{ formatDateTime(ord.created_at) }}</span>
               </div>
-              <span class="text-[11px] text-slate-400 mt-0.5 block">{{
-                formatDate(ord.created_at)
-              }}</span>
+
+              <div class="text-right flex items-center gap-3">
+                <div>
+                  <span class="font-black text-slate-900 block">Rp {{ formatRupiah(ord.total_price) }}</span>
+                  <span class="text-[11px] text-slate-400">{{ ord.total_weight ? `${ord.total_weight} Kg` : '' }}</span>
+                </div>
+                <div class="text-slate-400">
+                  <ChevronDown
+                    class="w-4 h-4 transition-transform duration-200"
+                    :class="{ 'rotate-180': expandedOrderId === ord.id }"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="text-right">
-              <span class="font-black text-slate-900 block"
-                >Rp {{ formatRupiah(ord.total_price) }}</span
-              >
-              <span class="text-[10px] text-slate-400">{{
-                ord.total_weight ? `${ord.total_weight} Kg` : ''
-              }}</span>
+
+            <!-- Expanded items view -->
+            <div
+              v-if="expandedOrderId === ord.id"
+              class="p-3 bg-white border-t border-slate-100 text-xs space-y-2 animate-in fade-in duration-150"
+            >
+              <div class="flex items-center justify-between text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100 pb-1">
+                <span>Rincian Layanan & Produk</span>
+                <span>Subtotal</span>
+              </div>
+
+              <!-- Loading items -->
+              <div v-if="loadingOrderItems && !getOrderItems(ord).length" class="py-2 text-center text-slate-400 text-xs">
+                Memuat rincian item...
+              </div>
+
+              <!-- Items list -->
+              <div v-else class="divide-y divide-slate-100">
+                <div
+                  v-for="item in getOrderItems(ord)"
+                  :key="item.id || item.service_name"
+                  class="py-1.5 flex justify-between items-center text-xs"
+                >
+                  <div>
+                    <span class="font-bold text-slate-800">{{ item.service_name }}</span>
+                    <span class="text-slate-400 text-[11px] block">
+                      {{ item.quantity }} {{ item.unit || 'Kg' }} x Rp {{ formatRupiah(item.price_per_unit) }}
+                      <span v-if="item.notes" class="text-amber-600 ml-1">({{ item.notes }})</span>
+                    </span>
+                  </div>
+                  <span class="font-black text-slate-900">
+                    Rp {{ formatRupiah(item.subtotal || item.quantity * item.price_per_unit) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Extra order info: Rack & Perfume -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span>📍 Rak: <strong>{{ ord.rack_number || '-' }}</strong></span>
+                <span>✨ Parfum: <strong>{{ ord.perfume_name || '-' }}</strong></span>
+              </div>
             </div>
           </div>
         </div>
@@ -296,8 +336,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { X, Phone, MapPin, Loader2, Calendar, MessageCircle } from 'lucide-vue-next'
-import { api, formatRupiah, formatDate } from '../../api/client'
+import { X, Phone, MapPin, Loader2, Calendar, MessageCircle, ChevronDown } from 'lucide-vue-next'
+import { api, formatRupiah, formatDate, formatDateTime } from '../../api/client'
 
 const props = defineProps({
   modelValue: {
@@ -331,6 +371,11 @@ const emit = defineEmits(['update:modelValue'])
 const modalTab = ref('LIFETIME') // 'LIFETIME' | 'PERIOD'
 const loading = ref(false)
 const profile = ref(null)
+
+// Expand order in period tab
+const expandedOrderId = ref(null)
+const orderItemsCache = ref({})
+const loadingOrderItems = ref(false)
 
 const customerData = computed(() => {
   return {
@@ -372,6 +417,25 @@ const formatCategoryName = (cat) => {
   }
 }
 
+const getOrderStatusBadgeClass = (status) => {
+  switch (status) {
+    case 'ANTRIAN':
+      return 'bg-amber-100 text-amber-800'
+    case 'CUCI':
+    case 'KERING':
+    case 'SETRIKA':
+      return 'bg-blue-100 text-blue-800'
+    case 'SIAP_AMBIL':
+      return 'bg-purple-100 text-purple-800'
+    case 'SELESAI':
+      return 'bg-emerald-100 text-emerald-800'
+    case 'BATAL':
+      return 'bg-rose-100 text-rose-800'
+    default:
+      return 'bg-slate-100 text-slate-700'
+  }
+}
+
 const periodSpend = computed(() => {
   return props.customerPeriodOrders.reduce((sum, o) => {
     return o.status !== 'BATAL' ? sum + (Number(o.total_price) || 0) : sum
@@ -387,14 +451,74 @@ const periodWeight = computed(() => {
 const periodServices = computed(() => {
   const set = new Set()
   props.customerPeriodOrders.forEach((o) => {
-    if (Array.isArray(o.items)) {
+    if (Array.isArray(o.items) && o.items.length > 0) {
       o.items.forEach((item) => {
         if (item.category) set.add(item.category)
+        else if (item.service_name) set.add(item.service_name)
       })
+    } else if (o.primary_service_name) {
+      const lower = o.primary_service_name.toLowerCase()
+      if (lower.includes('self service')) set.add('SELF_SERVICE')
+      else if (lower.includes('kiloan')) set.add('KILOAN')
+      else if (lower.includes('satuan')) set.add('SATUAN')
+      else set.add(o.primary_service_name)
     }
   })
   return Array.from(set)
 })
+
+const getOrderServiceTitle = (ord) => {
+  if (Array.isArray(ord.items) && ord.items.length > 0) {
+    return ord.items.map((i) => i.service_name).join(', ')
+  }
+  if (ord.primary_service_name) return ord.primary_service_name
+  return 'Layanan Laundry'
+}
+
+const getOrderItems = (ord) => {
+  if (orderItemsCache.value[ord.id]) {
+    return orderItemsCache.value[ord.id]
+  }
+  if (Array.isArray(ord.items) && ord.items.length > 0) {
+    return ord.items
+  }
+  if (ord.primary_service_name) {
+    return [
+      {
+        id: 'primary',
+        service_name: ord.primary_service_name,
+        quantity: Number(ord.total_weight) || 1,
+        unit: 'Kg',
+        price_per_unit: Number(ord.total_price) || 0,
+        subtotal: Number(ord.total_price) || 0,
+      },
+    ]
+  }
+  return []
+}
+
+const toggleOrderExpand = async (ord) => {
+  if (expandedOrderId.value === ord.id) {
+    expandedOrderId.value = null
+    return
+  }
+  expandedOrderId.value = ord.id
+
+  // Fetch full order items if not already cached
+  if (!orderItemsCache.value[ord.id] && (!Array.isArray(ord.items) || ord.items.length === 0)) {
+    loadingOrderItems.value = true
+    try {
+      const detail = await api.get(`/pos/orders/${ord.id}`)
+      if (detail && Array.isArray(detail.items)) {
+        orderItemsCache.value[ord.id] = detail.items
+      }
+    } catch (err) {
+      console.error('Failed to load items for order', ord.id, err)
+    } finally {
+      loadingOrderItems.value = false
+    }
+  }
+}
 
 const loadProfile = async () => {
   if (!props.customerId) return
@@ -415,6 +539,7 @@ watch(
     if (open && props.customerId) {
       loadProfile()
       modalTab.value = 'LIFETIME'
+      expandedOrderId.value = null
     } else {
       profile.value = null
     }
