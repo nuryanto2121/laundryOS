@@ -45,6 +45,16 @@
           <span>Online</span>
         </div>
 
+        <!-- Mobile App Prototype Link -->
+        <router-link
+          to="/mobile"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold transition-all"
+          title="Buka Desain Prototype Mobile Native LMS"
+        >
+          <Smartphone class="w-3.5 h-3.5 text-purple-600 shrink-0" />
+          <span class="hidden lg:inline">Mobile LMS</span>
+        </router-link>
+
         <!-- Role Profile Pill & Switcher Trigger -->
         <button
           class="flex items-center gap-2 pl-2 border-l border-slate-200 hover:opacity-85 transition-opacity cursor-pointer text-left"
@@ -173,7 +183,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Sparkles, Store, ChevronDown, Shield, ShieldCheck, User, Lock, X } from 'lucide-vue-next'
+import { Sparkles, Store, ChevronDown, Shield, ShieldCheck, User, Lock, X, Smartphone } from 'lucide-vue-next'
 import { useAppSettings } from '../../composables/useAppSettings'
 import { useToast } from '../../composables/useToast'
 

@@ -7,6 +7,7 @@ import HomeView from './views/HomeView.vue'
 import OrdersView from './views/OrdersView.vue'
 import ReportsView from './views/ReportsView.vue'
 import SettingsView from './views/SettingsView.vue'
+import MobilePreviewView from './views/MobilePreviewView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,23 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: SettingsView,
+    },
+    {
+      path: '/mobile',
+      name: 'mobile',
+      component: MobilePreviewView,
+    },
+    {
+      path: '/mobile-preview',
+      redirect: '/mobile',
+    },
+    {
+      path: '/mobile-preview.html',
+      redirect: '/mobile',
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
 })
