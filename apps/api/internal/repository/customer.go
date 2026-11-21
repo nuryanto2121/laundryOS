@@ -18,12 +18,13 @@ import (
 // CustomerRepository handles persistence operations for customers.
 // It is the only layer aware of sqlc and pgtype.
 type CustomerRepository struct {
+	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 // NewCustomerRepository creates a new CustomerRepository.
 func NewCustomerRepository(pool *pgxpool.Pool) *CustomerRepository {
-	return &CustomerRepository{queries: db.New(pool)}
+	return &CustomerRepository{pool: pool, queries: db.New(pool)}
 }
 
 // Create inserts a new customer and returns the created record.
@@ -274,4 +275,21 @@ func toModel(c db.Customer) model.Customer {
 		m.DeletedAt = &s
 	}
 	return m
+}
+
+// GetCustomerDefaultOutletID returns the customer's preferred outlet_id, or from their latest order.
+func (r *CustomerRepository) GetCustomerDefaultOutletID(ctx context.Context, customerID string) string {
+	var outletID string
+	_ = r.pool.QueryRow(ctx, `SELECT COALESCE(outlet_id::text, '') FROM customers WHERE id = $1`, customerID).Scan(&outletID)
+	if outletID != "" {
+		return outletID
+	}
+	_ = r.pool.QueryRow(ctx, `SELECT COALESCE(outlet_id::text, '') FROM orders WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1`, customerID).Scan(&outletID)
+	return outletID
+}
+
+// SetCustomerOutletID updates the customer's preferred outlet.
+func (r *CustomerRepository) SetCustomerOutletID(ctx context.Context, customerID string, outletID string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE customers SET outlet_id = $2, updated_at = NOW() WHERE id = $1`, customerID, outletID)
+	return err
 }

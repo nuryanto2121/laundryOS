@@ -25,8 +25,10 @@ type BotService interface {
 // BotServiceConfig bundles all dependencies for BotService.
 type BotServiceConfig struct {
 	CustomerService *CustomerService
+	CustomerRepo    *repository.CustomerRepository
 	OrderService    *OrderService
 	ServiceRepo     *repository.ServiceRepository
+	MasterRepo      *repository.MasterRepository
 	SessionStore    bot.SessionStore
 	NotificationSvc NotificationService
 	GatewayURL      string
@@ -35,8 +37,10 @@ type BotServiceConfig struct {
 
 type botService struct {
 	customerSvc  *CustomerService
+	customerRepo *repository.CustomerRepository
 	orderSvc     *OrderService
 	serviceRepo  *repository.ServiceRepository
+	masterRepo   *repository.MasterRepository
 	sessionStore bot.SessionStore
 	notifSvc     NotificationService
 	matcher      *bot.Matcher
@@ -55,8 +59,10 @@ func NewBotService(cfg BotServiceConfig) BotService {
 	matcher := bot.NewMatcher(bot.GetKnowledgeBase())
 	return &botService{
 		customerSvc:  cfg.CustomerService,
+		customerRepo: cfg.CustomerRepo,
 		orderSvc:     cfg.OrderService,
 		serviceRepo:  cfg.ServiceRepo,
+		masterRepo:   cfg.MasterRepo,
 		sessionStore: sessionStore,
 		notifSvc:     cfg.NotificationSvc,
 		matcher:      matcher,
@@ -324,38 +330,123 @@ func (s *botService) startPickupFlow(ctx context.Context, req model.IncomingMess
 	}
 
 	var existingAddress string
+	var existingCustomerID string
 	if s.customerSvc != nil {
 		cust, err := s.customerSvc.GetByPhone(ctx, phone)
-		if err == nil && cust.Address != "" {
-			existingAddress = cust.Address
-			session.Address = existingAddress
+		if err == nil && cust.ID != "" {
+			existingCustomerID = cust.ID
+			if cust.Address != "" {
+				existingAddress = cust.Address
+				session.Address = existingAddress
+			}
 		}
 	}
 
-	s.sessionStore.Set(phone, session)
+	// 1. Fetch active outlets dynamically
+	var activeOutlets []model.Outlet
+	if s.masterRepo != nil {
+		all, _ := s.masterRepo.ListOutletsWithGPS(ctx)
+		for _, o := range all {
+			if o.IsActive {
+				activeOutlets = append(activeOutlets, o)
+			}
+		}
+	}
 
-	var reply string
-	if existingAddress != "" {
-		reply = fmt.Sprintf(`🛵 *REQUEST PENJEMPUTAN FAN LAUNDRY* 🛵
+	// Determine dynamic brand name (e.g. "FAN Laundry" or "LaundryOS")
+	brandName := "LaundryOS"
+	if len(activeOutlets) > 0 && activeOutlets[0].Name != "" {
+		brandName = activeOutlets[0].Name
+	}
 
-Halo Kak *%s*! Alamat penjemputan Anda yang tersimpan:
+	// 2. Hybrid Branch Detection:
+	// A. Check if customer already has a known branch preference
+	var matchedOutlet *model.Outlet
+	if existingCustomerID != "" && s.customerRepo != nil {
+		preferredOutletID := s.customerRepo.GetCustomerDefaultOutletID(ctx, existingCustomerID)
+		if preferredOutletID != "" {
+			for _, o := range activeOutlets {
+				if o.ID == preferredOutletID {
+					matchedOutlet = &o
+					break
+				}
+			}
+		}
+	}
+
+	// If only 1 outlet exists in the system, automatically assign it
+	if matchedOutlet == nil && len(activeOutlets) == 1 {
+		matchedOutlet = &activeOutlets[0]
+	}
+
+	// B. If branch is already matched, proceed straight to Address!
+	if matchedOutlet != nil {
+		session.OutletID = matchedOutlet.ID
+		session.OutletName = matchedOutlet.Name
+		session.TargetGroupJID = matchedOutlet.WhatsAppGroupID
+		session.State = bot.StateAwaitingAddress
+		s.sessionStore.Set(phone, session)
+
+		var reply string
+		if existingAddress != "" {
+			reply = fmt.Sprintf(`🛵 *REQUEST PENJEMPUTAN %s* 🛵
+
+Halo Kak *%s*! Cabang: *%s*
+Alamat penjemputan Anda yang tersimpan:
 📍 *%s*
 
 Apakah ingin dijemput di alamat ini?
 • Ketik *YA* jika menggunakan alamat tersebut
 • Atau langsung ketik *Alamat Baru* Anda
 
-_(Ketik *BATAL* untuk membatalkan)_`, name, existingAddress)
-	} else {
-		reply = fmt.Sprintf(`🛵 *REQUEST PENJEMPUTAN FAN LAUNDRY* 🛵
+_(Ketik *BATAL* untuk membatalkan)_`, strings.ToUpper(session.OutletName), name, session.OutletName, existingAddress)
+		} else {
+			reply = fmt.Sprintf(`🛵 *REQUEST PENJEMPUTAN %s* 🛵
 
-Halo Kak *%s*! Kurir kami siap meluncur menjemput pakaian kotor Anda. 🧺✨
+Halo Kak *%s*! Cabang: *%s*
+Kurir kami siap meluncur menjemput pakaian kotor Anda. 🧺✨
 
 Silakan ketik *Alamat Lengkap Penjemputan* Anda (Jalan, No Rumah, Kos/Apartemen, Patokan):
 _(Atau ketik *1* jika ingin cek daftar harga terlebih dahulu)_
 
-_(Ketik *BATAL* untuk membatalkan)_`, name)
+_(Ketik *BATAL* untuk membatalkan)_`, strings.ToUpper(session.OutletName), name, session.OutletName)
+		}
+
+		s.dispatchAsync(phone, reply)
+		return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil
 	}
+
+	// C. If customer has NO branch and there are multiple branches: Ask to choose!
+	if len(activeOutlets) > 1 {
+		session.State = bot.StateAwaitingBranchSelection
+		s.sessionStore.Set(phone, session)
+
+		reply := fmt.Sprintf("🛵 *REQUEST PENJEMPUTAN %s* 🛵\n\n"+
+			"Halo Kak *%s*! Kurir kami siap meluncur menjemput pakaian kotor Anda. 🧺✨\n\n"+
+			"Silakan pilih cabang laundry terdekat untuk penjemputan:\n",
+			strings.ToUpper(brandName), name,
+		)
+		for i, o := range activeOutlets {
+			addrInfo := ""
+			if o.Address != "" {
+				addrInfo = " (" + o.Address + ")"
+			}
+			reply += fmt.Sprintf("\n%d️⃣ *%s*%s", i+1, o.Name, addrInfo)
+		}
+		reply += "\n\n👉 *Ketik angka pilihan cabang Anda* (contoh: *1*):\n_(Ketik *BATAL* untuk membatalkan)_"
+
+		s.dispatchAsync(phone, reply)
+		return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil
+	}
+
+	// Fallback if no outlets registered yet
+	s.sessionStore.Set(phone, session)
+	reply := fmt.Sprintf(`🛵 *REQUEST PENJEMPUTAN %s* 🛵
+
+Halo Kak *%s*! Kurir kami siap meluncur menjemput pakaian kotor Anda. 🧺✨
+
+Silakan ketik *Alamat Lengkap Penjemputan* Anda:
+_(Ketik *BATAL* untuk membatalkan)_`, strings.ToUpper(brandName), name)
 
 	s.dispatchAsync(phone, reply)
 	return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil
@@ -371,6 +462,46 @@ func (s *botService) handleActiveSession(ctx context.Context, session *bot.Sessi
 	}
 
 	switch session.State {
+	case bot.StateAwaitingBranchSelection:
+		var activeOutlets []model.Outlet
+		if s.masterRepo != nil {
+			all, _ := s.masterRepo.ListOutletsWithGPS(ctx)
+			for _, o := range all {
+				if o.IsActive {
+					activeOutlets = append(activeOutlets, o)
+				}
+			}
+		}
+
+		idx, err := strconv.Atoi(text)
+		if err != nil || idx < 1 || idx > len(activeOutlets) {
+			reply := fmt.Sprintf("Pilihan tidak valid. Silakan ketik angka antara 1 sampai %d sesuai cabang terdekat Anda:\n_(Ketik *BATAL* untuk membatalkan)_", len(activeOutlets))
+			s.dispatchAsync(phone, reply)
+			return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil
+		}
+
+		chosen := activeOutlets[idx-1]
+		session.OutletID = chosen.ID
+		session.OutletName = chosen.Name
+		session.TargetGroupJID = chosen.WhatsAppGroupID
+		session.State = bot.StateAwaitingAddress
+
+		// Persist customer preferred outlet for future orders
+		if s.customerSvc != nil && s.customerRepo != nil {
+			cust, err := s.customerSvc.GetByPhone(ctx, phone)
+			if err == nil && cust.ID != "" {
+				_ = s.customerRepo.SetCustomerOutletID(ctx, cust.ID, chosen.ID)
+			}
+		}
+
+		s.sessionStore.Set(phone, session)
+
+		reply := fmt.Sprintf("Cabang dipilih: *%s* ✅\n\n"+
+			"Silakan ketik *Alamat Lengkap Penjemputan* Anda (Jalan, No Rumah, Kos/Apartemen, Patokan):\n"+
+			"_(Ketik *BATAL* untuk membatalkan)_", chosen.Name)
+		s.dispatchAsync(phone, reply)
+		return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil
+
 	case bot.StateAwaitingAddress:
 		// If user asks "Harga" or "1" while being asked for address, show price and re-prompt address without resetting
 		if strings.EqualFold(text, "1") || strings.EqualFold(text, "HARGA") {
@@ -607,6 +738,7 @@ _(Ketik *BATAL* untuk membatalkan)_`, session.ServiceName)
 			order, err := s.orderSvc.CreatePickupOrder(ctx, model.CreateOrderRequest{
 				CustomerID:     customerID,
 				ServiceID:      serviceID,
+				OutletID:       session.OutletID,
 				PickupRequired: true,
 				Notes:          notes,
 			})
@@ -620,26 +752,35 @@ _(Ketik *BATAL* untuk membatalkan)_`, session.ServiceName)
 		// 3. Clear session
 		s.sessionStore.Delete(phone)
 
-		// 4. Notify Staff / Courier Group
+		// 4. Notify Staff / Courier Group for the specific branch
 		if s.notifSvc != nil {
+			targetGroup := session.TargetGroupJID
+			outletTitle := session.OutletName
 			go func() {
-				_ = s.notifSvc.NotifyPickupRequest(
+				_ = s.notifSvc.NotifyPickupRequestToGroup(
 					context.Background(),
+					targetGroup,
 					orderNumber,
 					session.CustomerName,
 					phone,
 					session.Address,
 					session.ServiceName,
 					session.Schedule,
+					outletTitle,
 				)
 			}()
+		}
+
+		branchNote := "Kurir kami"
+		if session.OutletName != "" {
+			branchNote = fmt.Sprintf("Kurir %s", session.OutletName)
 		}
 
 		reply := fmt.Sprintf("🎉 *REQUEST PICKUP BERHASIL DIBUAT!* 🎉\n\n"+
 			"• *No. Order:* %s\n"+
 			"• *Status:* *MENUNGGU PENJEMPUTAN (WAITING_PICKUP)*\n\n"+
-			"Kurir FAN Laundry telah menerima pesanan ini dan akan segera menjemput pakaian kotor Anda sesuai jadwal (*%s*).\n\n"+
-			"Terima kasih atas kepercayaannya! 🧺✨", bot.FormatDisplayOrderNumber(orderNumber), session.Schedule)
+			"%s telah menerima pesanan ini dan akan segera menjemput pakaian kotor Anda sesuai jadwal (*%s*).\n\n"+
+			"Terima kasih atas kepercayaannya! 🧺✨", bot.FormatDisplayOrderNumber(orderNumber), branchNote, session.Schedule)
 
 		s.dispatchAsync(phone, reply)
 		return &model.BotResponse{Category: bot.CategoryPickup, Reply: reply}, nil

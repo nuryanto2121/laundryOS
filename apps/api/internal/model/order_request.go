@@ -4,6 +4,7 @@ package model
 type CreateOrderRequest struct {
 	CustomerID     string  `json:"customer_id" validate:"required,uuid"`
 	ServiceID      string  `json:"service_id" validate:"required,uuid"`
+	OutletID       string  `json:"outlet_id"`
 	TotalWeight    float64 `json:"total_weight" validate:"gte=0"`
 	TotalPrice     float64 `json:"total_price" validate:"gte=0"`
 	PickupRequired bool    `json:"pickup_required"`
@@ -15,6 +16,7 @@ type CreateOrderRequest struct {
 type UpdateOrderRequest struct {
 	CustomerID     string  `json:"customer_id" validate:"required,uuid"`
 	ServiceID      string  `json:"service_id" validate:"required,uuid"`
+	OutletID       string  `json:"outlet_id"`
 	TotalWeight    float64 `json:"total_weight" validate:"gte=0"`
 	TotalPrice     float64 `json:"total_price" validate:"gte=0"`
 	PickupRequired bool    `json:"pickup_required"`

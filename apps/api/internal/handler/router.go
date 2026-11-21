@@ -21,6 +21,7 @@ type RouterParams struct {
 	MasterHandler     *MasterHandler
 	AttendanceHandler *AttendanceHandler
 	AuthHandler       *AuthHandler
+	GatewayHandler    *GatewayHandler
 }
 
 // NewRouter constructs and configures the Chi HTTP router with middlewares and route mappings.
@@ -163,6 +164,14 @@ func NewRouter(p RouterParams) http.Handler {
 			l.Post("/request", p.AttendanceHandler.CreateLeaveRequest)
 			l.Get("/", p.AttendanceHandler.ListLeaveRequests)
 			l.Put("/{id}/review", p.AttendanceHandler.ReviewLeaveRequest)
+		})
+	}
+
+	// WhatsApp Gateway Proxy routes
+	if p.GatewayHandler != nil {
+		r.Route("/gateway", func(g chi.Router) {
+			g.Get("/status", p.GatewayHandler.GetStatus)
+			g.Get("/groups", p.GatewayHandler.GetGroups)
 		})
 	}
 

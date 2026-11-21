@@ -18,4 +18,6 @@ type CustomerRepository interface {
 	Update(ctx context.Context, id string, req model.UpdateCustomerRequest, status model.CustomerStatus, deletedAt *string) (model.Customer, error)
 	UpdateStatus(ctx context.Context, id string, status model.CustomerStatus) (model.Customer, error)
 	Delete(ctx context.Context, id string) error
+	GetCustomerDefaultOutletID(ctx context.Context, customerID string) string
+	SetCustomerOutletID(ctx context.Context, customerID string, outletID string) error
 }

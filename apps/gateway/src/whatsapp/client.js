@@ -25,6 +25,7 @@ import makeWASocket, {
   jidNormalizedUser,
 } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
+import QRCode from 'qrcode';
 import logger from '../logger/index.js';
 import * as session from './session.js';
 import { handleMessagesUpsert } from './handler.js';
@@ -49,6 +50,9 @@ export const WAState = {
  */
 let currentState = WAState.DISCONNECTED;
 let activeSocket = null;
+let currentQR = null;
+let currentQRDataURL = null;
+let botInfo = null;
 
 /**
  * Returns the current WhatsApp connection state.
@@ -56,6 +60,19 @@ let activeSocket = null;
  */
 export function getState() {
   return currentState;
+}
+
+/**
+ * Returns detailed status for dashboard frontend.
+ * @returns {{ state: string, qr: string|null, qr_data_url: string|null, bot: object|null }}
+ */
+export function getStatus() {
+  return {
+    state: currentState,
+    qr: currentQR,
+    qr_data_url: currentQRDataURL,
+    bot: botInfo,
+  };
 }
 
 /**
@@ -129,6 +146,14 @@ export async function startWhatsApp() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
+      currentQR = qr;
+      QRCode.toDataURL(qr, { width: 320, margin: 2 })
+        .then((url) => {
+          currentQRDataURL = url;
+        })
+        .catch((err) => {
+          logger.error('Failed to generate QR data URL', { error: err.message });
+        });
       logger.info('QR Code generated — scan with WhatsApp to connect.');
       qrcode.generate(qr, { small: true });
     }
@@ -140,16 +165,20 @@ export async function startWhatsApp() {
 
     if (connection === 'open') {
       currentState = WAState.CONNECTED;
+      currentQR = null;
+      currentQRDataURL = null;
       logger.info('WhatsApp connected.');
 
       const id = socket.user?.id || 'Unknown';
       const name = socket.user?.name || socket.user?.verifiedName || 'Unknown';
+      botInfo = { id, name };
 
       logger.info(`Connected\n\nID      : ${id}\nName    : ${name}\nPlatform: WhatsApp`);
     }
 
     if (connection === 'close') {
       currentState = WAState.DISCONNECTED;
+      botInfo = null;
       logger.info(JSON.stringify(lastDisconnect, null, 2));
       // console.dir(lastDisconnect, { depth: null });
 

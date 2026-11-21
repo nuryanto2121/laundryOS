@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import './assets/main.css'
 import App from './App.vue'
+import { useToast } from './composables/useToast'
 import HomeView from './views/HomeView.vue'
 import OrdersView from './views/OrdersView.vue'
 import ReportsView from './views/ReportsView.vue'
@@ -89,7 +90,7 @@ router.beforeEach((to, from, next) => {
 
   // Restrict Kasir from accessing Settings
   if (to.path === '/settings' && user?.role === 'KASIR') {
-    alert('Akses Ditolak: Karyawan tidak diizinkan mengakses menu Pengaturan.')
+    useToast().error('Karyawan tidak diizinkan mengakses menu Pengaturan.', 'Akses Ditolak')
     return next('/')
   }
 

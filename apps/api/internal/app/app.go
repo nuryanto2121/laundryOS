@@ -70,8 +70,10 @@ func Run() error {
 	// Initialize Bot module
 	botSvc := service.NewBotService(service.BotServiceConfig{
 		CustomerService: customerSvc,
+		CustomerRepo:    customerRepo,
 		OrderService:    orderSvc,
 		ServiceRepo:     serviceRepo,
+		MasterRepo:      masterRepo,
 		NotificationSvc: notifSvc,
 		GatewayURL:      cfg.GatewayURL,
 		StaffPhone:      cfg.StaffPhone,
@@ -86,6 +88,9 @@ func Run() error {
 	// Initialize Auth module
 	authHandler := handler.NewAuthHandler(masterSvc)
 
+	// Initialize Gateway Proxy module
+	gatewayHandler := handler.NewGatewayHandler(cfg.GatewayURL)
+
 	// Initialize HTTP Router
 	router := handler.NewRouter(handler.RouterParams{
 		AppVersion:        cfg.AppVersion,
@@ -98,6 +103,7 @@ func Run() error {
 		MasterHandler:     masterHandler,
 		AttendanceHandler: attendanceHandler,
 		AuthHandler:       authHandler,
+		GatewayHandler:    gatewayHandler,
 	})
 
 	addr := ":" + cfg.Port

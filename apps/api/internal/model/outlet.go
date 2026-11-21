@@ -12,6 +12,8 @@ type Outlet struct {
 	Latitude             float64   `json:"latitude"`
 	Longitude            float64   `json:"longitude"`
 	GeofenceRadiusMeters int       `json:"geofence_radius_meters"`
+	WhatsAppGroupID      string    `json:"whatsapp_group_id"`
+	WhatsAppGroupName    string    `json:"whatsapp_group_name"`
 	IsActive             bool      `json:"is_active"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
@@ -26,6 +28,8 @@ type CreateOutletRequest struct {
 	Latitude             float64 `json:"latitude"`
 	Longitude            float64 `json:"longitude"`
 	GeofenceRadiusMeters int     `json:"geofence_radius_meters"`
+	WhatsAppGroupID      string  `json:"whatsapp_group_id"`
+	WhatsAppGroupName    string  `json:"whatsapp_group_name"`
 	IsActive             bool    `json:"is_active"`
 }
 
@@ -38,5 +42,7 @@ type UpdateOutletRequest struct {
 	Latitude             float64 `json:"latitude"`
 	Longitude            float64 `json:"longitude"`
 	GeofenceRadiusMeters int     `json:"geofence_radius_meters"`
+	WhatsAppGroupID      string  `json:"whatsapp_group_id"`
+	WhatsAppGroupName    string  `json:"whatsapp_group_name"`
 	IsActive             bool    `json:"is_active"`
 }

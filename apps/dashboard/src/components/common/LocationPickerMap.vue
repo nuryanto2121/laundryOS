@@ -35,6 +35,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { MapPin, Navigation } from 'lucide-vue-next'
+import { useToast } from '../../composables/useToast'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -93,9 +94,11 @@ const updatePosition = (lat, lng, pan = false) => {
   }
 }
 
+const { warning, error: toastError } = useToast()
+
 const getCurrentLocation = () => {
   if (!navigator.geolocation) {
-    alert('Browser tidak mendukung geolokasi GPS')
+    warning('Browser tidak mendukung geolokasi GPS')
     return
   }
   navigator.geolocation.getCurrentPosition(
@@ -108,7 +111,7 @@ const getCurrentLocation = () => {
       }
     },
     (err) => {
-      alert('Gagal mengambil lokasi GPS: ' + err.message)
+      toastError('Gagal mengambil lokasi GPS: ' + err.message)
     },
     { enableHighAccuracy: true, timeout: 8000 }
   )

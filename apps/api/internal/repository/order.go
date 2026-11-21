@@ -18,12 +18,13 @@ import (
 
 // OrderRepository handles persistence operations for orders.
 type OrderRepository struct {
+	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 // NewOrderRepository creates a new OrderRepository.
 func NewOrderRepository(pool *pgxpool.Pool) *OrderRepository {
-	return &OrderRepository{queries: db.New(pool)}
+	return &OrderRepository{pool: pool, queries: db.New(pool)}
 }
 
 // Create inserts a new order and returns the created record.
@@ -51,6 +52,9 @@ func (r *OrderRepository) Create(ctx context.Context, req model.CreateOrderReque
 	})
 	if err != nil {
 		return model.Order{}, fmt.Errorf("repository: create order: %w", err)
+	}
+	if req.OutletID != "" {
+		_, _ = r.pool.Exec(ctx, `UPDATE orders SET outlet_id = $2 WHERE id = $1`, id, req.OutletID)
 	}
 	return orderToModel(order), nil
 }

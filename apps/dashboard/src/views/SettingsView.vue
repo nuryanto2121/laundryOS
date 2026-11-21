@@ -111,6 +111,37 @@
             </div>
           </div>
 
+          <!-- Outlet Context Selector Banner (Filter Per-Outlet Settings) -->
+          <div class="bg-gradient-to-r from-brand-600 via-sky-600 to-indigo-600 rounded-3xl p-4 sm:p-5 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-xs">
+                <Store class="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-sky-200 block">Cabang Aktif Yang Dikonfigurasi</span>
+                <h2 class="text-base font-black text-white flex items-center gap-2">
+                  <span>{{ activeOutlet?.name || 'Cabang Belum Dipilih' }}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
+                    {{ activeOutlet?.code || 'Pusat' }}
+                  </span>
+                </h2>
+              </div>
+            </div>
+            <!-- Outlet Selector Dropdown -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-sky-100 hidden sm:inline font-bold">Ganti Cabang:</span>
+              <select
+                :value="activeOutletId"
+                class="px-3 py-2 bg-white text-slate-800 font-bold text-xs rounded-xl shadow-xs border border-white/40 focus:outline-hidden cursor-pointer"
+                @change="setActiveOutlet($event.target.value)"
+              >
+                <option v-for="o in outletsList" :key="o.id" :value="o.id">
+                  {{ o.name }} ({{ o.code }})
+                </option>
+              </select>
+            </div>
+          </div>
+
           <!-- ============================================================== -->
           <!-- TAB 0: MASTER CABANG & TITIK GPS OUTLET                         -->
           <!-- ============================================================== -->
@@ -201,6 +232,181 @@
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================================== -->
+          <!-- TAB WA_GATEWAY: WHATSAPP BOT & GRUP NOTIFIKASI CABANG          -->
+          <!-- ============================================================== -->
+          <div v-if="activeTab === 'WA_GATEWAY'" class="space-y-6">
+            <!-- Header Banner -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <MessageSquare class="w-4 h-4 text-emerald-600" />
+                  <span>WhatsApp Gateway & Manajemen Grup Bot Cabang</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  1 Akun WhatsApp Bot resmi untuk melayani seluruh pelanggan. Setiap cabang dapat dihubungkan ke Grup WhatsApp kurir/staf masing-masing.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer w-fit"
+                :disabled="loadingGateway"
+                @click="loadGatewayStatusAndGroups"
+              >
+                <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loadingGateway }" />
+                <span>Segarkan Status</span>
+              </button>
+            </div>
+
+            <!-- Connection Status Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-2">
+                <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Status Koneksi Gateway</span>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="w-2.5 h-2.5 rounded-full"
+                    :class="gatewayStatus.state === 'CONNECTED' ? 'bg-emerald-500 animate-pulse' : gatewayStatus.state === 'CONNECTING' ? 'bg-amber-500 animate-ping' : 'bg-rose-500'"
+                  ></span>
+                  <span class="font-black text-sm text-slate-800">
+                    {{ gatewayStatus.state === 'CONNECTED' ? 'Terhubung (Online)' : gatewayStatus.state === 'CONNECTING' ? 'Menunggu Scan QR...' : 'Terputus (Offline)' }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500">
+                  {{ gatewayStatus.state === 'CONNECTED' ? 'Bot siap menerima pesan & mengirim notifikasi.' : 'Scan QR code untuk menautkan nomor WhatsApp.' }}
+                </p>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-2">
+                <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Nomor Akun Bot</span>
+                <p class="font-black text-sm text-slate-800 font-mono">
+                  {{ gatewayStatus.bot?.id ? '+' + gatewayStatus.bot.id.split(':')[0].split('@')[0] : 'Belum Tertaut' }}
+                </p>
+                <p class="text-xs text-slate-500">
+                  Nama Bot: {{ gatewayStatus.bot?.name || 'LaundryOS Bot' }}
+                </p>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs space-y-2">
+                <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider">Grup Cabang Aktif Ini</span>
+                <p class="font-black text-sm text-brand-600 truncate">
+                  {{ activeOutlet?.whatsapp_group_name || 'Belum Dihubungkan' }}
+                </p>
+                <p class="text-[11px] text-slate-400 font-mono truncate">
+                  {{ activeOutlet?.whatsapp_group_id || 'Belum ada Group JID' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- QR Code Section (if disconnected / connecting) -->
+            <div
+              v-if="gatewayStatus.state !== 'CONNECTED'"
+              class="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-xs text-center space-y-6 max-w-xl mx-auto"
+            >
+              <div>
+                <h4 class="font-black text-base text-slate-900">Tautkan Akun WhatsApp Bot</h4>
+                <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  Scan QR code di bawah menggunakan aplikasi WhatsApp pada smartphone resmi laundry Anda.
+                </p>
+              </div>
+
+              <!-- Visual QR Code Container -->
+              <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 inline-block">
+                <img
+                  v-if="gatewayStatus.qr_data_url"
+                  :src="gatewayStatus.qr_data_url"
+                  alt="WhatsApp QR Code"
+                  class="w-64 h-64 mx-auto rounded-xl shadow-xs border bg-white p-2"
+                />
+                <div v-else class="w-64 h-64 flex flex-col items-center justify-center text-slate-400 space-y-2 bg-white rounded-xl border">
+                  <div class="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span class="text-xs font-bold">Menyiapkan QR Code...</span>
+                </div>
+              </div>
+
+              <!-- Steps Guide -->
+              <div class="text-left bg-slate-50/80 rounded-2xl p-4 border border-slate-100 text-xs space-y-2 text-slate-700">
+                <p class="font-bold text-slate-900">Cara Menautkan Perangkat:</p>
+                <ol class="list-decimal list-inside space-y-1 text-slate-600">
+                  <li>Buka aplikasi WhatsApp di HP Anda.</li>
+                  <li>Ketuk ikon <strong>Titik Tiga (⋮)</strong> di Android atau menu <strong>Pengaturan</strong> di iPhone.</li>
+                  <li>Pilih menu <strong>Perangkat Tertaut</strong> > <strong>Tautkan Perangkat</strong>.</li>
+                  <li>Arahkan kamera HP ke QR Code di atas sampai terhubung.</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Connected: List of Participating WhatsApp Groups -->
+            <div v-else class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                    <Users class="w-4 h-4 text-brand-600" />
+                    <span>Daftar Grup WhatsApp yang Diikuti Bot</span>
+                  </h4>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Pilih grup kurir/staf yang akan menerima notifikasi order jemput (pickup) untuk cabang <strong>{{ activeOutlet?.name }}</strong>.
+                  </p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                  {{ gatewayGroups.length }} Grup Ditemukan
+                </span>
+              </div>
+
+              <div v-if="gatewayGroups.length === 0" class="py-12 text-center text-xs text-slate-400 space-y-2">
+                <Users class="w-8 h-8 mx-auto text-slate-300" />
+                <p>Bot belum dimasukkan ke grup WhatsApp manapun.</p>
+                <p class="text-slate-500">Silakan buat Grup WhatsApp di HP, lalu tambahkan nomor bot ke grup tersebut.</p>
+              </div>
+
+              <div v-else class="space-y-2.5">
+                <div
+                  v-for="group in gatewayGroups"
+                  :key="group.id"
+                  class="p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
+                  :class="activeOutlet?.whatsapp_group_id === group.id ? 'border-brand-500 bg-brand-50/40 ring-1 ring-brand-500' : 'border-slate-200/80 hover:border-slate-300 bg-slate-50/50'"
+                >
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <h5 class="font-bold text-sm text-slate-900">{{ group.name }}</h5>
+                      <span
+                        v-if="activeOutlet?.whatsapp_group_id === group.id"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black bg-brand-100 text-brand-700"
+                      >
+                        Grup Cabang Ini ✅
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-500">
+                      <span>👥 {{ group.participants_count }} Anggota</span>
+                      <span class="text-slate-300">•</span>
+                      <span class="font-mono text-[11px] text-slate-400">{{ group.id }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
+                      title="Salin ID Grup ke Clipboard"
+                      @click="copyToClipboard(group.id, 'ID Grup WhatsApp disalin!')"
+                    >
+                      <Copy class="w-3.5 h-3.5 text-slate-500" />
+                      <span>Salin ID</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                      :class="activeOutlet?.whatsapp_group_id === group.id ? 'bg-emerald-600 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'"
+                      @click="assignGroupToActiveOutlet(group)"
+                    >
+                      <CheckCircle2 class="w-3.5 h-3.5" />
+                      <span>{{ activeOutlet?.whatsapp_group_id === group.id ? 'Terpasang' : 'Pilih untuk Cabang Ini' }}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1942,150 +2148,181 @@
       <!-- ============================================================== -->
 
       <!-- 0. Modal Tambah/Edit Outlet Cabang & GPS -->
-      <div v-if="showOutletModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white rounded-3xl max-w-xl w-full p-5 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 sticky top-0 bg-white z-10">
-            <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Store class="w-4 h-4 text-brand-600" />
-              <span>{{ isEditingOutlet ? 'Edit Profil & Koordinat Cabang' : 'Tambah Outlet Cabang Baru' }}</span>
-            </h4>
-            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showOutletModal = false">
-              <X class="w-4 h-4" />
-            </button>
+      <Teleport to="body">
+        <div v-if="showOutletModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+          <div class="bg-white rounded-3xl max-w-xl w-full p-5 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <Store class="w-4 h-4 text-brand-600" />
+                <span>{{ isEditingOutlet ? 'Edit Profil & Koordinat Cabang' : 'Tambah Outlet Cabang Baru' }}</span>
+              </h4>
+              <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showOutletModal = false">
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+            <form class="space-y-3" @submit.prevent="submitOutletForm">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Outlet *</label>
+                <input
+                  v-model="outletForm.name"
+                  type="text"
+                  required
+                  placeholder="Contoh: FAN Laundry Kalibaru"
+                  class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Kode Cabang *</label>
+                  <input
+                    v-model="outletForm.code"
+                    type="text"
+                    required
+                    placeholder="Contoh: OUT-01"
+                    class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 uppercase"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp</label>
+                  <input
+                    v-model="outletForm.phone"
+                    type="text"
+                    placeholder="Contoh: 0852-8597-7834"
+                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Outlet</label>
+                <textarea
+                  v-model="outletForm.address"
+                  rows="2"
+                  placeholder="Alamat lengkap outlet cabang..."
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                ></textarea>
+              </div>
+
+              <!-- Interactive GPS Map Picker -->
+              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <LocationPickerMap
+                  v-model:latitude="outletForm.latitude"
+                  v-model:longitude="outletForm.longitude"
+                  :radius-meters="outletForm.geofence_radius_meters"
+                />
+
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/70">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Latitude (Manual/Otomatis)</label>
+                    <input
+                      v-model.number="outletForm.latitude"
+                      type="number"
+                      step="0.000001"
+                      required
+                      placeholder="-6.113425"
+                      class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Longitude (Manual/Otomatis)</label>
+                    <input
+                      v-model.number="outletForm.longitude"
+                      type="number"
+                      step="0.000001"
+                      required
+                      placeholder="106.914230"
+                      class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Radius Geofence Absensi (Meter)</label>
+                  <input
+                    v-model.number="outletForm.geofence_radius_meters"
+                    type="number"
+                    min="5"
+                    max="500"
+                    required
+                    placeholder="25"
+                    class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white"
+                  />
+                  <p class="text-[10px] text-slate-400 mt-1">Disarankan 20-30 meter untuk toleransi sinyal GPS saat karyawan berada di dalam ruangan toko.</p>
+                </div>
+              </div>
+
+              <!-- WhatsApp Gateway Group Integration -->
+              <div class="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
+                <span class="block text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                  <MessageSquare class="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Integrasi Grup WhatsApp Cabang (Bot Notifikasi)</span>
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Nama WhatsApp Group</label>
+                    <input
+                      v-model="outletForm.whatsapp_group_name"
+                      type="text"
+                      placeholder="Contoh: Tim FAN Cabang 2"
+                      class="w-full px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">WhatsApp Group ID (JID)</label>
+                    <input
+                      v-model="outletForm.whatsapp_group_id"
+                      type="text"
+                      placeholder="Contoh: 12036302...@g.us"
+                      class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-1">
+                <input
+                  id="outlet-active"
+                  v-model="outletForm.is_active"
+                  type="checkbox"
+                  class="rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer"
+                />
+                <label for="outlet-active" class="text-xs font-bold text-slate-700 cursor-pointer">
+                  Outlet Aktif Beroperasi
+                </label>
+              </div>
+              <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  @click="showOutletModal = false"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  :disabled="modalSaving"
+                  class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  {{ modalSaving ? 'Menyimpan...' : 'Simpan Cabang' }}
+                </button>
+              </div>
+            </form>
           </div>
-          <form class="space-y-3" @submit.prevent="submitOutletForm">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Outlet *</label>
-              <input
-                v-model="outletForm.name"
-                type="text"
-                required
-                placeholder="Contoh: FAN Laundry Kalibaru"
-                class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Kode Cabang *</label>
-                <input
-                  v-model="outletForm.code"
-                  type="text"
-                  required
-                  placeholder="Contoh: OUT-01"
-                  class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 uppercase"
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp</label>
-                <input
-                  v-model="outletForm.phone"
-                  type="text"
-                  placeholder="Contoh: 0852-8597-7834"
-                  class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Outlet</label>
-              <textarea
-                v-model="outletForm.address"
-                rows="2"
-                placeholder="Alamat lengkap outlet cabang..."
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
-              ></textarea>
-            </div>
-
-            <!-- Interactive GPS Map Picker -->
-            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <LocationPickerMap
-                v-model:latitude="outletForm.latitude"
-                v-model:longitude="outletForm.longitude"
-                :radius-meters="outletForm.geofence_radius_meters"
-              />
-
-              <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/70">
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Latitude (Manual/Otomatis)</label>
-                  <input
-                    v-model.number="outletForm.latitude"
-                    type="number"
-                    step="0.000001"
-                    required
-                    placeholder="-6.113425"
-                    class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
-                  />
-                </div>
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Longitude (Manual/Otomatis)</label>
-                  <input
-                    v-model.number="outletForm.longitude"
-                    type="number"
-                    step="0.000001"
-                    required
-                    placeholder="106.914230"
-                    class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
-                  />
-                </div>
-              </div>
-              <div>
-                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Radius Geofence Absensi (Meter)</label>
-                <input
-                  v-model.number="outletForm.geofence_radius_meters"
-                  type="number"
-                  min="5"
-                  max="500"
-                  required
-                  placeholder="25"
-                  class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white"
-                />
-                <p class="text-[10px] text-slate-400 mt-1">Disarankan 20-30 meter untuk toleransi sinyal GPS saat karyawan berada di dalam ruangan toko.</p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 pt-1">
-              <input
-                id="outlet-active"
-                v-model="outletForm.is_active"
-                type="checkbox"
-                class="rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer"
-              />
-              <label for="outlet-active" class="text-xs font-bold text-slate-700 cursor-pointer">
-                Outlet Aktif Beroperasi
-              </label>
-            </div>
-            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                @click="showOutletModal = false"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-              >
-                {{ modalSaving ? 'Menyimpan...' : 'Simpan Cabang' }}
-              </button>
-            </div>
-          </form>
         </div>
-      </div>
+      </Teleport>
 
       <!-- 1. Modal Tambah/Edit Pegawai & Granular ACL -->
-      <div v-if="showEmployeeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100 sticky top-0 bg-white z-10">
-            <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Users class="w-4 h-4 text-purple-600" />
-              <span>{{ isEditingEmployee ? 'Edit Data Pegawai & Hak Akses' : 'Tambah Pegawai Baru' }}</span>
-            </h4>
-            <button class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer" @click="showEmployeeModal = false">
-              <X class="w-4 h-4" />
-            </button>
-          </div>
-          <form class="space-y-4" @submit.prevent="submitEmployeeForm">
+      <Teleport to="body">
+        <div v-if="showEmployeeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+          <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <Users class="w-4 h-4 text-purple-600" />
+                <span>{{ isEditingEmployee ? 'Edit Data Pegawai & Hak Akses' : 'Tambah Pegawai Baru' }}</span>
+              </h4>
+              <button class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer" @click="showEmployeeModal = false">
+                <X class="w-4 h-4" />
+              </button>
+            </div>
+            <form class="space-y-4" @submit.prevent="submitEmployeeForm">
             <!-- Data Diri Pegawai -->
             <div class="space-y-3">
               <div>
@@ -2245,6 +2482,7 @@
           </form>
         </div>
       </div>
+      </Teleport>
 
       <!-- 2. Modal Tambah/Edit Layanan (Flow: Pick Category First -> Auto Code & Unit) -->
       <div v-if="showServiceModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
@@ -2972,15 +3210,21 @@ import {
   Eye,
   Store,
   Crown,
+  MessageSquare,
+  QrCode,
+  Copy,
+  RefreshCw,
 } from 'lucide-vue-next'
 import { useAppSettings } from '../composables/useAppSettings'
 import { useToast } from '../composables/useToast'
+import { useActiveOutlet } from '../composables/useActiveOutlet'
 import { api, formatRupiah, formatDate } from '../api/client'
 import { printThermalReceipt } from '../utils/printReceipt'
 
 const { settings, changePin, resetToDefaults } = useAppSettings()
-const { success, error } = useToast()
+const { success, error, info } = useToast()
 const auth = useAuth()
+const { activeOutlet, activeOutletId, setActiveOutlet } = useActiveOutlet()
 
 const activeTab = ref('OUTLETS')
 
@@ -2989,6 +3233,7 @@ const tabGroups = [
     title: 'Cabang & Outlet',
     tabs: [
       { id: 'OUTLETS', label: 'Master Cabang (GPS)', icon: Store },
+      { id: 'WA_GATEWAY', label: 'WhatsApp Bot & Cabang', icon: MessageSquare },
       { id: 'PRINTER', label: 'Profil Outlet & Printer', icon: Printer },
     ],
   },
@@ -3531,6 +3776,8 @@ watch(activeTab, (tab) => {
     loadAttendances()
   } else if (tab === 'LEAVE_APPROVAL') {
     loadLeaves()
+  } else if (tab === 'WA_GATEWAY') {
+    loadGatewayStatusAndGroups()
   }
 })
 
@@ -3576,6 +3823,7 @@ onMounted(() => {
   loadLeaves()
   loadAttendances()
   loadOutlets()
+  loadGatewayStatusAndGroups()
 })
 
 // ==========================================
@@ -4076,6 +4324,8 @@ const outletForm = reactive({
   latitude: -6.113425,
   longitude: 106.914230,
   geofence_radius_meters: 25,
+  whatsapp_group_id: '',
+  whatsapp_group_name: '',
   is_active: true,
 })
 
@@ -4099,6 +4349,8 @@ const openAddOutletModal = () => {
     latitude: -6.113425,
     longitude: 106.914230,
     geofence_radius_meters: 25,
+    whatsapp_group_id: '',
+    whatsapp_group_name: '',
     is_active: true,
   })
   showOutletModal.value = true
@@ -4115,6 +4367,8 @@ const openEditOutletModal = (outlet) => {
     latitude: outlet.latitude || -6.113425,
     longitude: outlet.longitude || 106.914230,
     geofence_radius_meters: outlet.geofence_radius_meters || 25,
+    whatsapp_group_id: outlet.whatsapp_group_id || '',
+    whatsapp_group_name: outlet.whatsapp_group_name || '',
     is_active: outlet.is_active,
   })
   showOutletModal.value = true
@@ -4123,29 +4377,23 @@ const openEditOutletModal = (outlet) => {
 const submitOutletForm = async () => {
   modalSaving.value = true
   try {
+    const payload = {
+      name: outletForm.name,
+      code: outletForm.code,
+      address: outletForm.address,
+      phone: outletForm.phone,
+      latitude: parseFloat(outletForm.latitude) || -6.113425,
+      longitude: parseFloat(outletForm.longitude) || 106.914230,
+      geofence_radius_meters: parseInt(outletForm.geofence_radius_meters) || 25,
+      whatsapp_group_id: outletForm.whatsapp_group_id || '',
+      whatsapp_group_name: outletForm.whatsapp_group_name || '',
+      is_active: outletForm.is_active,
+    }
     if (isEditingOutlet.value) {
-      await api.put(`/master/outlets/${outletForm.id}`, {
-        name: outletForm.name,
-        code: outletForm.code,
-        address: outletForm.address,
-        phone: outletForm.phone,
-        latitude: parseFloat(outletForm.latitude) || -6.113425,
-        longitude: parseFloat(outletForm.longitude) || 106.914230,
-        geofence_radius_meters: parseInt(outletForm.geofence_radius_meters) || 25,
-        is_active: outletForm.is_active,
-      })
+      await api.put(`/master/outlets/${outletForm.id}`, payload)
       success('Profil & koordinat GPS outlet berhasil diperbarui!')
     } else {
-      await api.post('/master/outlets', {
-        name: outletForm.name,
-        code: outletForm.code,
-        address: outletForm.address,
-        phone: outletForm.phone,
-        latitude: parseFloat(outletForm.latitude) || -6.113425,
-        longitude: parseFloat(outletForm.longitude) || 106.914230,
-        geofence_radius_meters: parseInt(outletForm.geofence_radius_meters) || 25,
-        is_active: outletForm.is_active,
-      })
+      await api.post('/master/outlets', payload)
       success('Outlet cabang baru berhasil ditambahkan!')
     }
     showOutletModal.value = false
@@ -4204,7 +4452,7 @@ const loadShifts = async () => {
 const saveShiftSettings = async (shift) => {
   try {
     await api.put(`/master/shifts/${shift.id}`, {
-      shift_name: shift.shift_name,
+      shift_name: shift.shift_name || shift.name || ('Shift ' + (shift.code || 'Operasional')),
       start_time: shift.start_time,
       end_time: shift.end_time,
       break_start: shift.break_start,
@@ -4212,7 +4460,7 @@ const saveShiftSettings = async (shift) => {
       late_tolerance_minutes: parseInt(shift.late_tolerance_minutes) || 15,
       is_active: shift.is_active,
     })
-    success(`Pengaturan jam ${shift.shift_name} berhasil disimpan!`)
+    success(`Pengaturan jam ${shift.shift_name || 'shift'} berhasil disimpan!`)
     await loadShifts()
   } catch (err) {
     error(err.message || 'Gagal menyimpan shift')
@@ -4292,6 +4540,87 @@ const openPhotoZoom = (att) => {
     distance: att.distance_meters != null ? `${att.distance_meters.toFixed(1)} meter dari outlet` : '',
   }
   showPhotoZoomModal.value = true
+}
+
+// ==========================================
+// WhatsApp Gateway & Multi-Outlet Routing
+// ==========================================
+const loadingGateway = ref(false)
+const loadingGroups = ref(false)
+const searchGroupQuery = ref('')
+const gatewayStatus = ref({
+  state: 'DISCONNECTED',
+  bot: null,
+  qr: null,
+  qrDataURL: null,
+})
+const gatewayGroups = ref([])
+
+const filteredGatewayGroups = computed(() => {
+  if (!searchGroupQuery.value.trim()) return gatewayGroups.value
+  const q = searchGroupQuery.value.toLowerCase()
+  return gatewayGroups.value.filter(
+    (g) => (g.name || '').toLowerCase().includes(q) || (g.id || '').toLowerCase().includes(q)
+  )
+})
+
+const loadGatewayStatusAndGroups = async () => {
+  loadingGateway.value = true
+  try {
+    const statusData = await api.get('/gateway/status')
+    if (statusData) {
+      gatewayStatus.value = statusData
+    }
+    if (statusData?.state === 'CONNECTED') {
+      loadingGroups.value = true
+      try {
+        const groupsData = await api.get('/gateway/groups')
+        gatewayGroups.value = Array.isArray(groupsData) ? groupsData : []
+      } catch (gErr) {
+        console.error('Failed to load gateway groups:', gErr)
+      } finally {
+        loadingGroups.value = false
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load gateway status:', err)
+  } finally {
+    loadingGateway.value = false
+  }
+}
+
+const assignGroupToActiveOutlet = async (group) => {
+  if (!activeOutlet.value) {
+    error('Pilih cabang aktif terlebih dahulu di header pengaturan.')
+    return
+  }
+  try {
+    await api.put(`/master/outlets/${activeOutlet.value.id}`, {
+      name: activeOutlet.value.name,
+      code: activeOutlet.value.code,
+      address: activeOutlet.value.address,
+      phone: activeOutlet.value.phone,
+      latitude: activeOutlet.value.latitude,
+      longitude: activeOutlet.value.longitude,
+      geofence_radius_meters: activeOutlet.value.geofence_radius_meters,
+      whatsapp_group_id: group.id,
+      whatsapp_group_name: group.name,
+      is_active: activeOutlet.value.is_active,
+    })
+    success(`Cabang "${activeOutlet.value.name}" berhasil dihubungkan ke grup "${group.name}"!`)
+    await loadOutlets()
+  } catch (err) {
+    error(err.message || 'Gagal menghubungkan grup ke cabang')
+  }
+}
+
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    info('ID Grup WhatsApp berhasil disalin ke clipboard!')
+  } catch (e) {
+    info(`ID: ${text}`)
+  }
 }
 </script>
 

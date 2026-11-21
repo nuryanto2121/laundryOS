@@ -62,6 +62,16 @@ func (m *MockCustomerRepository) Delete(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
+func (m *MockCustomerRepository) GetCustomerDefaultOutletID(ctx context.Context, customerID string) string {
+	args := m.Called(ctx, customerID)
+	return args.String(0)
+}
+
+func (m *MockCustomerRepository) SetCustomerOutletID(ctx context.Context, customerID string, outletID string) error {
+	args := m.Called(ctx, customerID, outletID)
+	return args.Error(0)
+}
+
 func TestCustomerService_Create_CaseA_NewCustomer(t *testing.T) {
 	req := model.CreateCustomerRequest{
 		FullName: "John Doe",

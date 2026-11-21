@@ -16,6 +16,7 @@ import (
 // NotificationService defines the contract for sending business alert notifications.
 type NotificationService interface {
 	NotifyPickupRequest(ctx context.Context, orderNumber, customerName, customerPhone, address, serviceName, schedule string) error
+	NotifyPickupRequestToGroup(ctx context.Context, targetGroupJID, orderNumber, customerName, customerPhone, address, serviceName, schedule, outletName string) error
 	NotifyCustomerOrderCreated(ctx context.Context, phone, name, orderNumber, services string, totalPrice, paidAmount float64, estCompletion string) error
 	NotifyCustomerOrderStatus(ctx context.Context, phone, name, orderNumber, newStatus, rackNumber string, totalPrice, paidAmount float64) error
 	SendMessage(ctx context.Context, phone, message string) error
@@ -88,8 +89,22 @@ func (s *notificationService) SendMessage(ctx context.Context, phone, message st
 
 // NotifyPickupRequest broadcasts a new pickup order alert to the staff WhatsApp number or group.
 func (s *notificationService) NotifyPickupRequest(ctx context.Context, orderNumber, customerName, customerPhone, address, serviceName, schedule string) error {
+	return s.NotifyPickupRequestToGroup(ctx, "", orderNumber, customerName, customerPhone, address, serviceName, schedule, "")
+}
+
+// NotifyPickupRequestToGroup broadcasts a new pickup alert to a specific outlet's WhatsApp group.
+func (s *notificationService) NotifyPickupRequestToGroup(ctx context.Context, targetGroupJID, orderNumber, customerName, customerPhone, address, serviceName, schedule, outletName string) error {
 	displayOrderNum := bot.FormatDisplayOrderNumber(orderNumber)
-	message := fmt.Sprintf("🚨 *NOTIFIKASI PICKUP BARU (FAN Laundry)* 🚨\n\n"+
+	target := strings.TrimSpace(targetGroupJID)
+	if target == "" {
+		target = s.staffPhone
+	}
+	branchHeader := "FAN Laundry"
+	if outletName != "" {
+		branchHeader = outletName
+	}
+
+	message := fmt.Sprintf("🚨 *NOTIFIKASI PICKUP BARU (%s)* 🚨\n\n"+
 		"Halo Tim Kurir! Ada permintaan penjemputan cucian baru:\n\n"+
 		"• *No. Order:* %s\n"+
 		"• *Nama Pelanggan:* %s\n"+
@@ -98,10 +113,10 @@ func (s *notificationService) NotifyPickupRequest(ctx context.Context, orderNumb
 		"• *Paket Layanan:* %s\n"+
 		"• *Jadwal Pickup:* %s\n\n"+
 		"Mohon kurir yang bertugas segera me-reply notifikasi ini untuk mengambil pesanan dan menuju lokasi pelanggan. Terima kasih! 🛵💨",
-		displayOrderNum, customerName, customerPhone, address, serviceName, schedule,
+		branchHeader, displayOrderNum, customerName, customerPhone, address, serviceName, schedule,
 	)
 
-	return s.SendMessage(ctx, s.staffPhone, message)
+	return s.SendMessage(ctx, target, message)
 }
 
 // NotifyCustomerOrderCreated notifies a walk-in customer when their order is registered at the counter.

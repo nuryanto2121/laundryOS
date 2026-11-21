@@ -8,7 +8,7 @@
 
 import express from 'express';
 import logger from './logger/index.js';
-import { startWhatsApp, sendMessage, getState, getParticipatingGroups } from './whatsapp/client.js';
+import { startWhatsApp, sendMessage, getState, getStatus, getParticipatingGroups } from './whatsapp/client.js';
 
 const PORT = process.env.PORT || 3000;
 const APP_VERSION = process.env.APP_VERSION || '0.1.0';
@@ -41,6 +41,18 @@ app.get('/health', (req, res) => {
     whatsapp: getState(),
   });
   logger.info(`GET /health -> 200`);
+});
+
+/**
+ * GET /status
+ * Returns detailed connection state, current QR code if connecting, and bot profile.
+ */
+app.get('/status', (req, res) => {
+  const status = getStatus();
+  res.status(200).json({
+    success: true,
+    data: status,
+  });
 });
 
 /**

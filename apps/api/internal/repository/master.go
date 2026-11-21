@@ -179,7 +179,9 @@ func (r *MasterRepository) ListOutletsWithGPS(ctx context.Context) ([]model.Outl
 	query := `
 		SELECT id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
 		       COALESCE(latitude, -6.113425), COALESCE(longitude, 106.914230),
-		       COALESCE(geofence_radius_meters, 25), is_active, created_at, updated_at
+		       COALESCE(geofence_radius_meters, 25),
+		       COALESCE(whatsapp_group_id, ''), COALESCE(whatsapp_group_name, ''),
+		       is_active, created_at, updated_at
 		FROM outlets
 		ORDER BY name ASC
 	`
@@ -195,6 +197,7 @@ func (r *MasterRepository) ListOutletsWithGPS(ctx context.Context) ([]model.Outl
 		if err := rows.Scan(
 			&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
 			&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+			&o.WhatsAppGroupID, &o.WhatsAppGroupName,
 			&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -204,7 +207,7 @@ func (r *MasterRepository) ListOutletsWithGPS(ctx context.Context) ([]model.Outl
 	return list, nil
 }
 
-// CreateOutlet creates a new outlet with GPS coordinates.
+// CreateOutlet creates a new outlet with GPS coordinates and WhatsApp group.
 func (r *MasterRepository) CreateOutlet(ctx context.Context, req model.CreateOutletRequest) (model.Outlet, error) {
 	lat := req.Latitude
 	if lat == 0 {
@@ -221,18 +224,21 @@ func (r *MasterRepository) CreateOutlet(ctx context.Context, req model.CreateOut
 
 	newID := uuid.New()
 	query := `
-		INSERT INTO outlets (id, name, code, address, phone, latitude, longitude, geofence_radius_meters, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO outlets (id, name, code, address, phone, latitude, longitude, geofence_radius_meters, whatsapp_group_id, whatsapp_group_name, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
-		          latitude, longitude, geofence_radius_meters, is_active, created_at, updated_at
+		          latitude, longitude, geofence_radius_meters,
+		          COALESCE(whatsapp_group_id, ''), COALESCE(whatsapp_group_name, ''),
+		          is_active, created_at, updated_at
 	`
 	var o model.Outlet
 	err := r.pool.QueryRow(ctx, query,
 		newID, req.Name, req.Code, req.Address, req.Phone,
-		lat, lng, radius, req.IsActive,
+		lat, lng, radius, req.WhatsAppGroupID, req.WhatsAppGroupName, req.IsActive,
 	).Scan(
 		&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
 		&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+		&o.WhatsAppGroupID, &o.WhatsAppGroupName,
 		&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
 	)
 	if err != nil {
@@ -241,7 +247,7 @@ func (r *MasterRepository) CreateOutlet(ctx context.Context, req model.CreateOut
 	return o, nil
 }
 
-// UpdateOutlet updates outlet details including GPS and geofence radius.
+// UpdateOutlet updates outlet details including GPS, geofence radius, and WhatsApp group.
 func (r *MasterRepository) UpdateOutlet(ctx context.Context, id string, req model.UpdateOutletRequest) (model.Outlet, error) {
 	query := `
 		UPDATE outlets
@@ -252,19 +258,25 @@ func (r *MasterRepository) UpdateOutlet(ctx context.Context, id string, req mode
 		    latitude = CASE WHEN $6::numeric != 0::numeric THEN $6::numeric ELSE latitude END,
 		    longitude = CASE WHEN $7::numeric != 0::numeric THEN $7::numeric ELSE longitude END,
 		    geofence_radius_meters = CASE WHEN $8 > 0 THEN $8 ELSE geofence_radius_meters END,
-		    is_active = $9,
+		    whatsapp_group_id = COALESCE($9, whatsapp_group_id),
+		    whatsapp_group_name = COALESCE($10, whatsapp_group_name),
+		    is_active = $11,
 		    updated_at = NOW()
 		WHERE id = $1
 		RETURNING id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
-		          latitude, longitude, geofence_radius_meters, is_active, created_at, updated_at
+		          latitude, longitude, geofence_radius_meters,
+		          COALESCE(whatsapp_group_id, ''), COALESCE(whatsapp_group_name, ''),
+		          is_active, created_at, updated_at
 	`
 	var o model.Outlet
 	err := r.pool.QueryRow(ctx, query,
 		id, req.Name, req.Code, req.Address, req.Phone,
-		req.Latitude, req.Longitude, req.GeofenceRadiusMeters, req.IsActive,
+		req.Latitude, req.Longitude, req.GeofenceRadiusMeters,
+		req.WhatsAppGroupID, req.WhatsAppGroupName, req.IsActive,
 	).Scan(
 		&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
 		&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+		&o.WhatsAppGroupID, &o.WhatsAppGroupName,
 		&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
 	)
 	if err != nil {

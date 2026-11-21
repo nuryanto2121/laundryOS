@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 flex flex-col text-slate-800 overflow-x-hidden">
     <!-- Top Header -->
-    <AppHeader :active-outlet-name="activeOutlet" @open-outlet-modal="showOutletModal = true" />
+    <AppHeader :active-outlet-name="activeOutletName" @open-outlet-modal="showOutletModal = true" />
 
     <!-- Desktop Navigation Tab Bar (Visible on md and up) -->
     <div class="hidden md:block bg-white border-b border-slate-200/80 sticky top-16 z-20 shadow-xs">
@@ -45,73 +45,105 @@
     <!-- Global Floating Toast Notification Container -->
     <ToastContainer />
 
-    <!-- Outlet Switcher Modal -->
-    <div
-      v-if="showOutletModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
-    >
-      <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <Store class="w-5 h-5 text-brand-600" />
-            <h3 class="font-bold text-slate-800">Pilih Outlet Aktif</h3>
+    <!-- Outlet Switcher Modal (Teleported to body) -->
+    <Teleport to="body">
+      <div
+        v-if="showOutletModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+        @click.self="showOutletModal = false"
+      >
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <Store class="w-5 h-5 text-brand-600" />
+              <h3 class="font-bold text-slate-800">Pilih Outlet Aktif</h3>
+            </div>
+            <button
+              class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              @click="showOutletModal = false"
+            >
+              <X class="w-5 h-5" />
+            </button>
           </div>
+
+          <div class="py-1 space-y-2 max-h-80 overflow-y-auto">
+            <div
+              v-for="o in outlets"
+              :key="o.id"
+              class="p-3.5 rounded-2xl border-2 flex items-center justify-between cursor-pointer transition-all"
+              :class="
+                activeOutletId === o.id
+                  ? 'border-brand-500 bg-brand-50/50 shadow-xs'
+                  : 'border-slate-200 hover:border-slate-300'
+              "
+              @click="selectOutlet(o.id)"
+            >
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="font-bold text-sm text-slate-900">{{ o.name }}</p>
+                  <span
+                    v-if="o.is_active"
+                    class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                  {{ o.address || 'Alamat cabang belum diatur' }}
+                </p>
+              </div>
+              <CheckCircle2
+                v-if="activeOutletId === o.id"
+                class="w-5 h-5 text-brand-600 shrink-0 ml-2"
+              />
+            </div>
+
+            <div v-if="!outlets.length" class="text-center py-6 text-xs text-slate-400">
+              Memuat daftar cabang...
+            </div>
+          </div>
+
           <button
-            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
+            class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-semibold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
             @click="showOutletModal = false"
           >
-            <X class="w-5 h-5" />
+            Tutup
           </button>
         </div>
-        <div class="py-4 space-y-2">
-          <div
-            class="p-3 rounded-xl border-2 flex items-center justify-between cursor-pointer transition-all"
-            :class="
-              activeOutlet === 'FAN Laundry Kalibaru'
-                ? 'border-brand-500 bg-brand-50/50'
-                : 'border-slate-200 hover:border-slate-300'
-            "
-            @click="selectOutlet('FAN Laundry Kalibaru')"
-          >
-            <div>
-              <p class="font-bold text-sm text-slate-900">FAN Laundry Kalibaru</p>
-              <p class="text-xs text-slate-500">
-                Jl. Kalibaru Barat I Rt 007 Rw 008, Cilincing, Jakarta Utara
-              </p>
-            </div>
-            <CheckCircle2
-              v-if="activeOutlet === 'FAN Laundry Kalibaru'"
-              class="w-5 h-5 text-brand-600"
-            />
-          </div>
-        </div>
-        <button
-          class="w-full py-2.5 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800"
-          @click="showOutletModal = false"
-        >
-          Tutup
-        </button>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Home, ShoppingBag, BarChart3, Settings, Store, X, CheckCircle2 } from 'lucide-vue-next'
 import AppHeader from './AppHeader.vue'
 import BottomNavigation from './BottomNavigation.vue'
 import ToastContainer from '../ui/ToastContainer.vue'
 import { useAuth } from '../../composables/useAuth'
+import { useActiveOutlet } from '../../composables/useActiveOutlet'
 
 const route = useRoute()
 const auth = useAuth()
-const activeOutlet = ref('FAN Laundry Kalibaru')
+const {
+  outlets,
+  activeOutlet,
+  activeOutletName,
+  activeOutletId,
+  setActiveOutlet,
+  loadOutlets,
+} = useActiveOutlet()
+
 const showOutletModal = ref(false)
 const showExpenseModal = ref(false)
 const showSearchModal = ref(false)
 const queueCount = ref(0)
+
+onMounted(async () => {
+  await loadOutlets()
+})
 
 const isCurrentPath = (path) => {
   if (path === '/') return route.path === '/'
@@ -136,8 +168,8 @@ const navItems = computed(() => {
   return items
 })
 
-const selectOutlet = (name) => {
-  activeOutlet.value = name
+const selectOutlet = (id) => {
+  setActiveOutlet(id)
   showOutletModal.value = false
 }
 </script>

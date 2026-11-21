@@ -318,6 +318,43 @@
       v-model="showLeaveModal"
       :default-employee="currentEmployeeName"
     />
+
+    <!-- Small Logout Confirmation Modal (Replacing Native Browser Confirm) -->
+    <Teleport to="body">
+      <div
+        v-if="showLogoutConfirmModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+        @click.self="showLogoutConfirmModal = false"
+      >
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+          <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+            <LogOut class="w-7 h-7" />
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900">Keluar dari LaundryOS?</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Sesi akun Anda akan diakhiri. Anda perlu login kembali untuk mengakses sistem kasir dan operasional.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="button"
+              class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              @click="showLogoutConfirmModal = false"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs font-bold shadow-md shadow-rose-500/20 transition-all cursor-pointer"
+              @click="confirmLogout"
+            >
+              Ya, Keluar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </header>
 </template>
 
@@ -364,11 +401,17 @@ const isSuperAdmin = computed(() => {
   return auth.userRole.value === 'SUPER_ADMIN' || settings.role === 'SUPER_ADMIN'
 })
 
+const showLogoutConfirmModal = ref(false)
+
 const handleLogout = () => {
-  if (confirm('Keluar dari LaundryOS?')) {
-    auth.logout()
-    router.push('/login')
-  }
+  showLogoutConfirmModal.value = true
+}
+
+const confirmLogout = () => {
+  showLogoutConfirmModal.value = false
+  auth.logout()
+  success('Anda telah keluar dari LaundryOS.')
+  router.push('/login')
 }
 
 const handleProfileClick = () => {
