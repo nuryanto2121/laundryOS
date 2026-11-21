@@ -293,11 +293,18 @@
                 v-model="orderConfig.perfume_name"
                 class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-hidden font-medium"
               >
-                <option value="Akasia">Akasia (Segar Favorit)</option>
-                <option value="Sakura">Sakura (Manis Lembut)</option>
-                <option value="Ocean Fresh">Ocean Fresh (Semilir Laut)</option>
-                <option value="Snappy">Snappy (Elegan Segar)</option>
-                <option value="Downy Black">Downy Black (Mewah Modern)</option>
+                <template v-if="perfumesList.length > 0">
+                  <option v-for="p in perfumesList" :key="p.id" :value="p.name">
+                    {{ p.name }}
+                  </option>
+                </template>
+                <template v-else>
+                  <option value="Akasia">Akasia (Segar Favorit)</option>
+                  <option value="Sakura">Sakura (Manis Lembut)</option>
+                  <option value="Ocean Fresh">Ocean Fresh (Semilir Laut)</option>
+                  <option value="Snappy">Snappy (Elegan Segar)</option>
+                  <option value="Downy Black">Downy Black (Mewah Modern)</option>
+                </template>
               </select>
             </div>
 
@@ -532,73 +539,38 @@
           <!-- Category Filter Pills -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <button
+              v-for="tab in categoryTabs"
+              :key="tab.id"
               type="button"
-              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
+              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5"
               :class="
-                activeServiceTab === 'ALL'
-                  ? 'bg-slate-900 text-white'
+                activeServiceTab === tab.id
+                  ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               "
-              @click="activeServiceTab = 'ALL'"
+              @click="activeServiceTab = tab.id"
             >
-              Semua ({{ services.length }})
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
-              :class="
-                activeServiceTab === 'TABUNG'
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              @click="activeServiceTab = 'TABUNG'"
-            >
-              ⚡ Self Service ({{ services.filter((s) => s.category === 'TABUNG').length }})
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
-              :class="
-                activeServiceTab === 'KILOAN'
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              @click="activeServiceTab = 'KILOAN'"
-            >
-              🧺 Cuci Kiloan
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
-              :class="
-                activeServiceTab === 'SATUAN'
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              @click="activeServiceTab = 'SATUAN'"
-            >
-              🧥 Satuan & Bed Cover
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer"
-              :class="
-                activeServiceTab === 'METERAN'
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              @click="activeServiceTab = 'METERAN'"
-            >
-              🧼 Karpet
+              <span>{{ tab.icon }}</span>
+              <span>{{ tab.name }}</span>
+              <span
+                class="text-[10px] px-1.5 py-0.2 rounded-full font-semibold"
+                :class="
+                  activeServiceTab === tab.id
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-slate-200 text-slate-700'
+                "
+              >
+                {{ tab.count }}
+              </span>
             </button>
           </div>
         </div>
 
         <!-- Service List (Grouped Sections, Scrollable) -->
         <div class="flex-1 overflow-y-auto py-2 space-y-4 pr-1">
-          <div v-for="grp in filteredServiceGroups" :key="grp.category" class="space-y-2">
+          <div v-for="grp in filteredServiceGroups" :key="grp.categoryId" class="space-y-2">
             <div class="flex items-center gap-2 border-b border-slate-100 pb-1">
-              <span class="text-xs font-black text-slate-800">{{ grp.title }}</span>
+              <span class="text-xs font-black text-slate-800">{{ grp.icon }} {{ grp.categoryName }}</span>
               <span class="text-[10px] text-slate-400 font-semibold"
                 >({{ grp.items.length }} layanan)</span
               >
@@ -617,7 +589,13 @@
                       {{ s.service_name }}
                     </span>
                     <span
-                      v-if="s.category === 'TABUNG'"
+                      v-if="s.service_code"
+                      class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200"
+                    >
+                      {{ s.service_code }}
+                    </span>
+                    <span
+                      v-if="s.unit === 'Tabung' || (s.category && s.category.toLowerCase().includes('self service'))"
                       class="px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-100 text-blue-700"
                     >
                       Kapasitas 8 Kg
@@ -897,7 +875,7 @@
                   qtyInput = Math.max(
                     0.1,
                     Number(
-                      (qtyInput - (currentService?.category === 'KILOAN' ? 0.5 : 1)).toFixed(2)
+                      (qtyInput - (currentService?.unit === 'Kg' ? 0.5 : 1)).toFixed(2)
                     )
                   )
                 "
@@ -907,7 +885,7 @@
               <input
                 v-model.number="qtyInput"
                 type="number"
-                :step="currentService?.category === 'KILOAN' ? '0.1' : '1'"
+                :step="currentService?.unit === 'Kg' ? '0.1' : '1'"
                 min="0.1"
                 class="flex-1 py-2 text-center text-lg font-black rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-hidden"
               />
@@ -916,7 +894,7 @@
                 class="w-10 h-10 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
                 @click="
                   qtyInput = Number(
-                    (qtyInput + (currentService?.category === 'KILOAN' ? 0.5 : 1)).toFixed(2)
+                    (qtyInput + (currentService?.unit === 'Kg' ? 0.5 : 1)).toFixed(2)
                   )
                 "
               >
@@ -1006,12 +984,68 @@ const newCustomer = reactive({
 })
 
 const services = ref([])
+const serviceCategories = ref([])
+const perfumesList = ref([])
+const discountsList = ref([])
 const cartItems = ref([])
 
 // Service Picker Modal State
 const showServicePickerModal = ref(false)
 const serviceModalSearch = ref('')
 const activeServiceTab = ref('ALL')
+
+const getCategoryIcon = (identifier) => {
+  const idStr = (identifier || '').toUpperCase()
+  if (idStr.includes('SELF') || idStr.includes('TABUNG')) return '⚡'
+  if (idStr.includes('SETRIKA') && !idStr.includes('CUCI')) return '👔'
+  if (idStr.includes('CUCI_SETRIKA') || idStr.includes('KILOAN')) return '🧺'
+  if (idStr.includes('SATUAN')) return '🧥'
+  if (idStr.includes('KARPET')) return '🧼'
+  if (idStr.includes('BONEKA')) return '🧸'
+  if (idStr.includes('SEPATU') || idStr.includes('TAS')) return '👟'
+  if (idStr.includes('BED_COVER') || idStr.includes('SELIMUT')) return '🛏️'
+  return '🏷️'
+}
+
+// Category Tabs for Service Picker Modal
+const categoryTabs = computed(() => {
+  const list = []
+  const activeServices = services.value.filter((s) => s.active !== false)
+  list.push({ id: 'ALL', name: 'Semua', count: activeServices.length, icon: '✨' })
+
+  if (serviceCategories.value.length > 0) {
+    serviceCategories.value.forEach((cat) => {
+      const count = activeServices.filter((s) => {
+        return (
+          s.category_id === cat.id ||
+          s.category === cat.name ||
+          s.category === cat.code
+        )
+      }).length
+      list.push({
+        id: cat.id,
+        code: cat.code,
+        name: cat.name,
+        count: count,
+        icon: getCategoryIcon(cat.code || cat.name),
+      })
+    })
+  } else {
+    // Dynamic fallback from services
+    const uniqueCats = [...new Set(activeServices.map((s) => s.category).filter(Boolean))]
+    uniqueCats.forEach((cname) => {
+      const count = activeServices.filter((s) => s.category === cname).length
+      list.push({
+        id: cname,
+        code: cname,
+        name: cname,
+        count: count,
+        icon: getCategoryIcon(cname),
+      })
+    })
+  }
+  return list
+})
 
 // Quantity Sub-Modal State
 const showQtyModal = ref(false)
@@ -1039,9 +1073,11 @@ const isSelfService = computed(() => {
   if (!currentService.value) return false
   const name = (currentService.value.service_name || '').toLowerCase()
   const code = (currentService.value.service_code || '').toLowerCase()
+  const cat = (currentService.value.category || '').toLowerCase()
   return (
-    currentService.value.category === 'TABUNG' ||
     currentService.value.unit === 'Tabung' ||
+    cat.includes('self service') ||
+    cat === 'tabung' ||
     name.includes('self service') ||
     name.includes('cuci basah') ||
     name.includes('cuci kering') ||
@@ -1068,10 +1104,11 @@ const calculatedTubeCount = computed(() => {
 
 const presetOptions = computed(() => {
   if (!currentService.value) return [1, 2, 3, 5]
-  if (currentService.value.category === 'KILOAN') {
+  const unit = currentService.value.unit || ''
+  if (unit === 'Kg') {
     return [3, 4, 5, 7, 10]
   }
-  if (currentService.value.category === 'METERAN') {
+  if (unit === 'Meter') {
     return [2, 3, 4, 6]
   }
   return [1, 2, 3, 4]
@@ -1079,29 +1116,51 @@ const presetOptions = computed(() => {
 
 const favoriteServices = computed(() => {
   const favCodes = ['SVC018', 'SVC001', 'SVC005', 'SVC019', 'SVC006']
-  const matched = services.value.filter((s) => favCodes.includes(s.service_code))
+  const matched = services.value.filter((s) => favCodes.includes(s.service_code) && s.active !== false)
   if (matched.length > 0) return matched
-  return services.value.slice(0, 4)
+  return services.value.filter((s) => s.active !== false).slice(0, 4)
 })
 
 const groupedServices = computed(() => {
-  const groups = [
-    { category: 'TABUNG', title: '⚡ Self Service (Koin / Tabung)', items: [] },
-    { category: 'KILOAN', title: '🧺 Cuci Kiloan & Setrika', items: [] },
-    { category: 'SATUAN', title: '🧥 Satuan & Bed Cover', items: [] },
-    { category: 'METERAN', title: '🧼 Karpet & Lainnya', items: [] },
-  ]
+  const activeServices = services.value.filter((s) => s.active !== false)
 
-  services.value.forEach((s) => {
-    let cat = s.category || 'KILOAN'
-    let grp = groups.find((g) => g.category === cat)
-    if (!grp) {
-      grp = groups[1]
+  if (serviceCategories.value.length > 0) {
+    return serviceCategories.value
+      .map((cat) => {
+        const items = activeServices.filter((s) => {
+          return (
+            s.category_id === cat.id ||
+            s.category === cat.name ||
+            s.category === cat.code
+          )
+        })
+        return {
+          categoryId: cat.id,
+          categoryCode: cat.code,
+          categoryName: cat.name,
+          icon: getCategoryIcon(cat.code || cat.name),
+          items,
+        }
+      })
+      .filter((grp) => grp.items.length > 0)
+  }
+
+  // Fallback grouping by category string
+  const groupsMap = new Map()
+  activeServices.forEach((s) => {
+    const cname = s.category || 'Lainnya'
+    if (!groupsMap.has(cname)) {
+      groupsMap.set(cname, {
+        categoryId: cname,
+        categoryCode: cname,
+        categoryName: cname,
+        icon: getCategoryIcon(cname),
+        items: [],
+      })
     }
-    grp.items.push(s)
+    groupsMap.get(cname).items.push(s)
   })
-
-  return groups.filter((g) => g.items.length > 0)
+  return Array.from(groupsMap.values())
 })
 
 const filteredServiceGroups = computed(() => {
@@ -1109,14 +1168,19 @@ const filteredServiceGroups = computed(() => {
   return groupedServices.value
     .filter((grp) => {
       if (activeServiceTab.value === 'ALL') return true
-      return grp.category === activeServiceTab.value
+      return (
+        grp.categoryId === activeServiceTab.value ||
+        grp.categoryCode === activeServiceTab.value ||
+        grp.categoryName === activeServiceTab.value
+      )
     })
     .map((grp) => {
       if (!search) return grp
       const items = grp.items.filter(
         (s) =>
           s.service_name.toLowerCase().includes(search) ||
-          (s.service_code && s.service_code.toLowerCase().includes(search))
+          (s.service_code && s.service_code.toLowerCase().includes(search)) ||
+          (s.category && s.category.toLowerCase().includes(search))
       )
       return { ...grp, items }
     })
@@ -1306,10 +1370,24 @@ const applyDiscount = () => {
 
 const loadMasterServices = async () => {
   try {
-    const data = await api.get('/master/services')
-    services.value = data || []
-  } catch {
+    const [srvData, catData, prfData, discData] = await Promise.all([
+      api.get('/master/services').catch(() => []),
+      api.get('/master/service-categories').catch(() => []),
+      api.get('/master/perfumes').catch(() => []),
+      api.get('/master/discounts').catch(() => []),
+    ])
+    services.value = Array.isArray(srvData) ? srvData : []
+    serviceCategories.value = Array.isArray(catData) ? catData : []
+    if (Array.isArray(prfData) && prfData.length > 0) {
+      perfumesList.value = prfData
+    }
+    if (Array.isArray(discData) && discData.length > 0) {
+      discountsList.value = discData
+    }
+  } catch (err) {
+    console.error('Failed to load master services:', err)
     services.value = []
+    serviceCategories.value = []
   }
 }
 
