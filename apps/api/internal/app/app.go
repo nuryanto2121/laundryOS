@@ -78,16 +78,22 @@ func Run() error {
 	})
 	botHandler := handler.NewBotHandler(botSvc)
 
+	// Initialize Attendance & Shifts module
+	attendanceRepo := repository.NewAttendanceRepository(dbPool)
+	attendanceSvc := service.NewAttendanceService(attendanceRepo)
+	attendanceHandler := handler.NewAttendanceHandler(attendanceSvc)
+
 	// Initialize HTTP Router
 	router := handler.NewRouter(handler.RouterParams{
-		AppVersion:      cfg.AppVersion,
-		CustomerHandler: customerHandler,
-		OrderHandler:    orderHandler,
-		BotHandler:      botHandler,
-		POSHandler:      posHandler,
-		ExpenseHandler:  expenseHandler,
-		ReportHandler:   reportHandler,
-		MasterHandler:   masterHandler,
+		AppVersion:        cfg.AppVersion,
+		CustomerHandler:   customerHandler,
+		OrderHandler:      orderHandler,
+		BotHandler:        botHandler,
+		POSHandler:        posHandler,
+		ExpenseHandler:    expenseHandler,
+		ReportHandler:     reportHandler,
+		MasterHandler:     masterHandler,
+		AttendanceHandler: attendanceHandler,
 	})
 
 	addr := ":" + cfg.Port

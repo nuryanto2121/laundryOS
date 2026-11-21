@@ -499,7 +499,7 @@
                 {{ currentRole === 'OWNER' ? 'Akun Owner (Akses Penuh)' : 'Akun Kasir (Operasional Toko)' }}
               </div>
               <div class="text-[10px] text-slate-500">
-                {{ currentRole === 'OWNER' ? 'Hak akses Laporan, Omset, Settings, & POS' : 'Shift Pagi: 07:00 - 15:00 WIB' }}
+                {{ currentRole === 'OWNER' ? 'Hak akses Laporan, Omset, Settings, & POS' : 'Shift 1: 08:00 - 17:00 WIB (Istirahat 12-13)' }}
               </div>
             </div>
           </div>
@@ -608,8 +608,50 @@
 
         <!-- CASHIER EXCLUSIVE VIEW -->
         <div v-else class="space-y-3.5">
-          <div class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <span>🕒 Shift Kasir & Operasional</span>
+          <div class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span>🕒 Shift Kasir & Absensi</span>
+            </div>
+            <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Shift 1 (Aktif)
+            </span>
+          </div>
+
+          <!-- Absensi Selfie & Radar GPS Card -->
+          <div class="bg-gradient-to-br from-emerald-50/90 to-sky-50/60 p-3.5 rounded-2xl border border-emerald-200/80 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                  📸
+                </div>
+                <div>
+                  <div class="text-xs font-black text-slate-900">Validasi Foto & Lokasi Outlet</div>
+                  <div class="text-[10px] text-emerald-700 font-bold">Radius: 1.2m dari Outlet Kalibaru ✅</div>
+                </div>
+              </div>
+              <span class="text-[9px] font-black bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full uppercase">
+                On-Time
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-500 leading-tight">
+              Selfie wajib diambil di tempat laundry. Toleransi keterlambatan shift 15 menit.
+            </p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                @click="showNotificationToast('Kamera selfie aktif! Foto wajib diambil di outlet laundry.')"
+                class="py-2 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-[11px] font-bold transition-all shadow-2xs active:scale-95 text-center cursor-pointer"
+              >
+                📸 Foto Absensi
+              </button>
+              <button
+                type="button"
+                @click="showNotificationToast('Jatah cuti tersisa: 2 hari untuk bulan ini. Pengajuan terkirim ke Owner!')"
+                class="py-2 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold transition-all shadow-2xs active:scale-95 text-center cursor-pointer"
+              >
+                🏖️ Ajukan Libur (2x)
+              </button>
+            </div>
           </div>
 
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-2.5">
@@ -628,7 +670,7 @@
 
             <button 
               type="button" 
-              @click="showNotificationToast('Shift berhasil ditutup & rekap terkirim ke Owner!')"
+              @click="showNotificationToast('Shift 1 ditutup & rekap serah terima kas terkirim ke Owner!')"
               class="w-full mt-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
             >
               Serah Terima & Tutup Shift

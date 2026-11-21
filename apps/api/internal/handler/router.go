@@ -11,14 +11,15 @@ import (
 
 // RouterParams carries all dependencies required to build the HTTP router.
 type RouterParams struct {
-	AppVersion      string
-	CustomerHandler *CustomerHandler
-	OrderHandler    *OrderHandler
-	BotHandler      *BotHandler
-	POSHandler      *POSHandler
-	ExpenseHandler  *ExpenseHandler
-	ReportHandler   *ReportHandler
-	MasterHandler   *MasterHandler
+	AppVersion        string
+	CustomerHandler   *CustomerHandler
+	OrderHandler      *OrderHandler
+	BotHandler        *BotHandler
+	POSHandler        *POSHandler
+	ExpenseHandler    *ExpenseHandler
+	ReportHandler     *ReportHandler
+	MasterHandler     *MasterHandler
+	AttendanceHandler *AttendanceHandler
 }
 
 // NewRouter constructs and configures the Chi HTTP router with middlewares and route mappings.
@@ -128,6 +129,29 @@ func NewRouter(p RouterParams) http.Handler {
 			m.Post("/employees", p.MasterHandler.CreateEmployee)
 			m.Put("/employees/{id}", p.MasterHandler.UpdateEmployee)
 			m.Delete("/employees/{id}", p.MasterHandler.DeleteEmployee)
+		})
+	}
+
+	// Attendance, Shifts & Leaves routes
+	if p.AttendanceHandler != nil {
+		r.Route("/master/shifts", func(s chi.Router) {
+			s.Get("/", p.AttendanceHandler.ListShifts)
+			s.Put("/{id}", p.AttendanceHandler.UpdateShift)
+		})
+
+		r.Route("/attendances", func(a chi.Router) {
+			a.Post("/check-in", p.AttendanceHandler.CheckIn)
+			a.Post("/check-out", p.AttendanceHandler.CheckOut)
+			a.Get("/today", p.AttendanceHandler.GetActiveAttendance)
+			a.Get("/active", p.AttendanceHandler.ListActiveAttendances)
+			a.Get("/history", p.AttendanceHandler.ListAttendances)
+		})
+
+		r.Route("/leaves", func(l chi.Router) {
+			l.Get("/quota", p.AttendanceHandler.GetLeaveQuota)
+			l.Post("/request", p.AttendanceHandler.CreateLeaveRequest)
+			l.Get("/", p.AttendanceHandler.ListLeaveRequests)
+			l.Put("/{id}/review", p.AttendanceHandler.ReviewLeaveRequest)
 		})
 	}
 

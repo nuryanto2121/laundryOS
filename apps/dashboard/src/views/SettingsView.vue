@@ -1392,6 +1392,448 @@
       </div>
 
       <!-- ============================================================== -->
+      <!-- TAB: MASTER SHIFT & JAM KERJA                                  -->
+      <!-- ============================================================== -->
+      <div v-else-if="activeTab === 'SHIFTS_ATTENDANCE'" class="space-y-6">
+        <!-- Header Info -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+              <Clock class="w-4 h-4 text-brand-600" />
+              <span>Master Shift Operasional & Toleransi Keterlambatan</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Konfigurasi jam masuk, jam pulang, istirahat, dan toleransi keterlambatan shift FAN Laundry.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer w-fit"
+            @click="loadShifts"
+          >
+            <RotateCcw class="w-3.5 h-3.5" />
+            <span>Muat Ulang Shift</span>
+          </button>
+        </div>
+
+        <!-- Shift Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            v-for="shift in shiftsList"
+            :key="shift.id"
+            class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4 flex flex-col justify-between"
+          >
+            <div class="space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">
+                    {{ shift.shift_number }}
+                  </div>
+                  <div>
+                    <h4 class="font-extrabold text-sm text-slate-900">{{ shift.name }}</h4>
+                    <p class="text-[11px] text-slate-400">Jadwal Standar: {{ shift.start_time }} - {{ shift.end_time }} WIB</p>
+                  </div>
+                </div>
+                <span
+                  class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                  :class="shift.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'"
+                >
+                  {{ shift.is_active ? 'Aktif' : 'Non-Aktif' }}
+                </span>
+              </div>
+
+              <!-- Shift Form Inputs -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Jam Masuk (Start)</label>
+                  <input
+                    v-model="shift.start_time"
+                    type="time"
+                    step="1"
+                    class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Jam Pulang (End)</label>
+                  <input
+                    v-model="shift.end_time"
+                    type="time"
+                    step="1"
+                    class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Mulai Istirahat</label>
+                  <input
+                    v-model="shift.break_start"
+                    type="time"
+                    step="1"
+                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 mb-1">Selesai Istirahat</label>
+                  <input
+                    v-model="shift.break_end"
+                    type="time"
+                    step="1"
+                    class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                  Toleransi Keterlambatan (Menit)
+                </label>
+                <div class="relative">
+                  <input
+                    v-model.number="shift.late_tolerance_minutes"
+                    type="number"
+                    min="0"
+                    max="60"
+                    class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 pr-16"
+                  />
+                  <span class="absolute right-3 top-2 text-xs text-slate-400 font-medium pointer-events-none">
+                    Menit
+                  </span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">
+                  Check-in lewat dari jam masuk + toleransi akan tercatat "Terlambat".
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="w-full mt-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+              @click="saveShiftSettings(shift)"
+            >
+              <Save class="w-3.5 h-3.5" />
+              <span>Simpan Perubahan {{ shift.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Outlet Geofencing Map Card -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <MapPin class="w-5 h-5" />
+              </div>
+              <div>
+                <h4 class="font-black text-sm text-slate-900">Validasi Geofencing GPS Outlet Kalibaru</h4>
+                <p class="text-xs text-slate-500">Radius check-in selfie karyawan</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+              Radar Aktif
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Titik Latitude</span>
+              <p class="font-mono font-bold text-slate-800 text-sm">-6.113425</p>
+              <span class="text-[10px] text-slate-400">Kalibaru Barat I</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Titik Longitude</span>
+              <p class="font-mono font-bold text-slate-800 text-sm">106.914230</p>
+              <span class="text-[10px] text-slate-400">Cilincing, Jakarta Utara</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
+              <span class="text-[10px] font-bold text-emerald-700 uppercase">Radius Maksimal</span>
+              <p class="font-mono font-extrabold text-emerald-900 text-sm">25.0 Meter</p>
+              <span class="text-[10px] text-emerald-600">Toleransi GPS indoor / ruko</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- TAB: REKAP ABSENSI & CUTI                                      -->
+      <!-- ============================================================== -->
+      <div v-else-if="activeTab === 'ATTENDANCE_RECAP'" class="space-y-6">
+        <!-- 1. SECTION: PERSETUJUAN CUTI (LEAVE APPROVAL) -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <CalendarCheck class="w-5 h-5 text-indigo-600" />
+                <h3 class="font-black text-sm text-slate-900">Persetujuan Cuti Karyawan (Leave Requests)</h3>
+                <span
+                  v-if="pendingLeavesCount > 0"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse"
+                >
+                  {{ pendingLeavesCount }} Menunggu
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Jatah libur karyawan: maksimal 2x / bulan kalender. Review pengajuan libur staf Anda.
+              </p>
+            </div>
+
+            <!-- Filter Status -->
+            <div class="flex items-center gap-2">
+              <select
+                v-model="leaveFilterStatus"
+                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-slate-50 focus:bg-white cursor-pointer"
+                @change="loadLeaves"
+              >
+                <option value="">Semua Status</option>
+                <option value="PENDING">Menunggu (Pending)</option>
+                <option value="APPROVED">Disetujui (Approved)</option>
+                <option value="REJECTED">Ditolak (Rejected)</option>
+              </select>
+              <button
+                type="button"
+                class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                title="Refresh Pengajuan Cuti"
+                @click="loadLeaves"
+              >
+                <RotateCcw class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaves List -->
+          <div v-if="loadingLeaves" class="py-12 text-center text-xs text-slate-400">
+            Memuat pengajuan libur...
+          </div>
+          <div
+            v-else-if="leavesList.length === 0"
+            class="py-8 text-center text-xs text-slate-400"
+          >
+            Tidak ada data pengajuan libur dengan filter saat ini.
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div
+              v-for="leave in leavesList"
+              :key="leave.id"
+              class="p-4 rounded-2xl border transition-all space-y-3"
+              :class="
+                leave.status === 'PENDING'
+                  ? 'bg-amber-50/50 border-amber-200 shadow-xs'
+                  : leave.status === 'APPROVED'
+                    ? 'bg-emerald-50/30 border-emerald-200'
+                    : 'bg-slate-50 border-slate-200'
+              "
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-extrabold text-xs text-slate-900">{{ leave.employee_name }}</h4>
+                  <p class="text-[10px] text-slate-400">{{ formatDate(leave.created_at) }}</p>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                  :class="
+                    leave.status === 'APPROVED'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : leave.status === 'REJECTED'
+                        ? 'bg-rose-100 text-rose-800'
+                        : 'bg-amber-100 text-amber-800'
+                  "
+                >
+                  {{ leave.status === 'APPROVED' ? 'Disetujui ✅' : leave.status === 'REJECTED' ? 'Ditolak ❌' : 'Pending ⏳' }}
+                </span>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-white/80 border border-slate-100 text-xs space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Tanggal Libur:</span>
+                  <span class="font-black text-indigo-700">{{ formatDate(leave.date) }}</span>
+                </div>
+                <p class="text-[11px] text-slate-700 italic pt-1">
+                  "{{ leave.reason }}"
+                </p>
+              </div>
+
+              <div v-if="leave.reviewer_notes" class="text-[10px] text-slate-500">
+                <span class="font-bold">Catatan Review:</span> {{ leave.reviewer_notes }}
+              </div>
+
+              <!-- Owner Action Buttons for PENDING -->
+              <div v-if="leave.status === 'PENDING'" class="flex items-center gap-2 pt-1 border-t border-slate-200/50">
+                <button
+                  type="button"
+                  class="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                  @click="handleApproveLeave(leave)"
+                >
+                  <CheckCircle2 class="w-3.5 h-3.5" />
+                  <span>Setujui</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
+                  @click="openRejectLeaveModal(leave)"
+                >
+                  <X class="w-3.5 h-3.5" />
+                  <span>Tolak</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. SECTION: REKAP LOG ABSENSI HARIAN -->
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+            <div>
+              <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <Camera class="w-4 h-4 text-emerald-600" />
+                <span>Log Kehadiran, Foto Selfie & Serah Terima Shift</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Riwayat absen masuk, foto di lokasi outlet, GPS radius, dan saldo kas awal/akhir kasir.
+              </p>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <input
+                v-model="attendanceFilter.employee"
+                type="text"
+                placeholder="Cari nama..."
+                class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white w-28 sm:w-36"
+                @keyup.enter="loadAttendances"
+              />
+              <button
+                type="button"
+                class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                @click="loadAttendances"
+              >
+                <Search class="w-3.5 h-3.5" />
+                <span>Filter</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Attendance Table -->
+          <div v-if="loadingAttendances" class="py-12 text-center text-xs text-slate-400">
+            Memuat riwayat absensi...
+          </div>
+          <div
+            v-else-if="attendanceList.length === 0"
+            class="py-12 text-center text-xs text-slate-400 space-y-2"
+          >
+            <Camera class="w-8 h-8 mx-auto text-slate-300" />
+            <p>Belum ada rekaman absensi untuk periode ini.</p>
+          </div>
+          <div v-else class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th class="px-4 py-3">Foto Selfie</th>
+                  <th class="px-4 py-3">Karyawan & Shift</th>
+                  <th class="px-4 py-3">Jam Masuk (Check-In)</th>
+                  <th class="px-4 py-3">Jam Pulang (Check-Out)</th>
+                  <th class="px-4 py-3">Status Ketepatan</th>
+                  <th class="px-4 py-3">Kas Laci Awal / Akhir</th>
+                  <th class="px-4 py-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr v-for="att in attendanceList" :key="att.id" class="hover:bg-slate-50/70 transition-colors">
+                  <!-- Foto Thumbnail -->
+                  <td class="px-4 py-3">
+                    <div
+                      v-if="att.check_in_photo"
+                      class="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 cursor-pointer relative group shadow-2xs"
+                      @click="openPhotoZoom(att)"
+                    >
+                      <img :src="att.check_in_photo" class="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                        <Eye class="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div v-else class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                      <Camera class="w-4 h-4" />
+                    </div>
+                  </td>
+
+                  <!-- Karyawan & Shift -->
+                  <td class="px-4 py-3">
+                    <p class="font-extrabold text-slate-900 text-sm">{{ att.employee_name }}</p>
+                    <span class="text-[11px] font-bold text-brand-600">{{ att.shift_name }}</span>
+                  </td>
+
+                  <!-- Check In Time & Geofence -->
+                  <td class="px-4 py-3">
+                    <p class="font-bold text-slate-800">{{ att.clock_in_time ? formatDate(att.clock_in_time) : '-' }}</p>
+                    <span
+                      v-if="att.distance_meters != null"
+                      class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md mt-0.5"
+                    >
+                      <MapPin class="w-3 h-3 text-emerald-600" />
+                      {{ att.distance_meters.toFixed(1) }}m dari outlet
+                    </span>
+                  </td>
+
+                  <!-- Check Out Time -->
+                  <td class="px-4 py-3">
+                    <p class="font-bold text-slate-800">{{ att.clock_out_time ? formatDate(att.clock_out_time) : 'Masih Bertugas' }}</p>
+                    <span v-if="!att.clock_out_time" class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md mt-0.5 animate-pulse">
+                      Aktif Sekarang
+                    </span>
+                  </td>
+
+                  <!-- Punctuality Status -->
+                  <td class="px-4 py-3">
+                    <span
+                      class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-block"
+                      :class="
+                        att.punctuality_status === 'ON_TIME'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : att.punctuality_status === 'LATE'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                      "
+                    >
+                      {{
+                        att.punctuality_status === 'ON_TIME'
+                          ? 'Tepat Waktu'
+                          : att.punctuality_status === 'LATE'
+                            ? `Terlambat ${att.late_minutes} Mnt`
+                            : att.punctuality_status
+                      }}
+                    </span>
+                  </td>
+
+                  <!-- Cash Drawer -->
+                  <td class="px-4 py-3 font-mono">
+                    <div class="text-[11px]">
+                      <span class="text-slate-400">Awal:</span> {{ formatRupiah(att.starting_cash || 0) }}
+                    </div>
+                    <div v-if="att.ending_cash != null" class="text-[11px]">
+                      <span class="text-slate-400">Akhir:</span> {{ formatRupiah(att.ending_cash) }}
+                    </div>
+                  </td>
+
+                  <!-- Action -->
+                  <td class="px-4 py-3">
+                    <button
+                      v-if="att.check_in_photo"
+                      type="button"
+                      class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      @click="openPhotoZoom(att)"
+                    >
+                      <Eye class="w-3.5 h-3.5" />
+                      <span>Foto</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
       <!-- MODALS SECTION                                                 -->
       <!-- ============================================================== -->
 
@@ -2099,6 +2541,83 @@
           </div>
         </div>
       </div>
+
+      <!-- 9. MODAL ZOOM FOTO ABSENSI -->
+      <div
+        v-if="showPhotoZoomModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in"
+        @click.self="showPhotoZoomModal = false"
+      >
+        <div class="bg-white rounded-3xl max-w-sm w-full p-4 shadow-2xl border border-slate-100 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div>
+              <h4 class="font-black text-sm text-slate-900">{{ photoZoomData.title }}</h4>
+              <p class="text-[10px] text-slate-500">{{ photoZoomData.time }} • {{ photoZoomData.distance }}</p>
+            </div>
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showPhotoZoomModal = false">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+          <div class="rounded-2xl overflow-hidden border border-slate-200 aspect-square bg-slate-950">
+            <img :src="photoZoomData.url" class="w-full h-full object-cover" />
+          </div>
+          <button
+            type="button"
+            class="w-full py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 cursor-pointer transition-colors"
+            @click="showPhotoZoomModal = false"
+          >
+            Tutup Preview Foto
+          </button>
+        </div>
+      </div>
+
+      <!-- 10. MODAL TOLAK CUTI DENGAN ALASAN -->
+      <div
+        v-if="showRejectModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+        @click.self="showRejectModal = false"
+      >
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h4 class="font-bold text-sm text-rose-600 flex items-center gap-2">
+              <CalendarX class="w-4 h-4 text-rose-600" />
+              <span>Tolak Pengajuan Libur</span>
+            </h4>
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showRejectModal = false">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+          <p class="text-xs text-slate-600">
+            Tolak pengajuan libur <strong>{{ selectedLeaveForReject?.employee_name }}</strong> pada tanggal <strong>{{ formatDate(selectedLeaveForReject?.date) }}</strong>?
+          </p>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Catatan / Alasan Penolakan</label>
+            <textarea
+              v-model="rejectReasonInput"
+              rows="2"
+              placeholder="Contoh: Jadwal shift bentrok dengan rekan kerja..."
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-rose-500 resize-none font-medium"
+            ></textarea>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              @click="showRejectModal = false"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              class="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              @click="handleConfirmRejectLeave"
+            >
+              <CalendarX class="w-3.5 h-3.5" />
+              <span>Konfirmasi Tolak</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
@@ -2136,6 +2655,12 @@ import {
   ArrowUp,
   ArrowDown,
   FolderTree,
+  Clock,
+  CalendarCheck,
+  CalendarX,
+  MapPin,
+  Camera,
+  Eye,
 } from 'lucide-vue-next'
 import { useAppSettings } from '../composables/useAppSettings'
 import { useToast } from '../composables/useToast'
@@ -2149,6 +2674,8 @@ const activeTab = ref('PRINTER')
 
 const tabs = [
   { id: 'PRINTER', label: 'Profil Outlet & Printer Thermal', icon: Printer },
+  { id: 'SHIFTS_ATTENDANCE', label: 'Master Shift & Jam Kerja', icon: Clock },
+  { id: 'ATTENDANCE_RECAP', label: 'Rekap Absensi & Cuti', icon: CalendarCheck },
   { id: 'EMPLOYEES', label: 'Pegawai & Hak Akses (RBAC)', icon: ShieldCheck },
   { id: 'SERVICES', label: 'Master Layanan & Tarif', icon: Tag },
   { id: 'PERFUME_DISCOUNT', label: 'Master Parfum & Diskon', icon: Sparkles },
@@ -2592,6 +3119,11 @@ watch(activeTab, (tab) => {
     loadExpensesAudit()
   } else if (tab === 'CUSTOMERS') {
     loadCustomers()
+  } else if (tab === 'SHIFTS_ATTENDANCE') {
+    loadShifts()
+  } else if (tab === 'ATTENDANCE_RECAP') {
+    loadLeaves()
+    loadAttendances()
   }
 })
 
@@ -2633,6 +3165,9 @@ onMounted(() => {
   fetchMasterData()
   loadExpensesAudit()
   loadCustomers()
+  loadShifts()
+  loadLeaves()
+  loadAttendances()
 })
 
 // ==========================================
@@ -3113,6 +3648,133 @@ const deleteCustomer = async (id) => {
   await api.delete(`/customers/${id}`)
   success('Pelanggan berhasil dihapus!')
   loadCustomers()
+}
+
+// ==========================================
+// Milestone: Shifts, Attendance & Leaves
+// ==========================================
+const shiftsList = ref([])
+const attendanceList = ref([])
+const attendanceFilter = reactive({
+  employee: '',
+  startDate: '',
+  endDate: '',
+})
+const loadingAttendances = ref(false)
+
+const leavesList = ref([])
+const leaveFilterStatus = ref('')
+const loadingLeaves = ref(false)
+const showRejectModal = ref(false)
+const selectedLeaveForReject = ref(null)
+const rejectReasonInput = ref('')
+
+const showPhotoZoomModal = ref(false)
+const photoZoomData = ref({ url: '', title: '', time: '', distance: '' })
+
+const pendingLeavesCount = computed(() => {
+  return leavesList.value.filter((l) => l.status === 'PENDING').length
+})
+
+const loadShifts = async () => {
+  try {
+    const data = await api.get('/master/shifts')
+    shiftsList.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('Failed to load shifts:', err)
+  }
+}
+
+const saveShiftSettings = async (shift) => {
+  try {
+    await api.put(`/master/shifts/${shift.id}`, {
+      start_time: shift.start_time,
+      end_time: shift.end_time,
+      break_start: shift.break_start,
+      break_end: shift.break_end,
+      late_tolerance_minutes: parseInt(shift.late_tolerance_minutes) || 15,
+      is_active: shift.is_active,
+    })
+    success(`Pengaturan jam ${shift.name} berhasil disimpan!`)
+    await loadShifts()
+  } catch (err) {
+    error(err.message || 'Gagal menyimpan shift')
+  }
+}
+
+const loadAttendances = async () => {
+  loadingAttendances.value = true
+  try {
+    const params = {}
+    if (attendanceFilter.employee) params.employee = attendanceFilter.employee
+    if (attendanceFilter.startDate) params.start_date = attendanceFilter.startDate
+    if (attendanceFilter.endDate) params.end_date = attendanceFilter.endDate
+    const data = await api.get('/attendances/history', params)
+    attendanceList.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('Failed to load attendances:', err)
+  } finally {
+    loadingAttendances.value = false
+  }
+}
+
+const loadLeaves = async () => {
+  loadingLeaves.value = true
+  try {
+    const params = {}
+    if (leaveFilterStatus.value) params.status = leaveFilterStatus.value
+    const data = await api.get('/leaves', params)
+    leavesList.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('Failed to load leaves:', err)
+  } finally {
+    loadingLeaves.value = false
+  }
+}
+
+const handleApproveLeave = async (leave) => {
+  try {
+    await api.put(`/leaves/${leave.id}/review`, {
+      status: 'APPROVED',
+      reviewer_notes: 'Disetujui oleh Owner.',
+    })
+    success(`Pengajuan libur ${leave.employee_name} disetujui! ✅`)
+    await loadLeaves()
+  } catch (err) {
+    error(err.message || 'Gagal menyetujui libur')
+  }
+}
+
+const openRejectLeaveModal = (leave) => {
+  selectedLeaveForReject.value = leave
+  rejectReasonInput.value = ''
+  showRejectModal.value = true
+}
+
+const handleConfirmRejectLeave = async () => {
+  if (!selectedLeaveForReject.value) return
+  try {
+    await api.put(`/leaves/${selectedLeaveForReject.value.id}/review`, {
+      status: 'REJECTED',
+      reviewer_notes: rejectReasonInput.value || 'Ditolak karena pertimbangan jadwal shift operasional.',
+    })
+    success(`Pengajuan libur ${selectedLeaveForReject.value.employee_name} ditolak. ❌`)
+    showRejectModal.value = false
+    selectedLeaveForReject.value = null
+    await loadLeaves()
+  } catch (err) {
+    error(err.message || 'Gagal menolak libur')
+  }
+}
+
+const openPhotoZoom = (att) => {
+  photoZoomData.value = {
+    url: att.check_in_photo || att.check_out_photo,
+    title: `${att.employee_name} • ${att.shift_name}`,
+    time: att.clock_in_time ? formatDate(att.clock_in_time) : '',
+    distance: att.distance_meters != null ? `${att.distance_meters.toFixed(1)} meter dari outlet` : '',
+  }
+  showPhotoZoomModal.value = true
 }
 </script>
 
