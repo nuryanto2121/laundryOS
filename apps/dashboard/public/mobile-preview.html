@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LaundryOS Mobile LMS - Native Mobile Experience Design</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* iOS Momentum Scrolling & Mobile Reset */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      background-color: #0f172a;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Mobile Device Frame Styling */
+    .device-shadow {
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+    }
+    /* Pulse scanner animation */
+    @keyframes scanRay {
+      0% { top: 10%; opacity: 0.8; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.8; }
+    }
+    .scan-beam {
+      animation: scanRay 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 md:p-6 text-slate-800">
+
+<div id="app" class="w-full max-w-[420px] mx-auto">
+  <!-- Top Presentation Toolbar (Desktop only) -->
+  <div class="hidden md:flex items-center justify-between px-3 py-2 text-slate-300 text-xs mb-3">
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+      <span class="font-bold text-white tracking-wide">LaundryOS Mobile LMS</span>
+      <span class="px-2 py-0.5 rounded-md bg-slate-800 text-[10px] text-sky-400 font-mono">v1.0 Native Mobile</span>
+    </div>
+    <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+      <span>Device: iPhone 15 Pro (393x852)</span>
+    </div>
+  </div>
+
+  <!-- Physical Smartphone Canvas Frame -->
+  <div class="relative w-full h-[100dvh] md:h-[844px] bg-slate-50 md:rounded-[48px] overflow-hidden flex flex-col device-shadow border border-slate-700/50">
+
+    <!-- 1. Dynamic Island / Top Notch & Hardware Status Bar -->
+    <div class="pt-3 px-6 pb-2 bg-white flex items-center justify-between shrink-0 select-none border-b border-slate-100 z-30">
+      <div class="text-xs font-black text-slate-900 tracking-tight">09:41</div>
+      <!-- Dynamic Island Capsule -->
+      <div class="w-24 h-5 bg-slate-950 rounded-full flex items-center justify-center gap-1.5 shadow-inner">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span class="text-[9px] font-mono text-emerald-400 font-bold">BLE READY</span>
+      </div>
+      <div class="flex items-center gap-1.5 text-slate-900">
+        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+        <i data-lucide="battery-charging" class="w-4 h-4 text-emerald-600"></i>
+      </div>
+    </div>
+
+    <!-- 2. Mobile App Header -->
+    <div class="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0 z-20">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-brand-500 text-white flex items-center justify-center font-black text-sm shadow-sm">
+          FL
+        </div>
+        <div>
+          <div class="flex items-center gap-1">
+            <h1 class="text-xs font-extrabold text-slate-900">FAN Laundry Kalibaru</h1>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+          </div>
+          <p class="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Kasir: Nuryanto (Shift Pagi)
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Bluetooth & Alert Header Actions -->
+      <div class="flex items-center gap-1.5">
+        <button 
+          class="p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all"
+          :class="bluetoothConnected ? 'bg-sky-50 border-sky-200 text-sky-700' : 'bg-slate-100 border-slate-200 text-slate-400'"
+          @click="toggleBluetooth"
+          title="Status Bluetooth Thermal"
+        >
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span class="text-[10px]">58mm</span>
+        </button>
+        <button 
+          class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 relative"
+          @click="showNotificationSheet = true"
+        >
+          <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+          <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Screen View Container (Scrollable Content) -->
+    <div class="flex-1 overflow-y-auto hide-scrollbar relative bg-slate-50">
+
+      <!-- ============================================================ -->
+      <!-- SCREEN 1: BERANDA / QUICK RADAR                              -->
+      <!-- ============================================================ -->
+      <div v-if="activeNav === 'home'" class="p-4 space-y-4 pb-24">
+        <!-- Live Quick Stats (Thumb friendly 2x2 grid) -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Omset Hari Ini</span>
+              <div class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
+              </div>
+            </div>
+            <div class="text-base font-black text-slate-900 tracking-tight">Rp 842.000</div>
+            <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+              <i data-lucide="trending-up" class="w-3 h-3"></i> +18% vs kemarin
+            </div>
+          </div>
+
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Antrian Aktif</span>
+              <div class="w-6 h-6 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              </div>
+            </div>
+            <div class="text-base font-black text-slate-900 tracking-tight">14 Order</div>
+            <div class="text-[10px] text-amber-600 font-semibold flex items-center gap-0.5">
+              <i data-lucide="alert-circle" class="w-3 h-3"></i> 2 cucian urgent SLA
+            </div>
+          </div>
+        </div>
+
+        <!-- 1-Tap Quick Action Row (Ergonomic Thumb Area) -->
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <button 
+            @click="activeNav = 'pos'"
+            class="bg-brand-600 hover:bg-brand-700 text-white p-3 rounded-2xl shadow-sm flex flex-col items-center gap-1.5 transition-transform active:scale-95"
+          >
+            <i data-lucide="scale" class="w-5 h-5"></i>
+            <span class="text-[10px] font-extrabold leading-tight">Timbang (+Order)</span>
+          </button>
+          <button 
+            @click="activeNav = 'scan'"
+            class="bg-white hover:bg-slate-100 text-slate-800 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center gap-1.5 transition-transform active:scale-95"
+          >
+            <i data-lucide="qr-code" class="w-5 h-5 text-indigo-600"></i>
+            <span class="text-[10px] font-bold leading-tight">Scan QR Nota</span>
+          </button>
+          <button 
+            @click="activeNav = 'queue'"
+            class="bg-white hover:bg-slate-100 text-slate-800 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center gap-1.5 transition-transform active:scale-95"
+          >
+            <i data-lucide="layers" class="w-5 h-5 text-amber-600"></i>
+            <span class="text-[10px] font-bold leading-tight">Antrian Rak</span>
+          </button>
+          <button 
+            @click="showPettyCashSheet = true"
+            class="bg-white hover:bg-slate-100 text-slate-800 p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center gap-1.5 transition-transform active:scale-95"
+          >
+            <i data-lucide="wallet" class="w-5 h-5 text-rose-600"></i>
+            <span class="text-[10px] font-bold leading-tight">Kas Kecil</span>
+          </button>
+        </div>
+
+        <!-- Section: Cucian Butuh Perhatian (SLA Warning) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-500"></i>
+              Prioritas Pengerjaan (Target SLA)
+            </h2>
+            <button @click="activeNav = 'queue'" class="text-[10px] font-bold text-brand-600 hover:underline">
+              Lihat Semua
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <div 
+              v-for="order in urgentOrders" 
+              :key="order.id"
+              class="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between gap-3"
+            >
+              <div class="space-y-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono text-xs font-black text-slate-900">#{{ order.num }}</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold" :class="order.badgeClass">
+                    {{ order.status }}
+                  </span>
+                  <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-slate-900 text-white font-mono">
+                    Rak: {{ order.rack }}
+                  </span>
+                </div>
+                <p class="text-xs font-bold text-slate-800">{{ order.customer }} ({{ order.weight }} Kg)</p>
+                <p class="text-[10px] text-rose-600 font-semibold flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3 h-3"></i> Batas SLA: {{ order.due }}
+                </p>
+              </div>
+
+              <!-- Quick Progress Action Swipe/Tap Button -->
+              <button 
+                @click="progressOrder(order)"
+                class="px-3 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-black flex flex-col items-center gap-0.5 border border-brand-200 shrink-0"
+              >
+                <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                <span class="text-[9px]">Lanjut</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SCREEN 2: MOBILE NATIVE POS (TIMBANG & CATAT INSTAN)         -->
+      <!-- ============================================================ -->
+      <div v-if="activeNav === 'pos'" class="p-4 space-y-3.5 pb-28">
+        <!-- 1. Customer Select Bar -->
+        <div class="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 flex-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </div>
+            <div class="flex-1 truncate">
+              <span class="text-[10px] font-bold text-slate-400 block uppercase">Pelanggan</span>
+              <span class="text-xs font-extrabold text-slate-900 block truncate">{{ selectedCustomer.name }}</span>
+            </div>
+          </div>
+          <button 
+            @click="showCustomerPicker = true"
+            class="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
+          >
+            Ubah
+          </button>
+        </div>
+
+        <!-- 2. Layanan Chips Horizontal Scroll (Native Mobile) -->
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+            Pilih Kategori Layanan
+          </span>
+          <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+            <button 
+              v-for="cat in serviceCategories"
+              :key="cat.id"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all"
+              :class="activeCategory === cat.id ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'"
+              @click="activeCategory = cat.id"
+            >
+              {{ cat.name }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Service Cards for Selected Category -->
+        <div class="grid grid-cols-2 gap-2">
+          <button 
+            v-for="srv in filteredServices"
+            :key="srv.id"
+            @click="selectService(srv)"
+            class="p-3 rounded-2xl text-left transition-all border relative"
+            :class="selectedService.id === srv.id ? 'bg-sky-50/60 border-brand-500 ring-2 ring-brand-500/20' : 'bg-white border-slate-200'"
+          >
+            <div class="text-xs font-extrabold text-slate-900 leading-tight mb-1">{{ srv.name }}</div>
+            <div class="text-xs font-black text-brand-600">Rp {{ formatNumber(srv.price) }}/{{ srv.unit }}</div>
+            <div class="text-[10px] text-slate-400 mt-1">SLA {{ srv.duration }}</div>
+          </button>
+        </div>
+
+        <!-- 4. Big-Touch Scale Weight / Qty Stepper (Digital Scale Interface) -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="scale" class="w-4 h-4 text-brand-600"></i>
+              Input Timbangan Cucian
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              Satuan: {{ selectedService.unit || 'Kg' }}
+            </span>
+          </div>
+
+          <!-- Digital Scale Display -->
+          <div class="bg-slate-900 rounded-2xl p-4 text-center text-white relative overflow-hidden">
+            <div class="text-[10px] font-mono uppercase tracking-widest text-slate-400 mb-0.5">Berat Bersih Terukur</div>
+            <div class="text-4xl font-mono font-black tracking-tight text-sky-400">
+              {{ currentWeight.toFixed(1) }} <span class="text-lg font-bold text-white">{{ selectedService.unit }}</span>
+            </div>
+            <!-- Self Service Capacity Meter (8.0 Kg Limit indicator) -->
+            <div v-if="selectedService.category === 'Self Service'" class="mt-2 pt-2 border-t border-slate-800 text-[10px] flex items-center justify-between">
+              <span class="text-slate-400">Kapasitas Tabung (8 Kg):</span>
+              <span :class="currentWeight > 8.5 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'">
+                {{ currentWeight > 8.5 ? '⚠️ Melebihi Tabung (+1 Tabung)' : '✓ Pas 1 Tabung' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Large Touch Stepper Buttons -->
+          <div class="grid grid-cols-4 gap-2">
+            <button @click="adjustWeight(-1)" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm text-slate-800">-1.0</button>
+            <button @click="adjustWeight(-0.5)" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm text-slate-800">-0.5</button>
+            <button @click="adjustWeight(0.5)" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-sm text-slate-800">+0.5</button>
+            <button @click="adjustWeight(1.0)" class="py-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 font-black text-sm text-brand-700">+1.0</button>
+          </div>
+        </div>
+
+        <!-- 5. Perfume & Rack Selection -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
+            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Aroma Parfum</label>
+            <select v-model="selectedPerfume" class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl p-2 focus:outline-hidden">
+              <option value="Akasia">Akasia (Favorit)</option>
+              <option value="Downy Black">Downy Black</option>
+              <option value="Ocean Fresh">Ocean Fresh</option>
+              <option value="Sakura">Sakura</option>
+            </select>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
+            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Label / Nomor Rak</label>
+            <input v-model="rackNumber" type="text" placeholder="Misal: A-01" class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl p-2 uppercase focus:outline-hidden">
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SCREEN 3: ANTRIAN NATIVE SWIPE-TO-ACTION                      -->
+      <!-- ============================================================ -->
+      <div v-if="activeNav === 'queue'" class="p-4 space-y-3 pb-24">
+        <!-- Horizontal Scroll Status Filter Tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto hide-scrollbar pb-1">
+          <button 
+            v-for="tab in queueTabs" 
+            :key="tab.id"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all"
+            :class="activeQueueTab === tab.id ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200'"
+            @click="activeQueueTab = tab.id"
+          >
+            {{ tab.label }} ({{ tab.count }})
+          </button>
+        </div>
+
+        <!-- Order Cards with Native Gesture Indicator -->
+        <div class="space-y-2.5">
+          <div 
+            v-for="item in queueList" 
+            :key="item.id"
+            class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-xs space-y-2 relative overflow-hidden transition-all active:scale-[0.99]"
+            @click="openOrderDetailSheet(item)"
+          >
+            <!-- Card Header -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono text-xs font-black text-slate-900">#{{ item.orderNumber }}</span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold" :class="item.badgeClass">
+                  {{ item.status }}
+                </span>
+              </div>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-900 text-white font-mono">
+                Rak: {{ item.rack }}
+              </span>
+            </div>
+
+            <!-- Customer & Service Info -->
+            <div class="flex items-center justify-between text-xs">
+              <div class="font-bold text-slate-800">{{ item.customer }}</div>
+              <div class="font-black text-slate-900">Rp {{ formatNumber(item.total) }}</div>
+            </div>
+
+            <!-- Detail Meta Row -->
+            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+              <span>{{ item.service }} ({{ item.weight }} Kg)</span>
+              <span :class="item.paid ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'">
+                {{ item.paid ? 'LUNAS' : 'BELUM LUNAS' }}
+              </span>
+            </div>
+
+            <!-- Native Gesture Hint Bar -->
+            <div class="flex items-center justify-between pt-1 text-[10px] text-slate-400">
+              <span class="flex items-center gap-1"><i data-lucide="printer" class="w-3 h-3 text-brand-600"></i> Tap cetak</span>
+              <span class="flex items-center gap-1 text-sky-600 font-bold">Geser Kanan: Majukan Status ➜</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SCREEN 4: INSTANT CAMERA QR/BARCODE SCANNER                  -->
+      <!-- ============================================================ -->
+      <div v-if="activeNav === 'scan'" class="h-full flex flex-col justify-between p-4 bg-slate-950 text-white relative">
+        <!-- Viewfinder Overlay -->
+        <div class="text-center pt-2 space-y-1">
+          <div class="text-sm font-extrabold tracking-wide">Pindai Kode QR / Barcode</div>
+          <p class="text-xs text-slate-400">Arahkan kamera ke struk nota atau label rak cucian</p>
+        </div>
+
+        <!-- Camera Reticle Frame -->
+        <div class="relative w-64 h-64 mx-auto my-auto border-2 border-dashed border-sky-400/80 rounded-3xl flex items-center justify-center overflow-hidden">
+          <!-- Animated Scanning Beam -->
+          <div class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent scan-beam"></div>
+          <i data-lucide="qr-code" class="w-16 h-16 text-sky-400/30"></i>
+        </div>
+
+        <!-- Bottom Simulation Trigger -->
+        <div class="space-y-2 pb-20">
+          <button 
+            @click="simulateScanSuccess"
+            class="w-full py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-extrabold text-xs shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+          >
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>Simulasi Scan Sukses (Nota #261120000002)</span>
+          </button>
+          <p class="text-[10px] text-center text-slate-500">Kamera aktif langsung via native hardware API</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 4. Mobile Sticky Bottom Action Bar (Contextual for POS Tab) -->
+    <div v-if="activeNav === 'pos'" class="absolute bottom-[64px] left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200/90 z-20 flex items-center justify-between gap-3 shadow-lg">
+      <div>
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Tagihan</span>
+        <span class="text-base font-black text-slate-900 tracking-tight">
+          Rp {{ formatNumber(calculateTotal) }}
+        </span>
+      </div>
+      <button 
+        @click="processNewOrder"
+        class="px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-transform active:scale-95"
+      >
+        <span>Lanjut Bayar & Cetak</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- 5. Native Bottom Navigation Bar (Thumb Zone) -->
+    <div class="h-16 bg-white border-t border-slate-200/90 flex items-center justify-around px-2 shrink-0 z-30 select-none">
+      <button 
+        @click="activeNav = 'home'"
+        class="flex-1 py-1 flex flex-col items-center gap-1 transition-all"
+        :class="activeNav === 'home' ? 'text-brand-600 font-extrabold' : 'text-slate-400 font-medium'"
+      >
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px]">Beranda</span>
+      </button>
+
+      <button 
+        @click="activeNav = 'queue'"
+        class="flex-1 py-1 flex flex-col items-center gap-1 transition-all relative"
+        :class="activeNav === 'queue' ? 'text-brand-600 font-extrabold' : 'text-slate-400 font-medium'"
+      >
+        <i data-lucide="layers" class="w-5 h-5"></i>
+        <span class="text-[10px]">Antrian</span>
+        <span class="absolute top-0 right-5 w-2 h-2 rounded-full bg-brand-600"></span>
+      </button>
+
+      <!-- Center Floating Action POS Button -->
+      <button 
+        @click="activeNav = 'pos'"
+        class="w-12 h-12 -mt-5 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 border-2 border-white"
+        title="Input Order Cepat"
+      >
+        <i data-lucide="plus" class="w-6 h-6 stroke-[3]"></i>
+      </button>
+
+      <button 
+        @click="activeNav = 'scan'"
+        class="flex-1 py-1 flex flex-col items-center gap-1 transition-all"
+        :class="activeNav === 'scan' ? 'text-brand-600 font-extrabold' : 'text-slate-400 font-medium'"
+      >
+        <i data-lucide="scan" class="w-5 h-5"></i>
+        <span class="text-[10px]">Scan QR</span>
+      </button>
+
+      <button 
+        @click="showSettingsSheet = true"
+        class="flex-1 py-1 flex flex-col items-center gap-1 transition-all text-slate-400 font-medium hover:text-slate-800"
+      >
+        <i data-lucide="menu" class="w-5 h-5"></i>
+        <span class="text-[10px]">Menu</span>
+      </button>
+    </div>
+
+    <!-- 6. Mobile Bottom Sheet: Order Quick Action (Draggable Simulation) -->
+    <div 
+      v-if="selectedOrderSheet" 
+      class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col justify-end"
+      @click.self="selectedOrderSheet = null"
+    >
+      <div class="bg-white rounded-t-[32px] p-5 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+        <!-- Sheet Drag Handle -->
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto"></div>
+
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <h3 class="font-mono text-sm font-black text-slate-900">#{{ selectedOrderSheet.orderNumber }}</h3>
+            <p class="text-xs font-bold text-slate-600">{{ selectedOrderSheet.customer }} • Rak: {{ selectedOrderSheet.rack }}</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl text-xs font-black" :class="selectedOrderSheet.badgeClass">
+            {{ selectedOrderSheet.status }}
+          </span>
+        </div>
+
+        <!-- 3 Core One-Handed Actions -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <button 
+            @click="printViaBluetooth"
+            class="py-3 rounded-2xl bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95"
+          >
+            <i data-lucide="printer" class="w-4 h-4 text-sky-400"></i>
+            <span>Cetak BT 58mm</span>
+          </button>
+          <button 
+            @click="progressSheetStatus"
+            class="py-3 rounded-2xl bg-brand-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95"
+          >
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Majukan Status</span>
+          </button>
+        </div>
+
+        <button 
+          @click="selectedOrderSheet = null"
+          class="w-full py-2.5 rounded-xl bg-slate-100 font-bold text-xs text-slate-600"
+        >
+          Tutup Lembar Aksi
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification Toast Popup -->
+    <div 
+      v-if="toastMessage" 
+      class="absolute top-16 left-4 right-4 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold z-50 animate-in fade-in slide-in-from-top-2"
+    >
+      <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+      <span>{{ toastMessage }}</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const { createApp, ref, computed, watch, onMounted, nextTick } = Vue
+
+  createApp({
+    setup() {
+      const activeNav = ref('home')
+      const bluetoothConnected = ref(true)
+      const toastMessage = ref('')
+      const activeCategory = ref('cat-1')
+      const currentWeight = ref(8.0)
+      const selectedPerfume = ref('Akasia')
+      const rackNumber = ref('A-02')
+
+      const selectedCustomer = ref({
+        name: 'Nuryanto (0812-3456-7890)',
+        phone: '081234567890'
+      })
+
+      const serviceCategories = [
+        { id: 'cat-1', name: 'Self Service' },
+        { id: 'cat-2', name: 'Cuci Setrika' },
+        { id: 'cat-3', name: 'Setrika Saja' },
+        { id: 'cat-4', name: 'Bed Cover' },
+      ]
+
+      const services = [
+        { id: 's1', categoryId: 'cat-1', category: 'Self Service', name: 'Cuci Basah (Self Service)', price: 8000, unit: 'Tabung', duration: 'Instant' },
+        { id: 's2', categoryId: 'cat-1', category: 'Self Service', name: 'Cuci Kering (Self Service)', price: 20000, unit: 'Tabung', duration: 'Instant' },
+        { id: 's3', categoryId: 'cat-2', category: 'Cuci Setrika', name: 'Cuci Setrika Reguler', price: 7000, unit: 'Kg', duration: '3 Hari' },
+        { id: 's4', categoryId: 'cat-2', category: 'Cuci Setrika', name: 'Cuci Setrika Kilat', price: 11000, unit: 'Kg', duration: '24 Jam' },
+        { id: 's5', categoryId: 'cat-3', category: 'Setrika Saja', name: 'Setrika Saja Reguler', price: 6000, unit: 'Kg', duration: '3 Hari' },
+        { id: 's6', categoryId: 'cat-4', category: 'Bed Cover', name: 'Bed Cover Sedang', price: 30000, unit: 'Pcs', duration: '3 Hari' },
+      ]
+
+      const selectedService = ref(services[0])
+
+      const filteredServices = computed(() => {
+        return services.filter(s => s.categoryId === activeCategory.value)
+      })
+
+      const urgentOrders = ref([
+        { id: '1', num: '261120000002', status: 'PROSES', customer: 'Nuryanto', weight: 8.0, rack: 'A-01', due: '14:00 (2 jam lagi)', badgeClass: 'bg-amber-100 text-amber-800' },
+        { id: '2', num: '261120000005', status: 'ANTRIAN', customer: 'Bu Sarah', weight: 4.5, rack: 'B-03', due: '17:00 (Hari ini)', badgeClass: 'bg-sky-100 text-sky-800' },
+      ])
+
+      const queueTabs = [
+        { id: 'ALL', label: 'Semua', count: 14 },
+        { id: 'ANTRIAN', label: 'Antrian', count: 4 },
+        { id: 'PROSES', label: 'Proses', count: 6 },
+        { id: 'SIAP AMBIL', label: 'Siap Ambil', count: 4 },
+      ]
+      const activeQueueTab = ref('ALL')
+
+      const queueList = ref([
+        { id: '1', orderNumber: '261120000002', status: 'PROSES', customer: 'Nuryanto', total: 28000, service: 'Cuci Basah (Self Service)', weight: 8.0, rack: 'A-01', paid: true, badgeClass: 'bg-amber-100 text-amber-800' },
+        { id: '2', orderNumber: '261120000001', status: 'SIAP AMBIL', customer: 'Thiya', total: 56000, service: 'Cuci Setrika Reguler', weight: 8.0, rack: 'A-02', paid: true, badgeClass: 'bg-purple-100 text-purple-800' },
+        { id: '3', orderNumber: '261119000007', status: 'ANTRIAN', customer: 'Doni Pratama', total: 152000, service: 'Cuci Setrika Turbo', weight: 9.5, rack: 'C-01', paid: false, badgeClass: 'bg-sky-100 text-sky-800' },
+      ])
+
+      const selectedOrderSheet = ref(null)
+
+      const calculateTotal = computed(() => {
+        return Math.round(selectedService.value.price * (currentWeight.value || 1))
+      })
+
+      const showToast = (msg) => {
+        toastMessage.value = msg
+        setTimeout(() => { toastMessage.value = '' }, 2500)
+      }
+
+      const selectService = (srv) => {
+        selectedService.value = srv
+        if (srv.unit === 'Tabung' && currentWeight.value < 1) currentWeight.value = 1
+      }
+
+      const adjustWeight = (delta) => {
+        const next = Math.max(0.5, currentWeight.value + delta)
+        currentWeight.value = Math.round(next * 10) / 10
+      }
+
+      const toggleBluetooth = () => {
+        bluetoothConnected.value = !bluetoothConnected.value
+        showToast(bluetoothConnected.value ? 'Printer Bluetooth 58mm Terhubung!' : 'Printer Bluetooth Diputus')
+      }
+
+      const processNewOrder = () => {
+        showToast(`Order baru berhasil dibuat & dikirim via WA! Total Rp ${formatNumber(calculateTotal.value)}`)
+        activeNav.value = 'queue'
+      }
+
+      const openOrderDetailSheet = (order) => {
+        selectedOrderSheet.value = order
+      }
+
+      const printViaBluetooth = () => {
+        showToast('Struk berhasil dicetak ke Mini Printer BT 58mm!')
+      }
+
+      const progressSheetStatus = () => {
+        if (!selectedOrderSheet.value) return
+        if (selectedOrderSheet.value.status === 'ANTRIAN') selectedOrderSheet.value.status = 'PROSES'
+        else if (selectedOrderSheet.value.status === 'PROSES') selectedOrderSheet.value.status = 'SIAP AMBIL'
+        else if (selectedOrderSheet.value.status === 'SIAP AMBIL') selectedOrderSheet.value.status = 'SELESAI'
+        showToast(`Status #${selectedOrderSheet.value.orderNumber} diubah ke ${selectedOrderSheet.value.status}`)
+        setTimeout(() => { selectedOrderSheet.value = null }, 800)
+      }
+
+      const progressOrder = (order) => {
+        order.status = 'SIAP AMBIL'
+        order.badgeClass = 'bg-purple-100 text-purple-800'
+        showToast(`Status #${order.num} dimajukan ke SIAP AMBIL!`)
+      }
+
+      const simulateScanSuccess = () => {
+        selectedOrderSheet.value = queueList.value[0]
+        showToast('QR Code Terbaca! Membuka detail cucian...')
+      }
+
+      const formatNumber = (val) => {
+        return (val || 0).toLocaleString('id-ID')
+      }
+
+      watch([activeNav, selectedOrderSheet], () => {
+        nextTick(() => {
+          if (window.lucide) {
+            window.lucide.createIcons()
+          }
+        })
+      })
+
+      onMounted(() => {
+        lucide.createIcons()
+      })
+
+      return {
+        activeNav,
+        bluetoothConnected,
+        toastMessage,
+        activeCategory,
+        serviceCategories,
+        filteredServices,
+        selectedService,
+        currentWeight,
+        selectedPerfume,
+        rackNumber,
+        selectedCustomer,
+        urgentOrders,
+        queueTabs,
+        activeQueueTab,
+        queueList,
+        selectedOrderSheet,
+        calculateTotal,
+        selectService,
+        adjustWeight,
+        toggleBluetooth,
+        processNewOrder,
+        openOrderDetailSheet,
+        printViaBluetooth,
+        progressSheetStatus,
+        progressOrder,
+        simulateScanSuccess,
+        formatNumber,
+      }
+    }
+  }).mount('#app')
+</script>
+
+</body>
+</html>
