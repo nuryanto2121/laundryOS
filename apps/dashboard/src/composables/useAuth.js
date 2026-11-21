@@ -1,4 +1,5 @@
 import { reactive, computed } from 'vue'
+import { api } from '../api/client'
 
 const TOKEN_KEY = 'laundryos_auth_token'
 const USER_KEY = 'laundryos_auth_user'
@@ -46,30 +47,7 @@ export function useAuth() {
 
   const login = async (username, password) => {
     try {
-      const res = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      // If gateway proxies /auth/login directly without prefix fallback
-      let data
-      if (!res.ok && res.status === 404) {
-        const fallbackRes = await fetch('/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        })
-        data = await fallbackRes.json()
-        if (!fallbackRes.ok) {
-          return { success: false, message: data.error || data.message || 'Login gagal' }
-        }
-      } else {
-        data = await res.json()
-        if (!res.ok) {
-          return { success: false, message: data.error || data.message || 'Login gagal' }
-        }
-      }
+      const data = await api.post('/auth/login', { username, password })
 
       state.token = data.token
       state.user = data.user
@@ -79,7 +57,7 @@ export function useAuth() {
       return { success: true, user: data.user }
     } catch (err) {
       console.error('Login error:', err)
-      return { success: false, message: 'Gagal menghubungi server. Periksa koneksi Anda.' }
+      return { success: false, message: err.message || 'Gagal menghubungi server. Periksa koneksi Anda.' }
     }
   }
 

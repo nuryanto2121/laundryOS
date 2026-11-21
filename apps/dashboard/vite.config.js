@@ -17,5 +17,15 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    proxy: {
+      '/auth': 'http://localhost:8080',
+      '/master': 'http://localhost:8080',
+      '/customers': 'http://localhost:8080',
+      '/orders': 'http://localhost:8080',
+      '/expenses': 'http://localhost:8080',
+      '/reports': 'http://localhost:8080',
+      '/attendances': 'http://localhost:8080',
+      '/leaves': 'http://localhost:8080',
+    },
   },
 });
