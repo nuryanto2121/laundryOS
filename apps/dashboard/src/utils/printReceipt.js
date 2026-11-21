@@ -85,33 +85,55 @@ export function printThermalReceipt(elementOrId, options = {}) {
           .flex { display: flex; }
           .justify-between { justify-content: space-between; }
           .items-center { align-items: center; }
+          .grid { display: grid; }
+          .grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+          .gap-1 { gap: 4px; }
+          .border { border: 1px solid #000; }
+          .border-2 { border: 2px solid #000; }
           .border-b { border-bottom: 1px dashed #000; }
           .border-t { border-top: 1px dashed #000; }
+          .border-b-2 { border-bottom: 2px dashed #000; }
+          .border-t-2 { border-top: 2px dashed #000; }
           .border-dashed { border-style: dashed; }
-          .border-slate-400, .border-slate-300, .border-slate-200, .border-slate-100 {
+          .border-slate-900, .border-slate-400, .border-slate-300, .border-slate-200, .border-slate-100, .border-amber-300 {
             border-color: #000 !important;
           }
+          .p-1 { padding: 4px; }
+          .p-1\\.5 { padding: 6px; }
+          .p-2 { padding: 8px; }
+          .p-2\\.5 { padding: 10px; }
+          .px-1 { padding-left: 4px; padding-right: 4px; }
+          .px-1\\.5 { padding-left: 6px; padding-right: 6px; }
+          .px-2 { padding-left: 8px; padding-right: 8px; }
+          .py-0\\.5 { padding-top: 2px; padding-bottom: 2px; }
           .py-1 { padding-top: 4px; padding-bottom: 4px; }
           .py-1\\.5 { padding-top: 6px; padding-bottom: 6px; }
           .py-2 { padding-top: 8px; padding-bottom: 8px; }
           .py-2\\.5 { padding-top: 10px; padding-bottom: 10px; }
           .py-3 { padding-top: 12px; padding-bottom: 12px; }
+          .pb-1 { padding-bottom: 4px; }
           .pb-2 { padding-bottom: 8px; }
           .pb-3 { padding-bottom: 12px; }
+          .pt-1 { padding-top: 4px; }
           .pt-2 { padding-top: 8px; }
           .pt-3 { padding-top: 12px; }
+          .space-y-0\\.5 > * + * { margin-top: 2px; }
           .space-y-1 > * + * { margin-top: 4px; }
           .space-y-1\\.5 > * + * { margin-top: 6px; }
           .space-y-2 > * + * { margin-top: 8px; }
-          .text-\\[11px\\] { font-size: 11px; }
+          .text-\\[8px\\] { font-size: 8px; }
+          .text-\\[9px\\] { font-size: 9px; }
           .text-\\[10px\\] { font-size: 10px; }
+          .text-\\[11px\\] { font-size: 11px; }
           .text-xs { font-size: 11px; }
-          .text-sm { font-size: 12px; }
-          .text-base { font-size: 14px; }
-          .text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500 {
+          .text-sm { font-size: 13px; }
+          .text-base { font-size: 15px; }
+          .text-lg { font-size: 17px; }
+          .font-black { font-weight: 900; }
+          .text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500, .text-brand-700, .text-amber-900 {
             color: #000000 !important;
           }
-          .bg-white, .bg-slate-50 {
+          .bg-white, .bg-slate-50, .bg-slate-100, .bg-slate-200, .bg-amber-50, .bg-slate-900 {
             background-color: transparent !important;
           }
           .print\\:hidden, button, svg {

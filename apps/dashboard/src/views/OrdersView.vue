@@ -674,10 +674,18 @@ const openPrintReceipt = (order) => {
 
 const handleOrderCreated = async (newOrderData) => {
   await loadOrders()
-  if (newOrderData?.order) {
-    orderForPrint.value = newOrderData.order
-    showPrintModal.value = true
+  const createdId = newOrderData?.order?.id
+  const matched = orders.value.find((o) => o.id === createdId)
+  if (matched) {
+    orderForPrint.value = matched
+  } else if (newOrderData?.order) {
+    orderForPrint.value = {
+      ...newOrderData.order,
+      customer_name: newOrderData.order.customer_name || 'Pelanggan Walk-in',
+      customer_phone: newOrderData.order.customer_phone || '',
+    }
   }
+  showPrintModal.value = true
 }
 
 const handleOrderUpdated = async () => {

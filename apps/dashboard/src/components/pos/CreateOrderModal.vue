@@ -350,6 +350,20 @@
               />
             </div>
 
+            <!-- Jumlah Potong Pakaian (Pcs) Opsional -->
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                Jumlah Potong Pcs <span class="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+              </label>
+              <input
+                v-model="orderConfig.piece_count"
+                type="number"
+                min="0"
+                placeholder="Cth: 14"
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-hidden font-bold"
+              />
+            </div>
+
             <!-- Estimasi Selesai (SLA) -->
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1"
@@ -1057,6 +1071,7 @@ const selfServiceWeight = ref(8.0)
 const selfServiceAction = ref('TWO_TUBES') // 'TWO_TUBES' or 'SPLIT_EXCESS'
 
 const orderConfig = reactive({
+  piece_count: '',
   perfume_name: 'Akasia',
   discount_type: 'NONE',
   custom_discount: 0,
@@ -1434,6 +1449,11 @@ const submitOrder = async () => {
       estDate = new Date(orderConfig.estimated_completion_at).toISOString()
     }
 
+    let finalNotes = orderConfig.notes ? orderConfig.notes.trim() : ''
+    if (orderConfig.piece_count) {
+      finalNotes = `[${orderConfig.piece_count} Pcs] ${finalNotes}`.trim()
+    }
+
     const payload = {
       customer_id: custID,
       customer_name: custName,
@@ -1448,7 +1468,8 @@ const submitOrder = async () => {
       payment_method_name: paymentOption.value === 'SEKARANG' ? paymentMethod.value : '',
       rack_number: orderConfig.rack_number,
       estimated_completion_at: estDate,
-      notes: orderConfig.notes,
+      notes: finalNotes,
+      piece_count: Number(orderConfig.piece_count) || null,
       pickup_required: false,
       created_by: 'Kasir Utama',
     }

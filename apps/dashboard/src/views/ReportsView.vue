@@ -240,6 +240,173 @@
         </div>
       </div>
 
+      <!-- 3. VISUAL TREND CHART: Grafik Naik Turun Kinerja Berdasarkan Periode -->
+      <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <TrendingUp class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Grafik & Tren Kinerja Laundry</span>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  {{ chartData.length }} Hari
+                </span>
+              </h2>
+              <p class="text-xs text-slate-400">
+                Visualisasi fluktuasi harian berdasarkan rentang periode yang dipilih
+              </p>
+            </div>
+          </div>
+
+          <!-- Metric Toggle Buttons -->
+          <div class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl self-start sm:self-auto text-xs font-bold">
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="chartMetric === 'OMSET' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+              @click="chartMetric = 'OMSET'"
+            >
+              Omset (Rp)
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="chartMetric === 'CASH' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+              @click="chartMetric = 'CASH'"
+            >
+              Kas Masuk (Rp)
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+              :class="chartMetric === 'VOLUME' ? 'bg-white text-amber-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+              @click="chartMetric = 'VOLUME'"
+            >
+              Transaksi (Order)
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode Kasir Hidden Notice -->
+        <div
+          v-if="isFinancialsHidden && chartMetric !== 'VOLUME'"
+          class="p-8 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2"
+        >
+          <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center mx-auto">
+            <Lock class="w-5 h-5" />
+          </div>
+          <p class="text-xs font-bold text-slate-700">Nominal Keuangan Disembunyikan (Mode Kasir)</p>
+          <p class="text-[11px] text-slate-400 max-w-md mx-auto">
+            Buka akses Owner dengan memasukkan PIN untuk melihat nominal grafik, atau beralih ke metrik <strong>Transaksi (Order)</strong>.
+          </p>
+        </div>
+
+        <!-- Empty Data -->
+        <div
+          v-else-if="chartData.length === 0"
+          class="py-12 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl"
+        >
+          Belum ada riwayat transaksi pada rentang periode ini.
+        </div>
+
+        <!-- Interactive Chart Canvas -->
+        <div v-else class="space-y-4">
+          <!-- Main Bars Area -->
+          <div class="h-56 sm:h-64 flex items-end gap-2 sm:gap-4 pt-8 pb-2 px-2 border-b border-slate-100 overflow-x-auto scrollbar-none">
+            <div
+              v-for="bar in chartData"
+              :key="bar.rawDate"
+              class="flex-1 min-w-[36px] sm:min-w-[48px] max-w-[80px] h-full flex flex-col justify-end items-center group relative cursor-pointer"
+            >
+              <!-- Tooltip on Hover -->
+              <div
+                class="absolute -top-12 z-20 hidden group-hover:flex flex-col items-center bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-lg shadow-xl whitespace-nowrap pointer-events-none transition-all"
+              >
+                <span>{{ bar.dateLabel }}</span>
+                <span v-if="chartMetric === 'OMSET'" class="text-indigo-300">Rp {{ formatRupiah(bar.omset) }}</span>
+                <span v-else-if="chartMetric === 'CASH'" class="text-emerald-300">Rp {{ formatRupiah(bar.pendapatan_kas) }}</span>
+                <span v-else class="text-amber-300">{{ bar.total_transaksi }} Transaksi</span>
+                <div class="w-2 h-2 bg-slate-900 rotate-45 -mb-1 mt-0.5"></div>
+              </div>
+
+              <!-- Peak Badge -->
+              <div
+                v-if="peakDay && peakDay.rawDate === bar.rawDate && chartData.length > 1"
+                class="mb-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs whitespace-nowrap animate-bounce"
+              >
+                ⭐ Puncak
+              </div>
+
+              <!-- Bar Value Label (visible when <= 10 bars or peak) -->
+              <span
+                v-if="chartData.length <= 10"
+                class="text-[10px] font-bold text-slate-500 mb-1 group-hover:text-slate-900 transition-colors truncate max-w-full"
+              >
+                <template v-if="chartMetric === 'VOLUME'">{{ bar.total_transaksi }}</template>
+                <template v-else-if="chartMetric === 'OMSET'">{{ bar.omset >= 1000000 ? (bar.omset / 1000000).toFixed(1) + 'M' : (bar.omset / 1000).toFixed(0) + 'k' }}</template>
+                <template v-else>{{ bar.pendapatan_kas >= 1000000 ? (bar.pendapatan_kas / 1000000).toFixed(1) + 'M' : (bar.pendapatan_kas / 1000).toFixed(0) + 'k' }}</template>
+              </span>
+
+              <!-- Animated Column Bar -->
+              <div
+                class="w-full rounded-t-xl transition-all duration-300 relative overflow-hidden"
+                :class="
+                  chartMetric === 'OMSET'
+                    ? 'bg-gradient-to-t from-brand-600 via-indigo-600 to-indigo-400 group-hover:from-brand-500 group-hover:to-indigo-300'
+                    : chartMetric === 'CASH'
+                      ? 'bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 group-hover:from-emerald-500 group-hover:to-teal-300'
+                      : 'bg-gradient-to-t from-amber-600 via-amber-500 to-amber-400 group-hover:from-amber-500 group-hover:to-amber-300'
+                "
+                :style="{
+                  height: Math.max(8, Math.round(((chartMetric === 'OMSET' ? bar.omset : chartMetric === 'CASH' ? bar.pendapatan_kas : bar.total_transaksi) / maxMetricValue) * 100)) + '%'
+                }"
+              >
+                <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+
+              <!-- Date Label Below Bar -->
+              <div class="mt-2 text-center">
+                <p class="text-[11px] font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                  {{ bar.dateLabel }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Summary Highlights Strip -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-500 font-medium">Rata-rata Harian:</span>
+              <span class="font-bold text-slate-900">
+                <template v-if="chartMetric === 'VOLUME'">{{ chartSummary.avgValue.toFixed(1) }} Order/hari</template>
+                <template v-else>Rp {{ formatRupiah(chartSummary.avgValue) }}/hari</template>
+              </span>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-500 font-medium">Hari Tertinggi:</span>
+              <span class="font-bold text-slate-900">
+                <template v-if="peakDay">
+                  {{ peakDay.dateLabel }} ({{ chartMetric === 'VOLUME' ? `${peakDay.total_transaksi} Order` : `Rp ${formatRupiah(chartMetric === 'OMSET' ? peakDay.omset : peakDay.pendapatan_kas)}` }})
+                </template>
+                <template v-else>-</template>
+              </span>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+              <span class="text-slate-500 font-medium">Akumulasi Periode:</span>
+              <span class="font-black text-indigo-600">
+                <template v-if="chartMetric === 'VOLUME'">{{ chartSummary.totalVolume }} Total Transaksi</template>
+                <template v-else-if="chartMetric === 'OMSET'">Rp {{ formatRupiah(chartSummary.totalOmset) }}</template>
+                <template v-else>Rp {{ formatRupiah(chartSummary.totalCash) }}</template>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 4. TIGA KATEGORI LAPORAN UTAMA (Main Tabs) -->
       <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
         <!-- Tab 1: Laporan Transaksi -->
@@ -2077,6 +2244,111 @@ const financialReport = ref({
   total_pengeluaran: 0,
   laba_bersih: 0,
   daily_chart: [],
+})
+
+// Visual Trend Chart States & Computations
+const chartMetric = ref('OMSET') // 'OMSET' | 'CASH' | 'VOLUME'
+
+const chartData = computed(() => {
+  const list = financialReport.value?.daily_chart || []
+  if (!Array.isArray(list)) return []
+  return list.map((item) => {
+    const rawDate = item.report_date
+    let formattedDateLabel = ''
+    let fullDateLabel = ''
+    try {
+      const d = new Date(rawDate)
+      formattedDateLabel = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+      fullDateLabel = d.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    } catch (_) {
+      formattedDateLabel = String(rawDate)
+      fullDateLabel = String(rawDate)
+    }
+
+    const omsetVal = Number(item.omset) || 0
+    const cashVal = Number(item.pendapatan_kas) || 0
+    const volumeVal = Number(item.total_transaksi) || 0
+
+    return {
+      rawDate,
+      dateLabel: formattedDateLabel,
+      fullDateLabel,
+      omset: omsetVal,
+      pendapatan_kas: cashVal,
+      total_transaksi: volumeVal,
+    }
+  })
+})
+
+const maxMetricValue = computed(() => {
+  if (chartData.value.length === 0) return 1
+  let max = 0
+  for (const item of chartData.value) {
+    let val = 0
+    if (chartMetric.value === 'OMSET') val = item.omset
+    else if (chartMetric.value === 'CASH') val = item.pendapatan_kas
+    else val = item.total_transaksi
+    if (val > max) max = val
+  }
+  return max > 0 ? max : 1
+})
+
+const peakDay = computed(() => {
+  if (chartData.value.length === 0) return null
+  let highest = null
+  let max = -1
+  for (const item of chartData.value) {
+    let val = 0
+    if (chartMetric.value === 'OMSET') val = item.omset
+    else if (chartMetric.value === 'CASH') val = item.pendapatan_kas
+    else val = item.total_transaksi
+    if (val > max) {
+      max = val
+      highest = item
+    }
+  }
+  return max > 0 ? highest : null
+})
+
+const chartSummary = computed(() => {
+  const data = chartData.value
+  const days = data.length || 1
+  let totalOmset = 0
+  let totalCash = 0
+  let totalVolume = 0
+
+  for (const item of data) {
+    totalOmset += item.omset
+    totalCash += item.pendapatan_kas
+    totalVolume += item.total_transaksi
+  }
+
+  let selectedTotal = 0
+  let avgValue = 0
+  if (chartMetric.value === 'OMSET') {
+    selectedTotal = totalOmset
+    avgValue = totalOmset / days
+  } else if (chartMetric.value === 'CASH') {
+    selectedTotal = totalCash
+    avgValue = totalCash / days
+  } else {
+    selectedTotal = totalVolume
+    avgValue = totalVolume / days
+  }
+
+  return {
+    totalOmset,
+    totalCash,
+    totalVolume,
+    selectedTotal,
+    avgValue,
+    daysCount: days,
+  }
 })
 
 const serviceBreakdown = ref([])

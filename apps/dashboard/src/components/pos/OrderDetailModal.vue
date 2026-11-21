@@ -150,12 +150,20 @@
       <!-- Modal Body (Scrollable) -->
       <div class="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
         <!-- Summary Cards Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
           <!-- Total Berat -->
           <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
             <span class="text-slate-400 font-medium">Total Berat:</span>
             <p class="font-bold text-slate-800 text-sm mt-0.5">
               {{ order.total_weight ? `${order.total_weight} Kg` : '-' }}
+            </p>
+          </div>
+
+          <!-- Jumlah Potong (Pcs) -->
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <span class="text-slate-400 font-medium">Jml Potong:</span>
+            <p class="font-bold text-slate-800 text-sm mt-0.5">
+              {{ calculatedPcs ? `${calculatedPcs} Pcs` : '-' }}
             </p>
           </div>
 
@@ -185,12 +193,21 @@
           </div>
 
           <!-- Estimasi Selesai -->
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 col-span-2 sm:col-span-1">
             <span class="text-slate-400 font-medium">SLA Selesai:</span>
             <p class="font-bold text-slate-800 text-xs mt-0.5">
               {{ formatDateTime(order.estimated_completion_at) }}
             </p>
           </div>
+        </div>
+
+        <!-- Catatan Khusus Pengerjaan (Traveler Note) -->
+        <div
+          v-if="order.notes"
+          class="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs flex items-start gap-2 text-amber-900"
+        >
+          <span class="font-extrabold shrink-0 bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">Instruksi Khusus</span>
+          <span class="font-semibold">{{ order.notes }}</span>
         </div>
 
         <!-- Items Table -->
@@ -301,7 +318,7 @@
     </div>
 
     <!-- Sub-Modals -->
-    <ReceiptPrintModal v-model="showReceiptModal" :order="order" :items="displayItems" />
+    <ReceiptPrintModal v-model="showReceiptModal" :order="enrichedOrderForPrint" :items="displayItems" />
     <PaymentModal
       v-model="showPaymentModal"
       :order="order"
@@ -510,6 +527,34 @@ const displayItems = computed(() => {
 const displayPhotos = computed(() => {
   if (Array.isArray(props.photos) && props.photos.length > 0) return props.photos
   return loadedPhotos.value
+})
+
+const enrichedOrderForPrint = computed(() => {
+  if (!props.order) return {}
+  return {
+    ...props.order,
+    customer_name:
+      props.order.customer_name || props.order.customer?.full_name || 'Pelanggan Walk-in',
+    customer_phone: props.order.customer_phone || props.order.customer?.phone || '',
+  }
+})
+
+const calculatedPcs = computed(() => {
+  if (props.order?.piece_count) return props.order.piece_count
+  const match = (props.order?.notes || '').match(/\[(\d+)\s*Pcs\]/i)
+  if (match) return parseInt(match[1], 10)
+  const items = displayItems.value
+  if (!items || items.length === 0) return null
+  let totalPcs = 0
+  let foundPiece = false
+  for (const item of items) {
+    const unit = (item.unit || '').toUpperCase()
+    if (unit === 'PCS' || unit === 'SATUAN' || unit === 'POTONG' || unit === 'LEMBAR') {
+      totalPcs += Number(item.quantity) || 0
+      foundPiece = true
+    }
+  }
+  return foundPiece ? totalPcs : null
 })
 
 const displayHistory = computed(() => {

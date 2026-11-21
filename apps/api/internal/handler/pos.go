@@ -37,6 +37,16 @@ func (h *POSHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enrich with customer details for instant receipt printing
+	detail, err := h.svc.GetOrderDetail(r.Context(), order.ID.String())
+	if err == nil {
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"order": detail.Order,
+			"items": detail.Items,
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"order": order,
 		"items": items,
