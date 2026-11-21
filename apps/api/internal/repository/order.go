@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,22 +80,59 @@ func (r *OrderRepository) GetLatestOrderNumberToday(ctx context.Context) (string
 	return orderNumber, nil
 }
 
-// GetLatestByCustomerPhone retrieves the latest order for a customer by phone number.
+// GetLatestByCustomerPhone retrieves the latest order for a customer by phone number,
+// checking both international ("62...") and local ("0...") phone formats to find the latest active order.
 func (r *OrderRepository) GetLatestByCustomerPhone(ctx context.Context, phone string) (model.OrderTrackingDetail, error) {
-	row, err := r.queries.GetLatestOrderByCustomerPhone(ctx, phone)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return model.OrderTrackingDetail{}, nil
-		}
-		return model.OrderTrackingDetail{}, fmt.Errorf("repository: get latest order by phone: %w", err)
+	clean := strings.TrimSpace(phone)
+	if atIdx := strings.Index(clean, "@"); atIdx != -1 {
+		clean = clean[:atIdx]
+	}
+	clean = strings.TrimPrefix(clean, "+")
+
+	var candidates []model.OrderTrackingDetail
+
+	// 1. Primary phone query
+	if row, err := r.queries.GetLatestOrderByCustomerPhone(ctx, clean); err == nil && row.OrderNumber != "" {
+		candidates = append(candidates, trackingRowToModel(
+			row.ID, row.OrderNumber, row.CustomerID, row.CustomerName,
+			row.ServiceID, row.ServiceName, int(row.DurationDay.Int32),
+			row.Status, row.TotalWeight, row.TotalPrice, row.PickupRequired,
+			row.Notes, row.CreatedAt, row.UpdatedAt,
+		))
 	}
 
-	return trackingRowToModel(
-		row.ID, row.OrderNumber, row.CustomerID, row.CustomerName,
-		row.ServiceID, row.ServiceName, int(row.DurationDay.Int32),
-		row.Status, row.TotalWeight, row.TotalPrice, row.PickupRequired,
-		row.Notes, row.CreatedAt, row.UpdatedAt,
-	), nil
+	// 2. Alternate phone format query (62 <-> 0)
+	var altPhone string
+	if strings.HasPrefix(clean, "62") {
+		altPhone = "0" + clean[2:]
+	} else if strings.HasPrefix(clean, "0") {
+		altPhone = "62" + clean[1:]
+	}
+
+	if altPhone != "" {
+		if rowAlt, errAlt := r.queries.GetLatestOrderByCustomerPhone(ctx, altPhone); errAlt == nil && rowAlt.OrderNumber != "" {
+			candidates = append(candidates, trackingRowToModel(
+				rowAlt.ID, rowAlt.OrderNumber, rowAlt.CustomerID, rowAlt.CustomerName,
+				rowAlt.ServiceID, rowAlt.ServiceName, int(rowAlt.DurationDay.Int32),
+				rowAlt.Status, rowAlt.TotalWeight, rowAlt.TotalPrice, rowAlt.PickupRequired,
+				rowAlt.Notes, rowAlt.CreatedAt, rowAlt.UpdatedAt,
+			))
+		}
+	}
+
+	if len(candidates) == 0 {
+		return model.OrderTrackingDetail{}, nil
+	}
+
+	// Pick the newest order between primary and alternate phone formats
+	best := candidates[0]
+	for _, c := range candidates[1:] {
+		if c.CreatedAt > best.CreatedAt {
+			best = c
+		}
+	}
+
+	return best, nil
 }
 
 // GetByOrderNumber retrieves an order by its unique order number.

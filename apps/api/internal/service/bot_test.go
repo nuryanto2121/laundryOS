@@ -490,3 +490,80 @@ func TestBotService_StaffGroupWeighing_OverloadTabung(t *testing.T) {
 		t.Errorf("expected overload prompt ACK, got: %s", weighRes.Reply)
 	}
 }
+
+func TestBotService_CheckStatusExplicitOrderNumbers(t *testing.T) {
+	ctx := context.Background()
+	mockRepo := new(MockOrderRepository)
+	orderSvc := service.NewOrderService(mockRepo)
+
+	targetOrder := model.OrderTrackingDetail{
+		ID:           "target-order-id",
+		OrderNumber:  "ORD261121000001",
+		CustomerID:   "cust-nebula",
+		CustomerName: "Nebula",
+		ServiceName:  "Cuci Boneka",
+		DurationDay:  3,
+		Status:       model.OrderStatusCompleted,
+		TotalPrice:   50000,
+	}
+
+	mockRepo.On("GetByOrderNumber", ctx, "ORD261121000001").Return(targetOrder, nil)
+	mockRepo.On("GetByOrderNumber", ctx, "261121000001").Return(model.OrderTrackingDetail{}, nil)
+	mockRepo.On("GetByOrderNumber", ctx, "ORD999999999999").Return(model.OrderTrackingDetail{}, nil)
+	mockRepo.On("GetByOrderNumber", ctx, "999999999999").Return(model.OrderTrackingDetail{}, nil)
+
+	svc := service.NewBotService(service.BotServiceConfig{
+		OrderService: orderSvc,
+	})
+
+	testCases := []struct {
+		name       string
+		inputText  string
+		wantInBody string
+		wantCat    string
+	}{
+		{
+			name:       "Status with hash prefix #261121000001",
+			inputText:  "Status #261121000001",
+			wantInBody: "#261121000001",
+			wantCat:    bot.CategoryStatus,
+		},
+		{
+			name:       "Status with pure numeric 261121000001",
+			inputText:  "Status 261121000001",
+			wantInBody: "#261121000001",
+			wantCat:    bot.CategoryStatus,
+		},
+		{
+			name:       "Typo in status keyword Stataus #261121000001",
+			inputText:  "Stataus #261121000001",
+			wantInBody: "#261121000001",
+			wantCat:    bot.CategoryStatus,
+		},
+		{
+			name:       "Non-existent order number does not fallback to random order",
+			inputText:  "Status #999999999999",
+			wantInBody: "tidak ditemukan di sistem kami",
+			wantCat:    bot.CategoryStatus,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := svc.ProcessMessage(ctx, model.IncomingMessageRequest{
+				From:     "6285777374040",
+				Text:     tc.inputText,
+				PushName: "Nuryanto",
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if res.Category != tc.wantCat {
+				t.Errorf("expected category %s, got: %s", tc.wantCat, res.Category)
+			}
+			if !strings.Contains(res.Reply, tc.wantInBody) {
+				t.Errorf("expected reply to contain %q, but got:\n%s", tc.wantInBody, res.Reply)
+			}
+		})
+	}
+}

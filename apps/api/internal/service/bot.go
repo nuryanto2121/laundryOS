@@ -119,7 +119,7 @@ func (s *botService) ProcessMessage(ctx context.Context, req model.IncomingMessa
 		return s.startPickupFlow(ctx, req)
 	}
 
-	if category == bot.CategoryStatus {
+	if category == bot.CategoryStatus || bot.ExtractOrderNumber(req.Text) != "" {
 		return s.handleCheckStatus(ctx, req)
 	}
 
@@ -231,25 +231,65 @@ func (s *botService) handleCheckStatus(ctx context.Context, req model.IncomingMe
 	var orderDetail model.OrderTrackingDetail
 	var err error
 
-	// 1. Check if user specified an explicit order number in their message (e.g. "STATUS ORD261118000001")
-	words := strings.Fields(text)
-	var specifiedOrderNumber string
-	for _, w := range words {
-		clean := strings.Trim(w, `.,!?:;"'#`)
-		if strings.HasPrefix(clean, "ORD") && len(clean) >= 10 {
-			specifiedOrderNumber = clean
-			break
+	// 1. Check if user specified an explicit order number in their message
+	// Supporting "#261121000001", "261121000001", "ORD261121000001"
+	specifiedOrderNumber := bot.ExtractOrderNumber(req.Text)
+	if specifiedOrderNumber == "" {
+		words := strings.Fields(text)
+		for _, w := range words {
+			clean := strings.Trim(w, `.,!?:;"'#`)
+			if strings.HasPrefix(clean, "ORD") && len(clean) >= 10 {
+				specifiedOrderNumber = clean
+				break
+			}
+			// Check for 10-14 digit numeric order number
+			if len(clean) >= 10 && len(clean) <= 14 {
+				isDigits := true
+				for _, r := range clean {
+					if r < '0' || r > '9' {
+						isDigits = false
+						break
+					}
+				}
+				if isDigits {
+					specifiedOrderNumber = "ORD" + clean
+					break
+				}
+			}
 		}
 	}
 
 	if specifiedOrderNumber != "" && s.orderSvc != nil {
 		orderDetail, err = s.orderSvc.GetByOrderNumber(ctx, specifiedOrderNumber)
-		if err != nil {
+		if err != nil || orderDetail.OrderNumber == "" {
+			// Also try without "ORD" prefix if specified had it
+			rawNum := strings.TrimPrefix(specifiedOrderNumber, "ORD")
+			if altDetail, altErr := s.orderSvc.GetByOrderNumber(ctx, rawNum); altErr == nil && altDetail.OrderNumber != "" {
+				orderDetail = altDetail
+			}
+		}
+		if err != nil && orderDetail.OrderNumber == "" {
 			slog.Warn("bot: failed to find order by specified number", "order_number", specifiedOrderNumber, "error", err)
 		}
 	}
 
-	// 2. If no explicit order number provided or not found, lookup the customer's latest active order
+	// 2. If user explicitly specified an order number BUT it was not found:
+	// Do NOT silently fall back to an unrelated previous order! Tell the customer clearly.
+	if specifiedOrderNumber != "" && orderDetail.OrderNumber == "" {
+		dispNum := bot.FormatDisplayOrderNumber(specifiedOrderNumber)
+		name := req.PushName
+		if name == "" {
+			name = "Pelanggan"
+		}
+		reply := fmt.Sprintf("🧺 *STATUS CUCIAN (FAN Laundry)* 🧺\n\nMaaf Kak *%s*, order dengan nomor *%s* tidak ditemukan di sistem kami.\n\nMohon periksa kembali nomor order pada nota Anda, atau ketik *STATUS* untuk mengecek cucian aktif terakhir Anda. 🙏\n\nKetik *MENU* untuk pilihan info lainnya.", name, dispNum)
+		s.dispatchAsync(phone, reply)
+		return &model.BotResponse{
+			Category: bot.CategoryStatus,
+			Reply:    reply,
+		}, nil
+	}
+
+	// 3. If no explicit order number provided, lookup the customer's latest active order by phone
 	if orderDetail.OrderNumber == "" && s.orderSvc != nil && phone != "" {
 		orderDetail, err = s.orderSvc.GetLatestByCustomerPhone(ctx, phone)
 		if err != nil {

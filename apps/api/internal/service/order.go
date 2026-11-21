@@ -56,8 +56,31 @@ func (s *OrderService) GetLatestByCustomerPhone(ctx context.Context, phone strin
 	return s.repo.GetLatestByCustomerPhone(ctx, phone)
 }
 
-// GetByOrderNumber retrieves tracking details for an order by its unique order number.
+// GetByOrderNumber retrieves tracking details for an order by its unique order number,
+// supporting "#261121000001", "261121000001", or canonical "ORD261121000001".
 func (s *OrderService) GetByOrderNumber(ctx context.Context, orderNumber string) (model.OrderTrackingDetail, error) {
+	clean := strings.TrimSpace(orderNumber)
+	clean = strings.TrimPrefix(clean, "#")
+
+	// 1. Direct lookup
+	detail, err := s.repo.GetByOrderNumber(ctx, clean)
+	if err == nil && detail.OrderNumber != "" {
+		return detail, nil
+	}
+
+	// 2. Lookup with "ORD" prefix if not present
+	if !strings.HasPrefix(strings.ToUpper(clean), "ORD") {
+		if detail, err := s.repo.GetByOrderNumber(ctx, "ORD"+clean); err == nil && detail.OrderNumber != "" {
+			return detail, nil
+		}
+	} else {
+		// 3. Lookup without "ORD" prefix
+		raw := strings.TrimPrefix(strings.ToUpper(clean), "ORD")
+		if detail, err := s.repo.GetByOrderNumber(ctx, raw); err == nil && detail.OrderNumber != "" {
+			return detail, nil
+		}
+	}
+
 	return s.repo.GetByOrderNumber(ctx, orderNumber)
 }
 
