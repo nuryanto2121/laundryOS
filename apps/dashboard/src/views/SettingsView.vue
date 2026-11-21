@@ -42,15 +42,6 @@
             <User v-else class="w-4 h-4 text-slate-500" />
             <span>Peran: {{ settings.role === 'OWNER' ? '👑 Owner (Akses Penuh)' : '👤 Kasir' }}</span>
           </div>
-
-          <button
-            type="button"
-            class="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
-            @click="handleSaveAll"
-          >
-            <Save class="w-3.5 h-3.5" />
-            <span>Simpan</span>
-          </button>
         </div>
       </div>
 
@@ -228,6 +219,18 @@
             <p class="text-[11px] text-slate-400 mt-1">
               Gunakan enter untuk memisahkan baris pada kertas thermal.
             </p>
+          </div>
+
+          <!-- Save Button for Profile & Printer -->
+          <div class="pt-2">
+            <button
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+              @click="handleSavePrinterSettings"
+            >
+              <Save class="w-3.5 h-3.5" />
+              <span>Simpan Konfigurasi Profil & Nota</span>
+            </button>
           </div>
         </div>
 
@@ -2635,8 +2638,8 @@ onMounted(() => {
 // ==========================================
 // Handlers: Save All & PIN
 // ==========================================
-const handleSaveAll = () => {
-  success('Seluruh preferensi pengaturan berhasil disimpan!')
+const handleSavePrinterSettings = () => {
+  success('Konfigurasi profil outlet & template nota thermal berhasil disimpan!')
 }
 
 const handleSavePin = () => {
@@ -2652,7 +2655,7 @@ const handleSavePin = () => {
 
 const testPrint = () => {
   printThermalReceipt('thermal-preview-receipt', {
-    paperWidth: printerForm.paperWidth || '58mm',
+    paperWidth: settings.printer?.paperWidth || '58mm',
     title: 'Uji-Coba-Cetak-Struk',
   })
 }

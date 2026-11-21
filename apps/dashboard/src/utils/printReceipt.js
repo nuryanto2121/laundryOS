@@ -25,14 +25,14 @@ export function printThermalReceipt(elementOrId, options = {}) {
     oldIframe.parentNode.removeChild(oldIframe)
   }
 
-  // Create isolated invisible iframe
+  // Create isolated off-screen iframe (must have dimensions > 0 so Chrome won't block it)
   const iframe = document.createElement('iframe')
   iframe.id = 'thermal-print-iframe'
   iframe.style.position = 'fixed'
-  iframe.style.right = '0'
-  iframe.style.bottom = '0'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
+  iframe.style.top = '-9999px'
+  iframe.style.left = '-9999px'
+  iframe.style.width = '350px'
+  iframe.style.height = '600px'
   iframe.style.border = '0'
   iframe.style.zIndex = '-9999'
   document.body.appendChild(iframe)
