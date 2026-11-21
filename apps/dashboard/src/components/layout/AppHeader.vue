@@ -3,26 +3,14 @@
     class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-xs"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <!-- Left: Brand Logo & Title -->
-      <div class="flex items-center gap-3">
+      <!-- Left: Clean Brand Logo & Title -->
+      <div class="flex items-center gap-2.5">
         <div
           class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20"
         >
           <Sparkles class="w-5 h-5" />
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="font-extrabold text-lg tracking-tight text-slate-900">FAN Laundry</span>
-            <span
-              class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 border border-brand-200 uppercase tracking-wider"
-            >
-              POS Station
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 hidden sm:block">
-            Kalibaru Barat I, Cilincing — Jakarta Utara
-          </p>
-        </div>
+        <span class="font-extrabold text-lg tracking-tight text-slate-900">LaundryOS</span>
       </div>
 
       <!-- Right: Outlet Switcher, Live Status & Role Profile -->
@@ -68,14 +56,6 @@
           <span class="hidden lg:inline">Ajukan Libur</span>
         </button>
 
-        <!-- Live Sync Pill -->
-        <div
-          class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200 text-xs font-medium"
-        >
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Online</span>
-        </div>
-
         <!-- Mobile App Prototype Link -->
         <router-link
           to="/mobile"
@@ -86,59 +66,50 @@
           <span class="hidden lg:inline">Mobile LMS</span>
         </router-link>
 
-        <!-- Role Profile Pill & Switcher Trigger -->
+        <!-- Role Profile Pill (Click to Logout for Owner/Kasir, or Open Switcher for Super Admin) -->
         <button
+          type="button"
           class="flex items-center gap-2 pl-2 border-l border-slate-200 hover:opacity-85 transition-opacity cursor-pointer text-left"
-          @click="openRoleModal"
+          :title="isSuperAdmin ? 'Kelola Hak Akses Sistem (Super Admin)' : 'Klik untuk Keluar (Logout)'"
+          @click="handleProfileClick"
         >
           <div
             class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-xs text-white transition-all"
             :class="
-              settings.role === 'SUPER_ADMIN'
+              isSuperAdmin
                 ? 'bg-gradient-to-tr from-amber-500 to-rose-600 ring-2 ring-amber-300'
-                : settings.role === 'OWNER'
+                : (settings.role === 'OWNER' || auth.userRole.value === 'OWNER')
                   ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 ring-2 ring-purple-300'
                   : 'bg-slate-800'
             "
           >
-            {{ settings.role === 'SUPER_ADMIN' ? '⚡' : settings.role === 'OWNER' ? 'OW' : 'K1' }}
+            {{ isSuperAdmin ? '⚡' : (settings.role === 'OWNER' || auth.userRole.value === 'OWNER') ? 'OW' : 'K1' }}
           </div>
           <div class="hidden md:block">
             <div class="flex items-center gap-1">
               <p class="text-xs font-bold text-slate-800 leading-none">
                 {{
                   auth.currentUser.value?.full_name ||
-                  (settings.role === 'SUPER_ADMIN'
+                  (isSuperAdmin
                     ? 'Super Admin'
-                    : settings.role === 'OWNER'
+                    : (settings.role === 'OWNER' || auth.userRole.value === 'OWNER')
                       ? 'Owner (Admin)'
                       : 'Kasir Utama')
                 }}
               </p>
-              <Crown v-if="settings.role === 'SUPER_ADMIN'" class="w-3.5 h-3.5 text-amber-500 inline" />
-              <Shield v-else-if="settings.role === 'OWNER'" class="w-3 h-3 text-purple-600 inline" />
+              <Crown v-if="isSuperAdmin" class="w-3.5 h-3.5 text-amber-500 inline" />
+              <Shield v-else-if="settings.role === 'OWNER' || auth.userRole.value === 'OWNER'" class="w-3 h-3 text-purple-600 inline" />
             </div>
             <p class="text-[10px] text-slate-400 leading-none mt-0.5">
               {{
-                settings.role === 'SUPER_ADMIN'
+                isSuperAdmin
                   ? 'Super Admin (All Tenant)'
-                  : settings.role === 'OWNER'
-                    ? 'Akses Penuh Owner'
-                    : 'Karyawan / Kasir'
+                  : (settings.role === 'OWNER' || auth.userRole.value === 'OWNER')
+                    ? 'Akses Penuh Owner • Klik Keluar'
+                    : 'Karyawan / Kasir • Klik Keluar'
               }}
             </p>
           </div>
-        </button>
-
-        <!-- Logout Button -->
-        <button
-          type="button"
-          class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 text-slate-500 border border-slate-200 text-xs font-bold transition-all cursor-pointer"
-          title="Keluar dari Akun (Logout)"
-          @click="handleLogout"
-        >
-          <LogOut class="w-3.5 h-3.5" />
-          <span class="hidden xl:inline">Keluar</span>
         </button>
       </div>
     </div>
@@ -316,6 +287,18 @@
                 </button>
               </div>
             </div>
+
+            <!-- Logout Shortcut inside Super Admin Modal -->
+            <div class="pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                class="w-full py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                @click="closeRoleModal(); handleLogout()"
+              >
+                <LogOut class="w-3.5 h-3.5" />
+                <span>Keluar dari Akun (Logout)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -339,7 +322,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   Sparkles,
   Store,
@@ -377,10 +360,22 @@ const auth = useAuth()
 const { settings, switchRole } = useAppSettings()
 const { success, error } = useToast()
 
+const isSuperAdmin = computed(() => {
+  return auth.userRole.value === 'SUPER_ADMIN' || settings.role === 'SUPER_ADMIN'
+})
+
 const handleLogout = () => {
   if (confirm('Keluar dari LaundryOS?')) {
     auth.logout()
     router.push('/login')
+  }
+}
+
+const handleProfileClick = () => {
+  if (isSuperAdmin.value) {
+    openRoleModal()
+  } else {
+    handleLogout()
   }
 }
 const {

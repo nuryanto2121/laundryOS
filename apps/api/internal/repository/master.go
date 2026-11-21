@@ -219,15 +219,16 @@ func (r *MasterRepository) CreateOutlet(ctx context.Context, req model.CreateOut
 		radius = 25
 	}
 
+	newID := uuid.New()
 	query := `
-		INSERT INTO outlets (name, code, address, phone, latitude, longitude, geofence_radius_meters, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO outlets (id, name, code, address, phone, latitude, longitude, geofence_radius_meters, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
 		          latitude, longitude, geofence_radius_meters, is_active, created_at, updated_at
 	`
 	var o model.Outlet
 	err := r.pool.QueryRow(ctx, query,
-		req.Name, req.Code, req.Address, req.Phone,
+		newID, req.Name, req.Code, req.Address, req.Phone,
 		lat, lng, radius, req.IsActive,
 	).Scan(
 		&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
