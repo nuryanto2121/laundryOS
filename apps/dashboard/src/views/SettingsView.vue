@@ -570,14 +570,15 @@
                   </th>
                   <th class="py-3 px-3 cursor-pointer select-none" @click="sortEmployee('full_name')">
                     <div class="flex items-center gap-1">
-                      <span>Nama Lengkap</span>
+                      <span>Nama Pegawai</span>
                       <component :is="getSortIcon('employee', 'full_name')" class="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
+                  <th class="py-3 px-3">Penugasan Outlet</th>
                   <th class="py-3 px-3">No. HP</th>
                   <th class="py-3 px-3 text-center cursor-pointer select-none" @click="sortEmployee('role')">
                     <div class="flex items-center justify-center gap-1">
-                      <span>Hak Akses (Role)</span>
+                      <span>Hak Akses (Role & ACL)</span>
                       <component :is="getSortIcon('employee', 'role')" class="w-3 h-3 text-slate-400" />
                     </div>
                   </th>
@@ -587,7 +588,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100">
                 <tr v-if="sortedEmployees.length === 0">
-                  <td colspan="6" class="py-6 text-center text-slate-400">Belum ada pegawai terdaftar.</td>
+                  <td colspan="7" class="py-6 text-center text-slate-400">Belum ada pegawai terdaftar.</td>
                 </tr>
                 <tr
                   v-for="emp in sortedEmployees"
@@ -595,15 +596,32 @@
                   class="hover:bg-slate-50/70 transition-colors"
                 >
                   <td class="py-2.5 px-3 font-mono font-bold text-slate-800">{{ emp.username }}</td>
-                  <td class="py-2.5 px-3 font-bold text-slate-900">{{ emp.full_name }}</td>
+                  <td class="py-2.5 px-3">
+                    <p class="font-bold text-slate-900 leading-tight">{{ emp.full_name }}</p>
+                    <span v-if="emp.email" class="text-[10px] text-slate-400 block">{{ emp.email }}</span>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg">
+                      <Store class="w-3 h-3 text-brand-600" />
+                      {{ emp.outlet_name || 'Semua Cabang' }}
+                    </span>
+                  </td>
                   <td class="py-2.5 px-3 font-medium text-slate-600">{{ emp.phone || '-' }}</td>
                   <td class="py-2.5 px-3 text-center">
-                    <span
-                      class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
-                      :class="getRoleBadgeClass(emp.role)"
-                    >
-                      {{ emp.role }}
-                    </span>
+                    <div class="flex flex-col items-center gap-0.5">
+                      <span
+                        class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                        :class="getRoleBadgeClass(emp.role)"
+                      >
+                        {{ emp.role }}
+                      </span>
+                      <span
+                        v-if="emp.role === 'KASIR'"
+                        class="text-[9px] font-bold text-purple-700"
+                      >
+                        {{ Object.values(emp.permissions || {}).filter(Boolean).length }} Hak Akses Aktif
+                      </span>
+                    </div>
                   </td>
                   <td class="py-2.5 px-3 text-center">
                     <span
@@ -1925,8 +1943,8 @@
 
       <!-- 0. Modal Tambah/Edit Outlet Cabang & GPS -->
       <div v-if="showOutletModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-5 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 sticky top-0 bg-white z-10">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Store class="w-4 h-4 text-brand-600" />
               <span>{{ isEditingOutlet ? 'Edit Profil & Koordinat Cabang' : 'Tambah Outlet Cabang Baru' }}</span>
@@ -1976,15 +1994,18 @@
                 class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
               ></textarea>
             </div>
-            <!-- Koordinat GPS & Geofence -->
-            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <MapPin class="w-3.5 h-3.5 text-brand-600" />
-                Titik Koordinat GPS & Radius Geofence
-              </span>
-              <div class="grid grid-cols-2 gap-2">
+
+            <!-- Interactive GPS Map Picker -->
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <LocationPickerMap
+                v-model:latitude="outletForm.latitude"
+                v-model:longitude="outletForm.longitude"
+                :radius-meters="outletForm.geofence_radius_meters"
+              />
+
+              <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/70">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Latitude</label>
+                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Latitude (Manual/Otomatis)</label>
                   <input
                     v-model.number="outletForm.latitude"
                     type="number"
@@ -1995,7 +2016,7 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Longitude</label>
+                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Longitude (Manual/Otomatis)</label>
                   <input
                     v-model.number="outletForm.longitude"
                     type="number"
@@ -2017,9 +2038,10 @@
                   placeholder="25"
                   class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white"
                 />
-                <p class="text-[10px] text-slate-400 mt-1">Disarankan 25 meter untuk toleransi sinyal GPS dalam ruangan/ruko.</p>
+                <p class="text-[10px] text-slate-400 mt-1">Disarankan 20-30 meter untuk toleransi sinyal GPS saat karyawan berada di dalam ruangan toko.</p>
               </div>
             </div>
+
             <div class="flex items-center gap-2 pt-1">
               <input
                 id="outlet-active"
@@ -2051,92 +2073,163 @@
         </div>
       </div>
 
-      <!-- 1. Modal Tambah/Edit Pegawai -->
+      <!-- 1. Modal Tambah/Edit Pegawai & Granular ACL -->
       <div v-if="showEmployeeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 sticky top-0 bg-white z-10">
             <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
               <Users class="w-4 h-4 text-purple-600" />
-              <span>{{ isEditingEmployee ? 'Edit Data Pegawai' : 'Tambah Pegawai Baru' }}</span>
+              <span>{{ isEditingEmployee ? 'Edit Data Pegawai & Hak Akses' : 'Tambah Pegawai Baru' }}</span>
             </h4>
-            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showEmployeeModal = false">
+            <button class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer" @click="showEmployeeModal = false">
               <X class="w-4 h-4" />
             </button>
           </div>
-          <form class="space-y-3" @submit.prevent="submitEmployeeForm">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Username Login *</label>
-              <input
-                v-model="employeeForm.username"
-                type="text"
-                required
-                :disabled="isEditingEmployee"
-                placeholder="Contoh: kasir2"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap *</label>
-              <input
-                v-model="employeeForm.full_name"
-                type="text"
-                required
-                placeholder="Contoh: Siti Aminah"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+          <form class="space-y-4" @submit.prevent="submitEmployeeForm">
+            <!-- Data Diri Pegawai -->
+            <div class="space-y-3">
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Peran / Hak Akses *</label>
-                <select
-                  v-model="employeeForm.role"
-                  required
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="OWNER">👑 Owner</option>
-                  <option value="KASIR">👤 Kasir</option>
-                  <option value="KURIR">🛵 Kurir</option>
-                  <option value="OPERATOR">⚙️ Operator</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">
-                  {{ isEditingEmployee ? 'PIN Baru (Kosongkan jika tdk ubah)' : 'PIN Akses (4 Digit) *' }}
-                </label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pegawai *</label>
                 <input
-                  v-model="employeeForm.pin"
-                  type="password"
-                  maxlength="6"
-                  :required="!isEditingEmployee"
-                  placeholder="1234"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-mono focus:bg-white focus:ring-2 focus:ring-purple-500"
+                  v-model="employeeForm.full_name"
+                  type="text"
+                  required
+                  placeholder="Contoh: Staff 1"
+                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500 transition-all"
                 />
               </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Username Login *</label>
+                  <input
+                    v-model="employeeForm.username"
+                    type="text"
+                    required
+                    :disabled="isEditingEmployee"
+                    placeholder="Contoh: kasir1"
+                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500 disabled:opacity-60"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">No Handphone</label>
+                  <input
+                    v-model="employeeForm.phone"
+                    type="text"
+                    placeholder="Contoh: 085781258821"
+                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                <input
+                  v-model="employeeForm.email"
+                  type="email"
+                  placeholder="Contoh: staff@fanlaundry.com"
+                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-medium focus:bg-white focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  {{ isEditingEmployee ? 'Password (harap kosongkan jika tidak merubah password)' : 'Password Akun Login *' }}
+                </label>
+                <input
+                  v-model="employeeForm.password"
+                  type="password"
+                  :required="!isEditingEmployee"
+                  placeholder="Masukkan Password untuk pegawai login"
+                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-mono focus:bg-white focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Penugasan Outlet / Cabang</label>
+                  <select
+                    v-model="employeeForm.outlet_id"
+                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">-- Semua Cabang (Pusat) --</option>
+                    <option v-for="o in outletsList" :key="o.id" :value="o.id">
+                      {{ o.name }} ({{ o.code }})
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Peran Jabatan *</label>
+                  <select
+                    v-model="employeeForm.role"
+                    required
+                    class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 font-bold focus:bg-white focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="KASIR">👤 Kasir (POS & Operasional)</option>
+                    <option value="OWNER">👑 Owner (Akses Penuh Cabang)</option>
+                    <option value="KURIR">🛵 Kurir (Antar Jemput)</option>
+                    <option value="OPERATOR">⚙️ Operator (Produksi Cucian)</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">No. Handphone / WhatsApp</label>
-              <input
-                v-model="employeeForm.phone"
-                type="text"
-                placeholder="08123456789"
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 font-semibold focus:bg-white focus:ring-2 focus:ring-purple-500"
-              />
+
+            <!-- Granular ACL Permissions (Checklist Sesuai Contoh Edobi) -->
+            <div class="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-3.5">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div>
+                  <h5 class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                    <ShieldCheck class="w-4 h-4 text-purple-600" />
+                    <span>Hak Akses Pegawai</span>
+                  </h5>
+                  <p class="text-[10px] text-slate-500">Centang fitur yang diizinkan untuk dikerjakan pegawai ini</p>
+                </div>
+                <button
+                  type="button"
+                  class="text-[10px] font-bold text-purple-600 hover:text-purple-800 cursor-pointer"
+                  @click="employeeForm.permissions = { ...defaultAcl }"
+                >
+                  Reset Default Kasir
+                </button>
+              </div>
+
+              <div v-for="grp in aclPermissionsList" :key="grp.group" class="space-y-2">
+                <span class="text-[10px] font-black uppercase tracking-wider text-purple-700/80 block mt-2">
+                  {{ grp.group }}
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-1">
+                  <label
+                    v-for="p in grp.permissions"
+                    :key="p.key"
+                    class="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200/70 hover:border-purple-300 transition-all cursor-pointer select-none"
+                  >
+                    <input
+                      v-model="employeeForm.permissions[p.key]"
+                      type="checkbox"
+                      class="rounded border-slate-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span class="text-[11px] font-bold text-slate-700 leading-tight">{{ p.label }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
+
             <div class="flex items-center gap-2 pt-1">
               <input
+                id="emp-active"
                 v-model="employeeForm.is_active"
                 type="checkbox"
-                id="emp-active"
-                class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                class="rounded border-slate-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
               />
               <label for="emp-active" class="text-xs font-semibold text-slate-700 cursor-pointer">
-                Status Akun Aktif (Dapat login)
+                Status Akun Aktif (Dapat Login ke Aplikasi)
               </label>
             </div>
-            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 sticky bottom-0 bg-white py-2">
               <button
                 type="button"
-                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                 @click="showEmployeeModal = false"
               >
                 Batal
@@ -2144,9 +2237,9 @@
               <button
                 type="submit"
                 :disabled="modalSaving"
-                class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black transition-all shadow-md shadow-purple-500/20 cursor-pointer"
               >
-                {{ modalSaving ? 'Menyimpan...' : 'Simpan Pegawai' }}
+                {{ modalSaving ? 'Menyimpan...' : 'SIMPAN DATA PEGAWAI' }}
               </button>
             </div>
           </form>
@@ -2840,6 +2933,8 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import AppLayout from '../components/layout/AppLayout.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
+import LocationPickerMap from '../components/common/LocationPickerMap.vue'
+import { useAuth } from '../composables/useAuth'
 import {
   Settings,
   Printer,
@@ -2885,6 +2980,7 @@ import { printThermalReceipt } from '../utils/printReceipt'
 
 const { settings, changePin, resetToDefaults } = useAppSettings()
 const { success, error } = useToast()
+const auth = useAuth()
 
 const activeTab = ref('OUTLETS')
 
@@ -3037,7 +3133,67 @@ const executeConfirmedDelete = async () => {
   }
 }
 
-// 1. Employee Modal State
+// 1. Employee Modal State & Granular ACL
+const defaultAcl = {
+  can_create_order: true,
+  can_backdate_order: false,
+  can_edit_order: false,
+  can_cancel_order: false,
+  can_create_expense: true,
+  can_process_wash: true,
+  can_process_dry: true,
+  can_process_iron: true,
+  can_process_pack: true,
+  can_manage_services: false,
+  can_manage_customers: true,
+  can_manage_employees: false,
+  can_view_financials: false,
+  can_view_order_reports: false,
+  can_view_financial_reports: false,
+  can_view_performance_reports: false,
+  can_view_customer_reports: false,
+}
+
+const aclPermissionsList = [
+  {
+    group: 'Transaksi & Order POS',
+    permissions: [
+      { key: 'can_create_order', label: 'Membuat Order / Transaksi' },
+      { key: 'can_backdate_order', label: 'Membuat Order Backdate (Tanggal Mundur)' },
+      { key: 'can_edit_order', label: 'Edit Order / Transaksi' },
+      { key: 'can_cancel_order', label: 'Membatalkan Order / Transaksi' },
+    ],
+  },
+  {
+    group: 'Operasional & Produksi',
+    permissions: [
+      { key: 'can_create_expense', label: 'Membuat Pengeluaran' },
+      { key: 'can_process_wash', label: 'Cuci (Khusus Paket Cuci)' },
+      { key: 'can_process_dry', label: 'Kering (Khusus Paket Kering)' },
+      { key: 'can_process_iron', label: 'Setrika (Khusus Paket Setrika)' },
+      { key: 'can_process_pack', label: 'Packing (Khusus Paket Packing)' },
+    ],
+  },
+  {
+    group: 'Manajemen & Data',
+    permissions: [
+      { key: 'can_manage_services', label: 'Mengelola Layanan / Produk' },
+      { key: 'can_manage_customers', label: 'Mengelola Data Pelanggan' },
+      { key: 'can_manage_employees', label: 'Mengelola Data Pegawai' },
+    ],
+  },
+  {
+    group: 'Keuangan & Laporan',
+    permissions: [
+      { key: 'can_view_financials', label: 'Menampilkan Nilai Omset' },
+      { key: 'can_view_order_reports', label: 'Akses Laporan Transaksi' },
+      { key: 'can_view_financial_reports', label: 'Akses Laporan Keuangan' },
+      { key: 'can_view_performance_reports', label: 'Akses Laporan Kinerja' },
+      { key: 'can_view_customer_reports', label: 'Akses Laporan Pelanggan' },
+    ],
+  },
+]
+
 const showEmployeeModal = ref(false)
 const isEditingEmployee = ref(false)
 const currentEmployeeId = ref(null)
@@ -3045,8 +3201,11 @@ const employeeForm = reactive({
   username: '',
   full_name: '',
   phone: '',
+  email: '',
   role: 'KASIR',
-  pin: '',
+  password: '',
+  outlet_id: '',
+  permissions: { ...defaultAcl },
   is_active: true,
 })
 
@@ -3471,7 +3630,7 @@ const getRoleBadgeClass = (role) => {
 }
 
 // ==========================================
-// CRUD: Pegawai (Employees)
+// CRUD: Pegawai (Employees & Granular ACL)
 // ==========================================
 const openAddEmployeeModal = () => {
   isEditingEmployee.value = false
@@ -3479,8 +3638,11 @@ const openAddEmployeeModal = () => {
   employeeForm.username = ''
   employeeForm.full_name = ''
   employeeForm.phone = ''
+  employeeForm.email = ''
   employeeForm.role = 'KASIR'
-  employeeForm.pin = '1234'
+  employeeForm.password = '123456'
+  employeeForm.outlet_id = outletsList.value[0]?.id || ''
+  employeeForm.permissions = { ...defaultAcl }
   employeeForm.is_active = true
   showEmployeeModal.value = true
 }
@@ -3491,8 +3653,11 @@ const openEditEmployeeModal = (emp) => {
   employeeForm.username = emp.username
   employeeForm.full_name = emp.full_name
   employeeForm.phone = emp.phone || ''
+  employeeForm.email = emp.email || ''
   employeeForm.role = emp.role
-  employeeForm.pin = ''
+  employeeForm.password = ''
+  employeeForm.outlet_id = emp.outlet_id || (outletsList.value[0]?.id || '')
+  employeeForm.permissions = { ...defaultAcl, ...(emp.permissions || {}) }
   employeeForm.is_active = emp.is_active
   showEmployeeModal.value = true
 }
@@ -3500,25 +3665,22 @@ const openEditEmployeeModal = (emp) => {
 const submitEmployeeForm = async () => {
   modalSaving.value = true
   try {
+    const payload = {
+      username: employeeForm.username,
+      full_name: employeeForm.full_name,
+      phone: employeeForm.phone,
+      email: employeeForm.email,
+      role: employeeForm.role,
+      password: employeeForm.password,
+      outlet_id: employeeForm.outlet_id,
+      permissions: employeeForm.permissions,
+      is_active: employeeForm.is_active,
+    }
     if (isEditingEmployee.value) {
-      await api.put(`/master/employees/${currentEmployeeId.value}`, {
-        username: employeeForm.username,
-        full_name: employeeForm.full_name,
-        phone: employeeForm.phone,
-        role: employeeForm.role,
-        pin: employeeForm.pin,
-        is_active: employeeForm.is_active,
-      })
-      success('Data pegawai berhasil diperbarui!')
+      await api.put(`/master/employees/${currentEmployeeId.value}`, payload)
+      success('Data pegawai & hak akses berhasil diperbarui!')
     } else {
-      await api.post('/master/employees', {
-        username: employeeForm.username,
-        full_name: employeeForm.full_name,
-        phone: employeeForm.phone,
-        role: employeeForm.role,
-        pin: employeeForm.pin,
-        is_active: employeeForm.is_active,
-      })
+      await api.post('/master/employees', payload)
       success('Pegawai baru berhasil ditambahkan!')
     }
     showEmployeeModal.value = false

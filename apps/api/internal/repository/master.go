@@ -2,9 +2,13 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/nuryanto2121/laundryos/apps/api/internal/db/generated"
@@ -376,6 +380,226 @@ func (r *MasterRepository) UpdateEmployee(ctx context.Context, id uuid.UUID, ful
 // DeleteEmployee deactivates an employee.
 func (r *MasterRepository) DeleteEmployee(ctx context.Context, id uuid.UUID) error {
 	return r.queries.DeleteEmployee(ctx, toPgUUID(id))
+}
+
+// Authenticate checks user credentials and returns AuthUser.
+func (r *MasterRepository) Authenticate(ctx context.Context, username, password string) (model.AuthUser, error) {
+	if r.pool == nil {
+		return model.AuthUser{}, errors.New("database pool not initialized")
+	}
+
+	query := `
+		SELECT e.id, e.username, e.full_name, COALESCE(e.phone, ''), COALESCE(e.email, ''),
+		       e.role, COALESCE(e.password, e.pin), COALESCE(e.outlet_id::text, ''),
+		       COALESCE(o.name, ''), COALESCE(e.permissions, '{}'::jsonb), e.is_active
+		FROM employees e
+		LEFT JOIN outlets o ON o.id = e.outlet_id
+		WHERE LOWER(e.username) = LOWER($1) OR (e.phone IS NOT NULL AND e.phone = $1)
+		LIMIT 1
+	`
+	var (
+		user       model.AuthUser
+		storedPass string
+		permBytes  []byte
+		isActive   bool
+	)
+	err := r.pool.QueryRow(ctx, query, strings.TrimSpace(username)).Scan(
+		&user.ID, &user.Username, &user.FullName, &user.Phone, &user.Email,
+		&user.Role, &storedPass, &user.OutletID,
+		&user.OutletName, &permBytes, &isActive,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.AuthUser{}, errors.New("username atau nomor handphone tidak ditemukan")
+		}
+		return model.AuthUser{}, fmt.Errorf("master repo: auth: %w", err)
+	}
+
+	if !isActive {
+		return model.AuthUser{}, errors.New("akun pegawai nonaktif, silakan hubungi owner")
+	}
+
+	if password != storedPass {
+		return model.AuthUser{}, errors.New("password salah")
+	}
+
+	user.Permissions = make(map[string]bool)
+	if len(permBytes) > 0 {
+		_ = json.Unmarshal(permBytes, &user.Permissions)
+	}
+
+	return user, nil
+}
+
+// ListEmployeesDetailed retrieves all employees with full profile and ACL permissions.
+func (r *MasterRepository) ListEmployeesDetailed(ctx context.Context) ([]model.Employee, error) {
+	if r.pool == nil {
+		// fallback to basic query
+		emps, err := r.queries.ListEmployees(ctx)
+		if err != nil {
+			return nil, err
+		}
+		var list []model.Employee
+		for _, e := range emps {
+			list = append(list, model.Employee{
+				ID:        e.ID.String(),
+				Username:  e.Username,
+				FullName:  e.FullName,
+				Phone:     e.Phone.String,
+				Role:      e.Role,
+				IsActive:  e.IsActive,
+				CreatedAt: e.CreatedAt.Time,
+				UpdatedAt: e.UpdatedAt.Time,
+			})
+		}
+		return list, nil
+	}
+
+	query := `
+		SELECT e.id, e.username, e.full_name, COALESCE(e.phone, ''), COALESCE(e.email, ''),
+		       e.role, COALESCE(e.outlet_id::text, ''), COALESCE(o.name, ''),
+		       COALESCE(e.permissions, '{}'::jsonb), e.is_active, e.created_at, e.updated_at
+		FROM employees e
+		LEFT JOIN outlets o ON o.id = e.outlet_id
+		ORDER BY e.created_at ASC
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("master repo: list employees detailed: %w", err)
+	}
+	defer rows.Close()
+
+	var list []model.Employee
+	for rows.Next() {
+		var (
+			emp       model.Employee
+			permBytes []byte
+		)
+		if err := rows.Scan(
+			&emp.ID, &emp.Username, &emp.FullName, &emp.Phone, &emp.Email,
+			&emp.Role, &emp.OutletID, &emp.OutletName,
+			&permBytes, &emp.IsActive, &emp.CreatedAt, &emp.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		emp.Permissions = make(map[string]bool)
+		if len(permBytes) > 0 {
+			_ = json.Unmarshal(permBytes, &emp.Permissions)
+		}
+		list = append(list, emp)
+	}
+	return list, nil
+}
+
+// CreateEmployeeDetailed creates an employee with password, outlet, and ACL permissions.
+func (r *MasterRepository) CreateEmployeeDetailed(ctx context.Context, req model.CreateEmployeeRequest) (model.Employee, error) {
+	if r.pool == nil {
+		return model.Employee{}, errors.New("database pool not initialized")
+	}
+
+	id := uuid.New()
+	password := req.Password
+	if password == "" {
+		password = "password123"
+	}
+	role := req.Role
+	if role == "" {
+		role = "KASIR"
+	}
+
+	permBytes, _ := json.Marshal(req.Permissions)
+	if len(req.Permissions) == 0 {
+		permBytes = []byte("{}")
+	}
+
+	var outletID *uuid.UUID
+	if req.OutletID != "" {
+		if parsed, err := uuid.Parse(req.OutletID); err == nil {
+			outletID = &parsed
+		}
+	}
+
+	query := `
+		INSERT INTO employees (id, username, full_name, phone, email, role, password, pin, outlet_id, permissions, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id, username, full_name, COALESCE(phone, ''), COALESCE(email, ''), role,
+		          COALESCE(outlet_id::text, ''), permissions, is_active, created_at, updated_at
+	`
+	var (
+		emp          model.Employee
+		retPermBytes []byte
+	)
+	err := r.pool.QueryRow(ctx, query,
+		id, req.Username, req.FullName, req.Phone, req.Email,
+		role, password, password, outletID, permBytes, req.IsActive,
+	).Scan(
+		&emp.ID, &emp.Username, &emp.FullName, &emp.Phone, &emp.Email, &emp.Role,
+		&emp.OutletID, &retPermBytes, &emp.IsActive, &emp.CreatedAt, &emp.UpdatedAt,
+	)
+	if err != nil {
+		return model.Employee{}, fmt.Errorf("master repo: create employee: %w", err)
+	}
+	emp.Permissions = make(map[string]bool)
+	_ = json.Unmarshal(retPermBytes, &emp.Permissions)
+	return emp, nil
+}
+
+// UpdateEmployeeDetailed updates employee details, password, outlet, and permissions.
+func (r *MasterRepository) UpdateEmployeeDetailed(ctx context.Context, idStr string, req model.UpdateEmployeeRequest) (model.Employee, error) {
+	if r.pool == nil {
+		return model.Employee{}, errors.New("database pool not initialized")
+	}
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return model.Employee{}, errors.New("id pegawai tidak valid")
+	}
+
+	var outletID *uuid.UUID
+	if req.OutletID != "" {
+		if parsed, err := uuid.Parse(req.OutletID); err == nil {
+			outletID = &parsed
+		}
+	}
+
+	permBytes, _ := json.Marshal(req.Permissions)
+	if len(req.Permissions) == 0 {
+		permBytes = []byte("{}")
+	}
+
+	query := `
+		UPDATE employees
+		SET full_name = COALESCE(NULLIF($2, ''), full_name),
+		    phone = COALESCE(NULLIF($3, ''), phone),
+		    email = COALESCE(NULLIF($4, ''), email),
+		    role = COALESCE(NULLIF($5, ''), role),
+		    password = CASE WHEN $6 != '' THEN $6 ELSE password END,
+		    pin = CASE WHEN $6 != '' THEN $6 ELSE pin END,
+		    outlet_id = $7,
+		    permissions = $8,
+		    is_active = $9,
+		    updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, username, full_name, COALESCE(phone, ''), COALESCE(email, ''), role,
+		          COALESCE(outlet_id::text, ''), permissions, is_active, created_at, updated_at
+	`
+	var (
+		emp          model.Employee
+		retPermBytes []byte
+	)
+	err = r.pool.QueryRow(ctx, query,
+		id, req.FullName, req.Phone, req.Email, req.Role,
+		req.Password, outletID, permBytes, req.IsActive,
+	).Scan(
+		&emp.ID, &emp.Username, &emp.FullName, &emp.Phone, &emp.Email, &emp.Role,
+		&emp.OutletID, &retPermBytes, &emp.IsActive, &emp.CreatedAt, &emp.UpdatedAt,
+	)
+	if err != nil {
+		return model.Employee{}, fmt.Errorf("master repo: update employee: %w", err)
+	}
+	emp.Permissions = make(map[string]bool)
+	_ = json.Unmarshal(retPermBytes, &emp.Permissions)
+	return emp, nil
 }
 
 // ListServiceCategories retrieves active service categories.

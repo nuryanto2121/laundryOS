@@ -83,6 +83,9 @@ func Run() error {
 	attendanceSvc := service.NewAttendanceService(attendanceRepo)
 	attendanceHandler := handler.NewAttendanceHandler(attendanceSvc)
 
+	// Initialize Auth module
+	authHandler := handler.NewAuthHandler(masterSvc)
+
 	// Initialize HTTP Router
 	router := handler.NewRouter(handler.RouterParams{
 		AppVersion:        cfg.AppVersion,
@@ -94,6 +97,7 @@ func Run() error {
 		ReportHandler:     reportHandler,
 		MasterHandler:     masterHandler,
 		AttendanceHandler: attendanceHandler,
+		AuthHandler:       authHandler,
 	})
 
 	addr := ":" + cfg.Port

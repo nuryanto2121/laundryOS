@@ -2,7 +2,10 @@
   <nav
     class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/80 px-2 py-1 shadow-lg"
   >
-    <div class="grid grid-cols-4 items-center">
+    <div
+      class="grid items-center"
+      :class="auth.userRole.value === 'KASIR' ? 'grid-cols-3' : 'grid-cols-4'"
+    >
       <!-- 1. Beranda -->
       <RouterLink
         to="/"
@@ -75,6 +78,7 @@
 
       <!-- 4. Pengaturan -->
       <RouterLink
+        v-if="auth.userRole.value !== 'KASIR'"
         to="/settings"
         class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all relative"
         :class="
@@ -102,8 +106,10 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { Home, ShoppingBag, BarChart3, Settings } from 'lucide-vue-next'
+import { useAuth } from '../../composables/useAuth'
 
 const route = useRoute()
+const auth = useAuth()
 
 defineProps({
   queueCount: {

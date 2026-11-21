@@ -481,7 +481,7 @@ func (h *MasterHandler) DeleteExpenseCategory(w http.ResponseWriter, r *http.Req
 
 // ListEmployees handles GET /master/employees.
 func (h *MasterHandler) ListEmployees(w http.ResponseWriter, r *http.Request) {
-	emps, err := h.svc.ListEmployees(r.Context())
+	emps, err := h.svc.ListEmployeesDetailed(r.Context())
 	if err != nil {
 		slog.Error("master: list employees failed", "error", err)
 		writeError(w, http.StatusInternalServerError, "gagal memuat data pegawai")
@@ -490,18 +490,9 @@ func (h *MasterHandler) ListEmployees(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, emps)
 }
 
-type createEmployeeRequest struct {
-	Username string `json:"username"`
-	FullName string `json:"full_name"`
-	Phone    string `json:"phone"`
-	Role     string `json:"role"`
-	Pin      string `json:"pin"`
-	IsActive bool   `json:"is_active"`
-}
-
 // CreateEmployee handles POST /master/employees.
 func (h *MasterHandler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
-	var req createEmployeeRequest
+	var req model.CreateEmployeeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -513,13 +504,13 @@ func (h *MasterHandler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 	if req.Role == "" {
 		req.Role = "KASIR"
 	}
-	if req.Pin == "" {
-		req.Pin = "1234"
+	if req.Password == "" {
+		req.Password = "123456"
 	}
-	emp, err := h.svc.CreateEmployee(r.Context(), req.Username, req.FullName, req.Phone, req.Role, req.Pin, true)
+	emp, err := h.svc.CreateEmployeeDetailed(r.Context(), req)
 	if err != nil {
 		slog.Error("master: create employee failed", "error", err)
-		writeError(w, http.StatusInternalServerError, "gagal membuat pegawai")
+		writeError(w, http.StatusInternalServerError, "gagal membuat pegawai: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusCreated, emp)
@@ -528,15 +519,19 @@ func (h *MasterHandler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
 // UpdateEmployee handles PUT /master/employees/{id}.
 func (h *MasterHandler) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var req createEmployeeRequest
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "id pegawai wajib diisi")
+		return
+	}
+	var req model.UpdateEmployeeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	emp, err := h.svc.UpdateEmployee(r.Context(), id, req.FullName, req.Phone, req.Role, req.Pin, req.IsActive)
+	emp, err := h.svc.UpdateEmployeeDetailed(r.Context(), id, req)
 	if err != nil {
 		slog.Error("master: update employee failed", "error", err)
-		writeError(w, http.StatusInternalServerError, "gagal memperbarui pegawai")
+		writeError(w, http.StatusInternalServerError, "gagal memperbarui pegawai: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, emp)

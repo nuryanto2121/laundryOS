@@ -149,6 +149,26 @@ func (s *MasterService) DeleteExpenseCategory(ctx context.Context, idStr string)
 	return s.repo.DeleteExpenseCategory(ctx, id)
 }
 
+// Authenticate checks employee credentials.
+func (s *MasterService) Authenticate(ctx context.Context, username, password string) (model.AuthUser, error) {
+	return s.repo.Authenticate(ctx, username, password)
+}
+
+// ListEmployeesDetailed returns all employees with full profile and ACL permissions.
+func (s *MasterService) ListEmployeesDetailed(ctx context.Context) ([]model.Employee, error) {
+	return s.repo.ListEmployeesDetailed(ctx)
+}
+
+// CreateEmployeeDetailed creates an employee with password, outlet, and ACL permissions.
+func (s *MasterService) CreateEmployeeDetailed(ctx context.Context, req model.CreateEmployeeRequest) (model.Employee, error) {
+	return s.repo.CreateEmployeeDetailed(ctx, req)
+}
+
+// UpdateEmployeeDetailed updates employee details, password, outlet, and permissions.
+func (s *MasterService) UpdateEmployeeDetailed(ctx context.Context, idStr string, req model.UpdateEmployeeRequest) (model.Employee, error) {
+	return s.repo.UpdateEmployeeDetailed(ctx, idStr, req)
+}
+
 // ListEmployees returns all active employees.
 func (s *MasterService) ListEmployees(ctx context.Context) ([]db.Employee, error) {
 	return s.repo.ListEmployees(ctx)

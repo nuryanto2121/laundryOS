@@ -2190,16 +2190,18 @@ import {
 import { api, formatRupiah, formatDate, formatDateTime } from '../api/client'
 import { useToast } from '../composables/useToast'
 import { useAppSettings } from '../composables/useAppSettings'
+import { useAuth } from '../composables/useAuth'
 
 const route = useRoute()
 const toast = useToast()
 const { settings, switchRole } = useAppSettings()
+const auth = useAuth()
 
 const activeTab = ref('TRANSACTIONS')
 const loading = ref(false)
 
 const isFinancialsHidden = computed(
-  () => settings.role === 'CASHIER' && settings.hideFinancialsFromCashier
+  () => (settings.role === 'CASHIER' || auth.isCashier.value) && !auth.can('can_view_financial_reports')
 )
 
 const unlockPin = ref('')

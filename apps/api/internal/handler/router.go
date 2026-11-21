@@ -20,6 +20,7 @@ type RouterParams struct {
 	ReportHandler     *ReportHandler
 	MasterHandler     *MasterHandler
 	AttendanceHandler *AttendanceHandler
+	AuthHandler       *AuthHandler
 }
 
 // NewRouter constructs and configures the Chi HTTP router with middlewares and route mappings.
@@ -31,6 +32,13 @@ func NewRouter(p RouterParams) http.Handler {
 	// System routes
 	r.Get("/health", NewHealthHandler(p.AppVersion))
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
+
+	// Auth routes
+	if p.AuthHandler != nil {
+		r.Route("/auth", func(a chi.Router) {
+			a.Post("/login", p.AuthHandler.Login)
+		})
+	}
 
 	// Bot routes
 	if p.BotHandler != nil {

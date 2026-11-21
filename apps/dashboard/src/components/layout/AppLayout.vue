@@ -103,8 +103,10 @@ import { Home, ShoppingBag, BarChart3, Settings, Store, X, CheckCircle2 } from '
 import AppHeader from './AppHeader.vue'
 import BottomNavigation from './BottomNavigation.vue'
 import ToastContainer from '../ui/ToastContainer.vue'
+import { useAuth } from '../../composables/useAuth'
 
 const route = useRoute()
+const auth = useAuth()
 const activeOutlet = ref('FAN Laundry Kalibaru')
 const showOutletModal = ref(false)
 const showExpenseModal = ref(false)
@@ -116,17 +118,23 @@ const isCurrentPath = (path) => {
   return route.path.startsWith(path)
 }
 
-const navItems = computed(() => [
-  { path: '/', label: 'Beranda', icon: Home },
-  {
-    path: '/orders',
-    label: 'Transaksi & Antrian',
-    icon: ShoppingBag,
-    badge: queueCount.value > 0 ? queueCount.value : null,
-  },
-  { path: '/reports', label: 'Laporan Keuangan & CRM', icon: BarChart3 },
-  { path: '/settings', label: 'Pengaturan & Master Data', icon: Settings },
-])
+const navItems = computed(() => {
+  const items = [
+    { path: '/', label: 'Beranda', icon: Home },
+    {
+      path: '/orders',
+      label: 'Transaksi & Antrian',
+      icon: ShoppingBag,
+      badge: queueCount.value > 0 ? queueCount.value : null,
+    },
+    { path: '/reports', label: 'Laporan Keuangan & CRM', icon: BarChart3 },
+  ]
+  // Karyawan (Kasir) dilarang melihat menu Pengaturan
+  if (auth.userRole.value !== 'KASIR') {
+    items.push({ path: '/settings', label: 'Pengaturan & Master Data', icon: Settings })
+  }
+  return items
+})
 
 const selectOutlet = (name) => {
   activeOutlet.value = name

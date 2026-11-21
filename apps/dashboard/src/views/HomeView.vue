@@ -415,10 +415,12 @@ import SearchOrderModal from '../components/modals/SearchOrderModal.vue'
 import OmsetBreakdownModal from '../components/modals/OmsetBreakdownModal.vue'
 import { api, formatRupiah } from '../api/client'
 import { useAppSettings } from '../composables/useAppSettings'
+import { useAuth } from '../composables/useAuth'
 import { useToast } from '../composables/useToast'
 
 const router = useRouter()
 const { settings } = useAppSettings()
+const auth = useAuth()
 const { info } = useToast()
 
 const loading = ref(false)
@@ -428,13 +430,13 @@ const showSearchModal = ref(false)
 const showOmsetModal = ref(false)
 
 const isFinancialsHidden = computed(
-  () => settings.role === 'CASHIER' && settings.hideFinancialsFromCashier
+  () => (settings.role === 'CASHIER' || auth.isCashier.value) && !auth.can('can_view_financials')
 )
 
 const handleOmsetClick = () => {
   if (isFinancialsHidden.value) {
     info(
-      'Data omset disembunyikan dalam Mode Kasir. Masuk ke peran Owner di profil kanan atas untuk melihat rincian.'
+      'Data omset disembunyikan untuk staf Anda berdasarkan hak akses (ACL). Hubungi Owner untuk membuka izin.'
     )
     return
   }

@@ -107,11 +107,12 @@
             <div class="flex items-center gap-1">
               <p class="text-xs font-bold text-slate-800 leading-none">
                 {{
-                  settings.role === 'SUPER_ADMIN'
+                  auth.currentUser.value?.full_name ||
+                  (settings.role === 'SUPER_ADMIN'
                     ? 'Super Admin'
                     : settings.role === 'OWNER'
                       ? 'Owner (Admin)'
-                      : 'Kasir Utama'
+                      : 'Kasir Utama')
                 }}
               </p>
               <Crown v-if="settings.role === 'SUPER_ADMIN'" class="w-3.5 h-3.5 text-amber-500 inline" />
@@ -120,13 +121,24 @@
             <p class="text-[10px] text-slate-400 leading-none mt-0.5">
               {{
                 settings.role === 'SUPER_ADMIN'
-                  ? 'Akses Semua Outlet'
+                  ? 'Super Admin (All Tenant)'
                   : settings.role === 'OWNER'
                     ? 'Akses Penuh Owner'
-                    : 'Mode Operasional'
+                    : 'Karyawan / Kasir'
               }}
             </p>
           </div>
+        </button>
+
+        <!-- Logout Button -->
+        <button
+          type="button"
+          class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 text-slate-500 border border-slate-200 text-xs font-bold transition-all cursor-pointer"
+          title="Keluar dari Akun (Logout)"
+          @click="handleLogout"
+        >
+          <LogOut class="w-3.5 h-3.5" />
+          <span class="hidden xl:inline">Keluar</span>
         </button>
       </div>
     </div>
@@ -346,6 +358,8 @@ import {
 import { useAppSettings } from '../../composables/useAppSettings'
 import { useToast } from '../../composables/useToast'
 import { useAttendance } from '../../composables/useAttendance'
+import { useAuth } from '../../composables/useAuth'
+import { useRouter } from 'vue-router'
 import AttendanceModal from '../attendance/AttendanceModal.vue'
 import LeaveRequestModal from '../attendance/LeaveRequestModal.vue'
 
@@ -358,8 +372,17 @@ defineProps({
 
 defineEmits(['open-outlet-modal'])
 
+const router = useRouter()
+const auth = useAuth()
 const { settings, switchRole } = useAppSettings()
 const { success, error } = useToast()
+
+const handleLogout = () => {
+  if (confirm('Keluar dari LaundryOS?')) {
+    auth.logout()
+    router.push('/login')
+  }
+}
 const {
   activeAttendance,
   showAttendanceModal,
