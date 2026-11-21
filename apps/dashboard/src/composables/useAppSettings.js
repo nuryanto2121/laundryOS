@@ -3,7 +3,8 @@ import { reactive, watch } from 'vue'
 const STORAGE_KEY = 'laundryos_app_settings'
 
 const defaultSettings = {
-  role: 'OWNER', // 'OWNER' | 'CASHIER'
+  role: 'OWNER', // 'SUPER_ADMIN' | 'OWNER' | 'CASHIER'
+  superAdminPin: '9999',
   ownerPin: '1234',
   hideFinancialsFromCashier: true,
   printer: {
@@ -63,8 +64,15 @@ watch(
 
 export function useAppSettings() {
   const switchRole = (newRole, pin = '') => {
+    if (newRole === 'SUPER_ADMIN') {
+      if (pin === (state.superAdminPin || '9999')) {
+        state.role = 'SUPER_ADMIN'
+        return { success: true }
+      }
+      return { success: false, message: 'PIN Super Admin tidak valid' }
+    }
     if (newRole === 'OWNER') {
-      if (pin === state.ownerPin) {
+      if (pin === state.ownerPin || pin === (state.superAdminPin || '9999')) {
         state.role = 'OWNER'
         return { success: true }
       }

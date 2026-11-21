@@ -85,9 +85,32 @@ func (s *MasterService) ListPaymentMethods(ctx context.Context) ([]db.PaymentMet
 	return s.repo.ListPaymentMethods(ctx)
 }
 
-// ListOutlets returns all active outlets.
-func (s *MasterService) ListOutlets(ctx context.Context) ([]db.Outlet, error) {
-	return s.repo.ListOutlets(ctx)
+// ListOutlets returns all active outlets with GPS coordinates.
+func (s *MasterService) ListOutlets(ctx context.Context) ([]model.Outlet, error) {
+	return s.repo.ListOutletsWithGPS(ctx)
+}
+
+// CreateOutlet creates a new outlet with GPS coordinates.
+func (s *MasterService) CreateOutlet(ctx context.Context, req model.CreateOutletRequest) (model.Outlet, error) {
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		req.Name = "Outlet Laundry"
+	}
+	req.Code = strings.TrimSpace(req.Code)
+	if req.Code == "" {
+		req.Code = "OUT-" + strings.ToUpper(uuid.New().String()[:6])
+	}
+	return s.repo.CreateOutlet(ctx, req)
+}
+
+// UpdateOutlet updates outlet profile and GPS coordinates.
+func (s *MasterService) UpdateOutlet(ctx context.Context, idStr string, req model.UpdateOutletRequest) (model.Outlet, error) {
+	return s.repo.UpdateOutlet(ctx, idStr, req)
+}
+
+// DeleteOutlet deactivates an outlet.
+func (s *MasterService) DeleteOutlet(ctx context.Context, idStr string) error {
+	return s.repo.DeleteOutlet(ctx, idStr)
 }
 
 // GetDefaultOutlet returns the primary outlet.

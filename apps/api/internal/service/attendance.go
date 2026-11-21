@@ -48,7 +48,16 @@ func (s *attendanceService) ListShifts(ctx context.Context) ([]model.Shift, erro
 
 func (s *attendanceService) UpdateShift(ctx context.Context, id string, req model.UpdateShiftRequest) (model.Shift, error) {
 	if strings.TrimSpace(req.ShiftName) == "" {
-		return model.Shift{}, errors.New("shift_name is required")
+		shifts, _ := s.repo.ListShifts(ctx)
+		for _, sh := range shifts {
+			if sh.ID == id {
+				req.ShiftName = sh.ShiftName
+				break
+			}
+		}
+	}
+	if strings.TrimSpace(req.ShiftName) == "" {
+		req.ShiftName = "Shift Operasional"
 	}
 	if strings.TrimSpace(req.StartTime) == "" || strings.TrimSpace(req.EndTime) == "" {
 		return model.Shift{}, errors.New("start_time and end_time are required")

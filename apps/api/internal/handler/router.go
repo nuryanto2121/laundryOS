@@ -109,6 +109,9 @@ func NewRouter(p RouterParams) http.Handler {
 
 			m.Get("/payment-methods", p.MasterHandler.ListPaymentMethods)
 			m.Get("/outlets", p.MasterHandler.ListOutlets)
+			m.Post("/outlets", p.MasterHandler.CreateOutlet)
+			m.Put("/outlets/{id}", p.MasterHandler.UpdateOutlet)
+			m.Delete("/outlets/{id}", p.MasterHandler.DeleteOutlet)
 
 			m.Get("/services", p.MasterHandler.ListServices)
 			m.Post("/services", p.MasterHandler.CreateService)

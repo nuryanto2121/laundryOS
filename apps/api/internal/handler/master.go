@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 	"github.com/nuryanto2121/laundryos/apps/api/internal/service"
 )
 
@@ -198,6 +199,58 @@ func (h *MasterHandler) ListOutlets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, outlets)
+}
+
+// CreateOutlet handles POST /master/outlets.
+func (h *MasterHandler) CreateOutlet(w http.ResponseWriter, r *http.Request) {
+	var req model.CreateOutletRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	outlet, err := h.svc.CreateOutlet(r.Context(), req)
+	if err != nil {
+		slog.Error("master: create outlet failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal membuat outlet")
+		return
+	}
+	writeJSON(w, http.StatusCreated, outlet)
+}
+
+// UpdateOutlet handles PUT /master/outlets/{id}.
+func (h *MasterHandler) UpdateOutlet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "id outlet wajib diisi")
+		return
+	}
+	var req model.UpdateOutletRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	outlet, err := h.svc.UpdateOutlet(r.Context(), id, req)
+	if err != nil {
+		slog.Error("master: update outlet failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal update outlet")
+		return
+	}
+	writeJSON(w, http.StatusOK, outlet)
+}
+
+// DeleteOutlet handles DELETE /master/outlets/{id}.
+func (h *MasterHandler) DeleteOutlet(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "id outlet wajib diisi")
+		return
+	}
+	if err := h.svc.DeleteOutlet(r.Context(), id); err != nil {
+		slog.Error("master: delete outlet failed", "error", err)
+		writeError(w, http.StatusInternalServerError, "gagal menonaktifkan outlet")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "outlet berhasil dinonaktifkan"})
 }
 
 // ListServices handles GET /master/services.

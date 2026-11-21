@@ -8,16 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/nuryanto2121/laundryos/apps/api/internal/db/generated"
+	"github.com/nuryanto2121/laundryos/apps/api/internal/model"
 )
 
 // MasterRepository provides access to master data (perfumes, discounts, payment methods, outlets, categories, employees).
 type MasterRepository struct {
+	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 // NewMasterRepository creates a new MasterRepository.
 func NewMasterRepository(pool *pgxpool.Pool) *MasterRepository {
-	return &MasterRepository{queries: db.New(pool)}
+	return &MasterRepository{pool: pool, queries: db.New(pool)}
 }
 
 func toPgUUID(id uuid.UUID) pgtype.UUID {
@@ -142,6 +144,134 @@ func (r *MasterRepository) ListOutlets(ctx context.Context) ([]db.Outlet, error)
 		return nil, fmt.Errorf("master repo: list outlets: %w", err)
 	}
 	return outlets, nil
+}
+
+// ListOutletsWithGPS retrieves all outlets with GPS coordinates and geofence radius.
+func (r *MasterRepository) ListOutletsWithGPS(ctx context.Context) ([]model.Outlet, error) {
+	if r.pool == nil {
+		outlets, err := r.queries.ListOutlets(ctx)
+		if err != nil {
+			return nil, err
+		}
+		var res []model.Outlet
+		for _, o := range outlets {
+			res = append(res, model.Outlet{
+				ID:                   o.ID.String(),
+				Name:                 o.Name,
+				Code:                 o.Code,
+				Address:              o.Address.String,
+				Phone:                o.Phone.String,
+				Latitude:             -6.113425,
+				Longitude:            106.914230,
+				GeofenceRadiusMeters: 25,
+				IsActive:             o.IsActive,
+				CreatedAt:            o.CreatedAt.Time,
+				UpdatedAt:            o.UpdatedAt.Time,
+			})
+		}
+		return res, nil
+	}
+
+	query := `
+		SELECT id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
+		       COALESCE(latitude, -6.113425), COALESCE(longitude, 106.914230),
+		       COALESCE(geofence_radius_meters, 25), is_active, created_at, updated_at
+		FROM outlets
+		ORDER BY name ASC
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("master repo: list outlets with gps: %w", err)
+	}
+	defer rows.Close()
+
+	var list []model.Outlet
+	for rows.Next() {
+		var o model.Outlet
+		if err := rows.Scan(
+			&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
+			&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+			&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		list = append(list, o)
+	}
+	return list, nil
+}
+
+// CreateOutlet creates a new outlet with GPS coordinates.
+func (r *MasterRepository) CreateOutlet(ctx context.Context, req model.CreateOutletRequest) (model.Outlet, error) {
+	lat := req.Latitude
+	if lat == 0 {
+		lat = -6.113425
+	}
+	lng := req.Longitude
+	if lng == 0 {
+		lng = 106.914230
+	}
+	radius := req.GeofenceRadiusMeters
+	if radius <= 0 {
+		radius = 25
+	}
+
+	query := `
+		INSERT INTO outlets (name, code, address, phone, latitude, longitude, geofence_radius_meters, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
+		          latitude, longitude, geofence_radius_meters, is_active, created_at, updated_at
+	`
+	var o model.Outlet
+	err := r.pool.QueryRow(ctx, query,
+		req.Name, req.Code, req.Address, req.Phone,
+		lat, lng, radius, req.IsActive,
+	).Scan(
+		&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
+		&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+		&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
+	)
+	if err != nil {
+		return model.Outlet{}, fmt.Errorf("master repo: create outlet: %w", err)
+	}
+	return o, nil
+}
+
+// UpdateOutlet updates outlet details including GPS and geofence radius.
+func (r *MasterRepository) UpdateOutlet(ctx context.Context, id string, req model.UpdateOutletRequest) (model.Outlet, error) {
+	query := `
+		UPDATE outlets
+		SET name = COALESCE(NULLIF($2, ''), name),
+		    code = COALESCE(NULLIF($3, ''), code),
+		    address = COALESCE(NULLIF($4, ''), address),
+		    phone = COALESCE(NULLIF($5, ''), phone),
+		    latitude = CASE WHEN $6::numeric != 0::numeric THEN $6::numeric ELSE latitude END,
+		    longitude = CASE WHEN $7::numeric != 0::numeric THEN $7::numeric ELSE longitude END,
+		    geofence_radius_meters = CASE WHEN $8 > 0 THEN $8 ELSE geofence_radius_meters END,
+		    is_active = $9,
+		    updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, name, code, COALESCE(address, ''), COALESCE(phone, ''),
+		          latitude, longitude, geofence_radius_meters, is_active, created_at, updated_at
+	`
+	var o model.Outlet
+	err := r.pool.QueryRow(ctx, query,
+		id, req.Name, req.Code, req.Address, req.Phone,
+		req.Latitude, req.Longitude, req.GeofenceRadiusMeters, req.IsActive,
+	).Scan(
+		&o.ID, &o.Name, &o.Code, &o.Address, &o.Phone,
+		&o.Latitude, &o.Longitude, &o.GeofenceRadiusMeters,
+		&o.IsActive, &o.CreatedAt, &o.UpdatedAt,
+	)
+	if err != nil {
+		return model.Outlet{}, fmt.Errorf("master repo: update outlet: %w", err)
+	}
+	return o, nil
+}
+
+// DeleteOutlet deactivates an outlet.
+func (r *MasterRepository) DeleteOutlet(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE outlets SET is_active = false, updated_at = NOW() WHERE id = $1`, id)
+	return err
 }
 
 // GetDefaultOutlet retrieves the primary default outlet.

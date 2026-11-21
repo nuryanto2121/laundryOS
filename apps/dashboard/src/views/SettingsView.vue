@@ -33,61 +33,178 @@
           <div
             class="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 shadow-2xs"
             :class="
-              settings.role === 'OWNER'
-                ? 'bg-purple-50 text-purple-900 border-purple-200'
-                : 'bg-slate-100 text-slate-700 border-slate-200'
+              settings.role === 'SUPER_ADMIN'
+                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                : settings.role === 'OWNER'
+                  ? 'bg-purple-50 text-purple-900 border-purple-200'
+                  : 'bg-slate-100 text-slate-700 border-slate-200'
             "
           >
-            <Shield v-if="settings.role === 'OWNER'" class="w-4 h-4 text-purple-600" />
+            <Crown v-if="settings.role === 'SUPER_ADMIN'" class="w-4 h-4 text-amber-500" />
+            <Shield v-else-if="settings.role === 'OWNER'" class="w-4 h-4 text-purple-600" />
             <User v-else class="w-4 h-4 text-slate-500" />
-            <span>Peran: {{ settings.role === 'OWNER' ? '👑 Owner (Akses Penuh)' : '👤 Kasir' }}</span>
+            <span>Peran: {{ settings.role === 'SUPER_ADMIN' ? '⚡ Super Admin (Multi-Tenant)' : settings.role === 'OWNER' ? '👑 Owner (Akses Penuh)' : '👤 Kasir' }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 2. Mobile Quick-Picker Dropdown (< md) -->
-      <div class="block md:hidden bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs">
-        <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">
-          Pilih Menu Pengaturan & Master Data
-        </label>
-        <div class="relative">
-          <select
-            v-model="activeTab"
-            class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 appearance-none focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
-          >
-            <option v-for="tab in tabs" :key="tab.id" :value="tab.id">
-              {{ tab.label }}
-            </option>
-          </select>
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-600">
-            <component :is="activeTabObj.icon" class="w-4 h-4" />
-          </div>
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-            <ChevronDown class="w-4 h-4" />
+      <!-- Static Main Settings Layout: Left Sidebar Navigation (col-span-3) + Right Active Content (col-span-9) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Static Sidebar Navigation for Desktop (No horizontal sliding) -->
+        <div class="hidden lg:block lg:col-span-3 space-y-4 sticky top-20">
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-xs space-y-3.5">
+            <div v-for="group in tabGroups" :key="group.title" class="space-y-1">
+              <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 py-1">
+                {{ group.title }}
+              </div>
+              <button
+                v-for="tab in group.tabs"
+                :key="tab.id"
+                type="button"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-left"
+                :class="
+                  activeTab === tab.id
+                    ? 'bg-brand-50 text-brand-700 shadow-2xs font-extrabold border border-brand-200/60'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                "
+                @click="activeTab = tab.id"
+              >
+                <div class="flex items-center gap-2.5 truncate">
+                  <component :is="tab.icon" class="w-4 h-4 shrink-0" :class="activeTab === tab.id ? 'text-brand-600' : 'text-slate-400'" />
+                  <span class="truncate">{{ tab.label }}</span>
+                </div>
+                <span
+                  v-if="tab.id === 'LEAVE_APPROVAL' && pendingLeavesCount > 0"
+                  class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse"
+                >
+                  {{ pendingLeavesCount }}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 3. Desktop Navigation Tabs (>= md) -->
-      <div
-        class="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none bg-slate-100/80 p-1.5 rounded-2xl text-xs font-bold"
-      >
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          class="flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0"
-          :class="
-            activeTab === tab.id
-              ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
-          "
-          @click="activeTab = tab.id"
-        >
-          <component :is="tab.icon" class="w-4 h-4" />
-          <span>{{ tab.label }}</span>
-        </button>
-      </div>
+        <!-- Right Content Area (lg:col-span-9) -->
+        <div class="col-span-1 lg:col-span-9 space-y-6">
+          <!-- Mobile Dropdown Selector (Static, visible on mobile only, < lg) -->
+          <div class="block lg:hidden bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs">
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">
+              Pilih Menu Pengaturan
+            </label>
+            <div class="relative">
+              <select
+                v-model="activeTab"
+                class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 appearance-none focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
+              >
+                <optgroup v-for="group in tabGroups" :key="group.title" :label="group.title">
+                  <option v-for="tab in group.tabs" :key="tab.id" :value="tab.id">
+                    {{ tab.label }}
+                  </option>
+                </optgroup>
+              </select>
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-600">
+                <component :is="activeTabObj.icon" class="w-4 h-4" />
+              </div>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown class="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================================== -->
+          <!-- TAB 0: MASTER CABANG & TITIK GPS OUTLET                         -->
+          <!-- ============================================================== -->
+          <div v-if="activeTab === 'OUTLETS'" class="space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <Store class="w-4 h-4 text-brand-600" />
+                  <span>Master Cabang & Titik Koordinat GPS Outlet</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Kelola outlet/cabang laundry di bawah akun Owner Anda, tentukan alamat dan titik GPS untuk validasi absensi selfie kasir.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer w-fit"
+                @click="openAddOutletModal"
+              >
+                <Plus class="w-3.5 h-3.5" />
+                <span>Tambah Cabang Baru</span>
+              </button>
+            </div>
+
+            <!-- Outlet Cards Grid -->
+            <div v-if="outletsList.length === 0" class="py-12 bg-white rounded-2xl border border-slate-100 text-center text-xs text-slate-400 space-y-2">
+              <Store class="w-8 h-8 mx-auto text-slate-300" />
+              <p>Belum ada data cabang outlet. Klik "Tambah Cabang Baru" untuk menambahkan.</p>
+            </div>
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                v-for="outlet in outletsList"
+                :key="outlet.id"
+                class="bg-white rounded-2xl border border-slate-100 p-5 shadow-xs space-y-3.5 flex flex-col justify-between hover:border-slate-200 transition-all"
+              >
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-black text-xs">
+                        {{ outlet.code }}
+                      </div>
+                      <div>
+                        <h4 class="font-black text-sm text-slate-900">{{ outlet.name }}</h4>
+                        <p class="text-[10px] text-slate-400 font-mono">{{ outlet.phone || 'Tanpa No. WhatsApp' }}</p>
+                      </div>
+                    </div>
+                    <span
+                      class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                      :class="outlet.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'"
+                    >
+                      {{ outlet.is_active ? 'Aktif' : 'Non-Aktif' }}
+                    </span>
+                  </div>
+
+                  <p class="text-xs text-slate-600 line-clamp-2">
+                    {{ outlet.address || 'Alamat outlet belum diset.' }}
+                  </p>
+
+                  <!-- GPS Radar Info -->
+                  <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] space-y-1 font-mono">
+                    <div class="flex items-center justify-between text-slate-700">
+                      <span class="text-slate-400 flex items-center gap-1 font-sans font-bold">
+                        <MapPin class="w-3 h-3 text-brand-600" /> Koordinat GPS:
+                      </span>
+                      <span class="font-bold">{{ outlet.latitude }}, {{ outlet.longitude }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-slate-700">
+                      <span class="text-slate-400 font-sans font-bold">Radius Absen:</span>
+                      <span class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">{{ outlet.geofence_radius_meters || 25 }} Meter</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer flex items-center gap-1.5"
+                    @click="openEditOutletModal(outlet)"
+                  >
+                    <Edit2 class="w-3.5 h-3.5 text-slate-500" />
+                    <span>Edit Cabang & GPS</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="p-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    title="Nonaktifkan Cabang"
+                    @click="deleteOutlet(outlet.id, outlet.name)"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
       <!-- ============================================================== -->
       <!-- TAB 1: PROFIL OUTLET & PRINTER THERMAL                         -->
@@ -1430,7 +1547,7 @@
                     {{ shift.shift_number }}
                   </div>
                   <div>
-                    <h4 class="font-extrabold text-sm text-slate-900">{{ shift.name }}</h4>
+                    <h4 class="font-extrabold text-sm text-slate-900">{{ shift.shift_name }}</h4>
                     <p class="text-[11px] text-slate-400">Jadwal Standar: {{ shift.start_time }} - {{ shift.end_time }} WIB</p>
                   </div>
                 </div>
@@ -1513,53 +1630,16 @@
               @click="saveShiftSettings(shift)"
             >
               <Save class="w-3.5 h-3.5" />
-              <span>Simpan Perubahan {{ shift.name }}</span>
+              <span>Simpan Perubahan {{ shift.shift_name }}</span>
             </button>
-          </div>
-        </div>
-
-        <!-- Outlet Geofencing Map Card -->
-        <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <MapPin class="w-5 h-5" />
-              </div>
-              <div>
-                <h4 class="font-black text-sm text-slate-900">Validasi Geofencing GPS Outlet Kalibaru</h4>
-                <p class="text-xs text-slate-500">Radius check-in selfie karyawan</p>
-              </div>
-            </div>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
-              Radar Aktif
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span class="text-[10px] font-bold text-slate-400 uppercase">Titik Latitude</span>
-              <p class="font-mono font-bold text-slate-800 text-sm">-6.113425</p>
-              <span class="text-[10px] text-slate-400">Kalibaru Barat I</span>
-            </div>
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span class="text-[10px] font-bold text-slate-400 uppercase">Titik Longitude</span>
-              <p class="font-mono font-bold text-slate-800 text-sm">106.914230</p>
-              <span class="text-[10px] text-slate-400">Cilincing, Jakarta Utara</span>
-            </div>
-            <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
-              <span class="text-[10px] font-bold text-emerald-700 uppercase">Radius Maksimal</span>
-              <p class="font-mono font-extrabold text-emerald-900 text-sm">25.0 Meter</p>
-              <span class="text-[10px] text-emerald-600">Toleransi GPS indoor / ruko</span>
-            </div>
           </div>
         </div>
       </div>
 
       <!-- ============================================================== -->
-      <!-- TAB: REKAP ABSENSI & CUTI                                      -->
+      <!-- TAB: PERSETUJUAN CUTI (LEAVE APPROVAL)                         -->
       <!-- ============================================================== -->
-      <div v-else-if="activeTab === 'ATTENDANCE_RECAP'" class="space-y-6">
-        <!-- 1. SECTION: PERSETUJUAN CUTI (LEAVE APPROVAL) -->
+      <div v-else-if="activeTab === 'LEAVE_APPROVAL'" class="space-y-6">
         <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
             <div>
@@ -1679,8 +1759,12 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 2. SECTION: REKAP LOG ABSENSI HARIAN -->
+      <!-- ============================================================== -->
+      <!-- TAB: REKAP ABSENSI KARYAWAN                                    -->
+      <!-- ============================================================== -->
+      <div v-else-if="activeTab === 'ATTENDANCE_LOG'" class="space-y-6">
         <div class="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
             <div>
@@ -1832,10 +1916,140 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
       <!-- ============================================================== -->
       <!-- MODALS SECTION                                                 -->
       <!-- ============================================================== -->
+
+      <!-- 0. Modal Tambah/Edit Outlet Cabang & GPS -->
+      <div v-if="showOutletModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+              <Store class="w-4 h-4 text-brand-600" />
+              <span>{{ isEditingOutlet ? 'Edit Profil & Koordinat Cabang' : 'Tambah Outlet Cabang Baru' }}</span>
+            </h4>
+            <button class="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer" @click="showOutletModal = false">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+          <form class="space-y-3" @submit.prevent="submitOutletForm">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nama Outlet *</label>
+              <input
+                v-model="outletForm.name"
+                type="text"
+                required
+                placeholder="Contoh: FAN Laundry Kalibaru"
+                class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Kode Cabang *</label>
+                <input
+                  v-model="outletForm.code"
+                  type="text"
+                  required
+                  placeholder="Contoh: OUT-01"
+                  class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 uppercase"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">No. WhatsApp</label>
+                <input
+                  v-model="outletForm.phone"
+                  type="text"
+                  placeholder="Contoh: 0852-8597-7834"
+                  class="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Outlet</label>
+              <textarea
+                v-model="outletForm.address"
+                rows="2"
+                placeholder="Alamat lengkap outlet cabang..."
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500"
+              ></textarea>
+            </div>
+            <!-- Koordinat GPS & Geofence -->
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                <MapPin class="w-3.5 h-3.5 text-brand-600" />
+                Titik Koordinat GPS & Radius Geofence
+              </span>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Latitude</label>
+                  <input
+                    v-model.number="outletForm.latitude"
+                    type="number"
+                    step="0.000001"
+                    required
+                    placeholder="-6.113425"
+                    class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Longitude</label>
+                  <input
+                    v-model.number="outletForm.longitude"
+                    type="number"
+                    step="0.000001"
+                    required
+                    placeholder="106.914230"
+                    class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Radius Geofence Absensi (Meter)</label>
+                <input
+                  v-model.number="outletForm.geofence_radius_meters"
+                  type="number"
+                  min="5"
+                  max="500"
+                  required
+                  placeholder="25"
+                  class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white"
+                />
+                <p class="text-[10px] text-slate-400 mt-1">Disarankan 25 meter untuk toleransi sinyal GPS dalam ruangan/ruko.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input
+                id="outlet-active"
+                v-model="outletForm.is_active"
+                type="checkbox"
+                class="rounded border-slate-300 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer"
+              />
+              <label for="outlet-active" class="text-xs font-bold text-slate-700 cursor-pointer">
+                Outlet Aktif Beroperasi
+              </label>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                @click="showOutletModal = false"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                :disabled="modalSaving"
+                class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                {{ modalSaving ? 'Menyimpan...' : 'Simpan Cabang' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- 1. Modal Tambah/Edit Pegawai -->
       <div v-if="showEmployeeModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs">
@@ -2661,6 +2875,8 @@ import {
   MapPin,
   Camera,
   Eye,
+  Store,
+  Crown,
 } from 'lucide-vue-next'
 import { useAppSettings } from '../composables/useAppSettings'
 import { useToast } from '../composables/useToast'
@@ -2670,24 +2886,53 @@ import { printThermalReceipt } from '../utils/printReceipt'
 const { settings, changePin, resetToDefaults } = useAppSettings()
 const { success, error } = useToast()
 
-const activeTab = ref('PRINTER')
+const activeTab = ref('OUTLETS')
 
-const tabs = [
-  { id: 'PRINTER', label: 'Profil Outlet & Printer Thermal', icon: Printer },
-  { id: 'SHIFTS_ATTENDANCE', label: 'Master Shift & Jam Kerja', icon: Clock },
-  { id: 'ATTENDANCE_RECAP', label: 'Rekap Absensi & Cuti', icon: CalendarCheck },
-  { id: 'EMPLOYEES', label: 'Pegawai & Hak Akses (RBAC)', icon: ShieldCheck },
-  { id: 'SERVICES', label: 'Master Layanan & Tarif', icon: Tag },
-  { id: 'PERFUME_DISCOUNT', label: 'Master Parfum & Diskon', icon: Sparkles },
-  { id: 'EXPENSE_CATEGORIES', label: 'Kategori Pengeluaran', icon: Receipt },
-  { id: 'EXPENSE_CORRECTION', label: 'Pengoreksi Kas Kecil', icon: DollarSign },
-  { id: 'CUSTOMERS', label: 'Kelola Pelanggan (CRM)', icon: Users },
-  { id: 'MACHINE', label: 'Kapasitas Mesin & Toleransi', icon: Scale },
-  { id: 'INTEGRATION', label: 'Status Integrasi & Sistem', icon: Smartphone },
+const tabGroups = [
+  {
+    title: 'Cabang & Outlet',
+    tabs: [
+      { id: 'OUTLETS', label: 'Master Cabang (GPS)', icon: Store },
+      { id: 'PRINTER', label: 'Profil Outlet & Printer', icon: Printer },
+    ],
+  },
+  {
+    title: 'Operasional & Shift',
+    tabs: [
+      { id: 'SHIFTS_ATTENDANCE', label: 'Master Shift & Jam Kerja', icon: Clock },
+      { id: 'MACHINE', label: 'Kapasitas Mesin & Toleransi', icon: Scale },
+    ],
+  },
+  {
+    title: 'Kepegawaian & Absensi',
+    tabs: [
+      { id: 'ATTENDANCE_LOG', label: 'Rekap Absensi Karyawan', icon: Camera },
+      { id: 'LEAVE_APPROVAL', label: 'Persetujuan Cuti (Libur)', icon: CalendarCheck },
+      { id: 'EMPLOYEES', label: 'Pegawai & Hak Akses', icon: ShieldCheck },
+    ],
+  },
+  {
+    title: 'Katalog & Keuangan',
+    tabs: [
+      { id: 'SERVICES', label: 'Master Layanan & Tarif', icon: Tag },
+      { id: 'PERFUME_DISCOUNT', label: 'Master Parfum & Diskon', icon: Sparkles },
+      { id: 'EXPENSE_CATEGORIES', label: 'Kategori Pengeluaran', icon: Receipt },
+      { id: 'EXPENSE_CORRECTION', label: 'Pengoreksi Kas Kecil', icon: DollarSign },
+      { id: 'CUSTOMERS', label: 'Kelola Pelanggan (CRM)', icon: Users },
+    ],
+  },
+  {
+    title: 'Sistem',
+    tabs: [
+      { id: 'INTEGRATION', label: 'Status Integrasi & Sistem', icon: Smartphone },
+    ],
+  },
 ]
 
+const tabs = computed(() => tabGroups.flatMap((g) => g.tabs))
+
 const activeTabObj = computed(() => {
-  return tabs.find((t) => t.id === activeTab.value) || tabs[0]
+  return tabs.value.find((t) => t.id === activeTab.value) || tabs.value[0]
 })
 
 // State for PIN Form
@@ -3115,15 +3360,18 @@ const loadCustomers = async () => {
 
 // Watchers for Tabs & Pagination
 watch(activeTab, (tab) => {
-  if (tab === 'EXPENSE_CORRECTION') {
+  if (tab === 'OUTLETS') {
+    loadOutlets()
+  } else if (tab === 'EXPENSE_CORRECTION') {
     loadExpensesAudit()
   } else if (tab === 'CUSTOMERS') {
     loadCustomers()
   } else if (tab === 'SHIFTS_ATTENDANCE') {
     loadShifts()
-  } else if (tab === 'ATTENDANCE_RECAP') {
-    loadLeaves()
+  } else if (tab === 'ATTENDANCE_LOG') {
     loadAttendances()
+  } else if (tab === 'LEAVE_APPROVAL') {
+    loadLeaves()
   }
 })
 
@@ -3168,6 +3416,7 @@ onMounted(() => {
   loadShifts()
   loadLeaves()
   loadAttendances()
+  loadOutlets()
 })
 
 // ==========================================
@@ -3651,8 +3900,113 @@ const deleteCustomer = async (id) => {
 }
 
 // ==========================================
-// Milestone: Shifts, Attendance & Leaves
+// Milestone: Outlets, Shifts, Attendance & Leaves
 // ==========================================
+const outletsList = ref([])
+const showOutletModal = ref(false)
+const isEditingOutlet = ref(false)
+const outletForm = reactive({
+  id: '',
+  name: '',
+  code: '',
+  address: '',
+  phone: '',
+  latitude: -6.113425,
+  longitude: 106.914230,
+  geofence_radius_meters: 25,
+  is_active: true,
+})
+
+const loadOutlets = async () => {
+  try {
+    const data = await api.get('/master/outlets')
+    outletsList.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('Failed to load outlets:', err)
+  }
+}
+
+const openAddOutletModal = () => {
+  isEditingOutlet.value = false
+  Object.assign(outletForm, {
+    id: '',
+    name: '',
+    code: 'OUT-' + Math.floor(100 + Math.random() * 900),
+    address: '',
+    phone: '',
+    latitude: -6.113425,
+    longitude: 106.914230,
+    geofence_radius_meters: 25,
+    is_active: true,
+  })
+  showOutletModal.value = true
+}
+
+const openEditOutletModal = (outlet) => {
+  isEditingOutlet.value = true
+  Object.assign(outletForm, {
+    id: outlet.id,
+    name: outlet.name,
+    code: outlet.code,
+    address: outlet.address,
+    phone: outlet.phone,
+    latitude: outlet.latitude || -6.113425,
+    longitude: outlet.longitude || 106.914230,
+    geofence_radius_meters: outlet.geofence_radius_meters || 25,
+    is_active: outlet.is_active,
+  })
+  showOutletModal.value = true
+}
+
+const submitOutletForm = async () => {
+  modalSaving.value = true
+  try {
+    if (isEditingOutlet.value) {
+      await api.put(`/master/outlets/${outletForm.id}`, {
+        name: outletForm.name,
+        code: outletForm.code,
+        address: outletForm.address,
+        phone: outletForm.phone,
+        latitude: parseFloat(outletForm.latitude) || -6.113425,
+        longitude: parseFloat(outletForm.longitude) || 106.914230,
+        geofence_radius_meters: parseInt(outletForm.geofence_radius_meters) || 25,
+        is_active: outletForm.is_active,
+      })
+      success('Profil & koordinat GPS outlet berhasil diperbarui!')
+    } else {
+      await api.post('/master/outlets', {
+        name: outletForm.name,
+        code: outletForm.code,
+        address: outletForm.address,
+        phone: outletForm.phone,
+        latitude: parseFloat(outletForm.latitude) || -6.113425,
+        longitude: parseFloat(outletForm.longitude) || 106.914230,
+        geofence_radius_meters: parseInt(outletForm.geofence_radius_meters) || 25,
+        is_active: outletForm.is_active,
+      })
+      success('Outlet cabang baru berhasil ditambahkan!')
+    }
+    showOutletModal.value = false
+    await loadOutlets()
+  } catch (err) {
+    error(err.message || 'Gagal menyimpan outlet')
+  } finally {
+    modalSaving.value = false
+  }
+}
+
+const deleteOutlet = async (id, name) => {
+  triggerDeleteModal(
+    'Outlet Cabang',
+    name,
+    async () => {
+      await api.delete(`/master/outlets/${id}`)
+      success(`Outlet ${name} berhasil dinonaktifkan!`)
+      await loadOutlets()
+    }
+  )
+}
+
 const shiftsList = ref([])
 const attendanceList = ref([])
 const attendanceFilter = reactive({
@@ -3688,6 +4042,7 @@ const loadShifts = async () => {
 const saveShiftSettings = async (shift) => {
   try {
     await api.put(`/master/shifts/${shift.id}`, {
+      shift_name: shift.shift_name,
       start_time: shift.start_time,
       end_time: shift.end_time,
       break_start: shift.break_start,
@@ -3695,7 +4050,7 @@ const saveShiftSettings = async (shift) => {
       late_tolerance_minutes: parseInt(shift.late_tolerance_minutes) || 15,
       is_active: shift.is_active,
     })
-    success(`Pengaturan jam ${shift.name} berhasil disimpan!`)
+    success(`Pengaturan jam ${shift.shift_name} berhasil disimpan!`)
     await loadShifts()
   } catch (err) {
     error(err.message || 'Gagal menyimpan shift')
